@@ -10,5 +10,6 @@ admin.site.site_title = "Aprovizionare RURIS"
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("cont/", include("apps.accounts.urls")),
+    path("jurnal/", include("apps.audit.urls")),
     path("", include("apps.dashboard.urls")),
 ]

@@ -132,7 +132,7 @@ def test_failed_login_is_recorded_without_password(client, procurement_user):
 
     event = BusinessEvent.objects.get(event_type=T.LOGIN_FAILED)
     assert event.actor is None
-    assert event.data == {"username": procurement_user.username}
+    assert event.data == {"utilizator": procurement_user.username}
     assert "parola-gresita" not in str(event.data) + event.message
 
 

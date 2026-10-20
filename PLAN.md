@@ -60,9 +60,9 @@ Legendă: `[ ]` de făcut · `[x]` gata · **(opțional)** = după ce obligatori
 - [x] 2.2 Matricea de permisiuni în cod (`permissions.py`), `PermissionMixin`, `user.can()`, filtrul `|can` în șabloane, meniul pe permisiuni, pagini 403/404
 - [x] 2.3 Audit automat (django-auditlog): utilizator, acțiune, câmpuri vechi → noi, dată, IP; modelele urmărite declarate centralizat în setări; parola mascată; utilizatorii nu se pot șterge
 - [x] 2.4 Evenimente de business (`BusinessEvent`, `record_event()`): autentificări reușite/eșuate, ieșiri; jurnal append-only; context cine/IP limitat strict la cerere
-- [ ] 2.5 Pagina **Jurnal de activitate** (Admin), cu filtre după utilizator, tip document, perioadă
-- [ ] 2.6 Istoric pe fiecare document (secțiunea „Istoric” pe pagina comenzii / facturii)
-- [ ] 2.7 Teste: fiecare rol primește 403 pe ce nu are voie
+- [x] 2.5 Pagina **Jurnal de activitate** (Admin): ambele jurnale într-o singură cronologie (UNION SQL + paginare în baza de date), filtre HTMX după utilizator, tip, perioadă
+- [x] 2.6 Istoric pe document: componenta `{% object_history obiect %}` (se pune pe paginile din cap. 4–7) + filtrul „istoricul documentului” în jurnal
+- [x] 2.7 Teste: plasă de siguranță automată pe toate rutele (orice pagină nouă trebuie să declare o permisiune; fiecare rol fără drept primește 403)
 
 ---
 

@@ -28,5 +28,5 @@ def on_login_failed(sender, credentials, request=None, **kwargs):
     record_event(
         BusinessEvent.Type.LOGIN_FAILED,
         f"Autentificare eșuată pentru utilizatorul „{username}”.",
-        data={"username": username},
+        data={"utilizator": username},
     )

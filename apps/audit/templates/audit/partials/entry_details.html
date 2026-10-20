@@ -1,0 +1,26 @@
+{# Conținutul unei intrări din jurnal: tip, document, mesaj, câmpuri modificate, detalii. #}
+<div class="d-flex flex-wrap align-items-center gap-2">
+  <span class="badge text-bg-{{ entry.color }}"><i class="bi bi-{{ entry.icon }} me-1"></i>{{ entry.label }}</span>
+  {% if entry.title %}<span class="small fw-semibold">{{ entry.title }}</span>{% endif %}
+</div>
+
+{% if entry.message %}<div class="small mt-1">{{ entry.message }}</div>{% endif %}
+
+{% if entry.changes %}
+  <ul class="list-unstyled small mt-1 mb-0">
+    {% for name, old, new in entry.changes %}
+      <li>
+        <span class="text-body-secondary">{{ name|capfirst }}:</span>
+        <del class="text-danger">{{ old|default:"(gol)" }}</del>
+        <i class="bi bi-arrow-right mx-1"></i>
+        <span class="text-success">{{ new|default:"(gol)" }}</span>
+      </li>
+    {% endfor %}
+  </ul>
+{% endif %}
+
+{% if entry.details %}
+  <ul class="list-unstyled small text-body-secondary mt-1 mb-0">
+    {% for key, value in entry.details.items %}<li>{{ key|capfirst }}: {{ value }}</li>{% endfor %}
+  </ul>
+{% endif %}

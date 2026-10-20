@@ -1,0 +1,25 @@
+{% load permissions %}
+{# Secțiunea „Istoric” de pe pagina unui document. Folosire: {% load audit %}{% object_history obiect %} #}
+<div class="card shadow-sm">
+  <div class="card-header bg-body d-flex justify-content-between align-items-center">
+    <span class="fw-semibold"><i class="bi bi-clock-history me-1"></i> Istoric</span>
+    {% if user|can:"audit.view" %}
+      <a href="{% url 'audit:log' %}?ct={{ content_type_id }}&obj={{ object_id }}" class="small">Istoricul complet</a>
+    {% endif %}
+  </div>
+  <ul class="list-group list-group-flush">
+    {% for entry in entries %}
+      <li class="list-group-item">
+        <div class="small text-body-secondary mb-1">
+          {{ entry.timestamp|date:"d.m.Y H:i" }} · {% if entry.actor %}{{ entry.actor }}{% else %}sistem{% endif %}
+        </div>
+        {% include "audit/partials/entry_details.html" %}
+      </li>
+    {% empty %}
+      <li class="list-group-item small text-body-secondary">Nicio înregistrare.</li>
+    {% endfor %}
+    {% if has_more %}
+      <li class="list-group-item small text-body-secondary">… și înregistrări mai vechi.</li>
+    {% endif %}
+  </ul>
+</div>
