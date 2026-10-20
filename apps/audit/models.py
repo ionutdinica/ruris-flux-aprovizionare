@@ -35,6 +35,9 @@ class BusinessEvent(models.Model):
         LOGIN = "auth.login", "Autentificare"
         LOGOUT = "auth.logout", "Ieșire din cont"
         LOGIN_FAILED = "auth.login_failed", "Autentificare eșuată"
+        ORDER_SENT = "order.sent", "Comandă trimisă"
+        ORDER_CANCELLED = "order.cancelled", "Comandă anulată"
+        ORDER_CLOSED = "order.closed", "Comandă închisă cu rest"
 
     timestamp = models.DateTimeField("data și ora", auto_now_add=True, db_index=True)
     # PROTECT: un utilizator cu istoric nu poate fi șters (doar dezactivat),

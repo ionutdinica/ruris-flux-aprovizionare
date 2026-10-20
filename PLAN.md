@@ -77,12 +77,12 @@ Legendă: `[ ]` de făcut · `[x]` gata · **(opțional)** = după ce obligatori
 ## Capitolul 4 – Achiziții: comenzi
 
 - [ ] 4.1 Creare / editare comandă cu linii dinamice (HTMX): produs, cantitate, preț, monedă, dată estimată
-- [ ] 4.2 Tranzițiile de status (Trimite, Anulează, Închide) cu validări
+- [x] 4.2 Tranzițiile de status (`services.py`: trimite, anulează, închide cu rest, recalculare automată), cu blocare în baza de date și evenimente în jurnal; numerotare `CMD-AAAA-NNNN` fără goluri
 - [ ] 4.3 Status de recepție calculat automat din recepții; progres pe fiecare linie (comandat / recepționat / facturat)
 - [ ] 4.4 Lista comenzilor cu filtre: status, furnizor, **întârziate**
 - [ ] 4.5 **Import din Excel**: șablon descărcabil, validare rând cu rând, raport de erori, previzualizare înainte de salvare
 - [ ] 4.6 **Export în Excel**: comenzile filtrate, cu cantitățile recepționate și facturate
-- [ ] 4.7 Rezolvarea discrepanțelor primite de la Depozit (marfă necomandată → atașează la o comandă / marchează retur)
+- [ ] 4.7 ~~Rezolvarea discrepanțelor~~ → mutat în capitolul 5 (discrepanțele apar la recepție)
 
 ---
 

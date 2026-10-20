@@ -16,7 +16,7 @@ from datetime import datetime
 
 from auditlog.models import LogEntry
 from django.contrib.contenttypes.models import ContentType
-from django.db.models import CharField, Value
+from django.db.models import CharField, Q, Value
 
 from .models import BusinessEvent
 
@@ -34,6 +34,9 @@ EVENT_STYLE = {
     BusinessEvent.Type.LOGIN: ("secondary", "box-arrow-in-right"),
     BusinessEvent.Type.LOGOUT: ("secondary", "box-arrow-right"),
     BusinessEvent.Type.LOGIN_FAILED: ("danger", "shield-exclamation"),
+    BusinessEvent.Type.ORDER_SENT: ("primary", "send"),
+    BusinessEvent.Type.ORDER_CANCELLED: ("danger", "x-circle"),
+    BusinessEvent.Type.ORDER_CLOSED: ("warning", "slash-circle"),
 }
 DEFAULT_EVENT_STYLE = ("info", "flag")
 
@@ -151,15 +154,27 @@ def _filtered_sources(f):
         common["timestamp__date__gte"] = f.date_from
     if f.date_to:
         common["timestamp__date__lte"] = f.date_to
-    if f.content_type_id:
-        common["content_type_id"] = f.content_type_id
 
     for source, qs in sources.items():
         qs = qs.filter(**common)
         if f.content_type_id:
-            qs = qs.filter(**{OBJECT_FIELD[source]: f.object_id})
+            qs = qs.filter(_document_condition(source, f.content_type_id, f.object_id))
         sources[source] = qs
     return sources
+
+
+def _document_condition(source, content_type_id, object_id):
+    """Intrările despre un document: ale lui și, pentru modificări, ale părților lui.
+
+    Ex.: istoricul unei comenzi include și modificările liniilor ei. Liniile își
+    declară „părintele” prin get_additional_data() (vezi PurchaseOrderLine).
+    """
+    condition = Q(content_type_id=content_type_id, **{OBJECT_FIELD[source]: object_id})
+    if source == CHANGE:
+        content_type = ContentType.objects.get_for_id(content_type_id)
+        parent_key = f"{content_type.app_label}.{content_type.model}:{object_id}"
+        condition |= Q(additional_data__parent=parent_key)
+    return condition
 
 
 def timeline_rows(filters):

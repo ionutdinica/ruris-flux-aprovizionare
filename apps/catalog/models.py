@@ -5,14 +5,18 @@ dezactivează. Un element inactiv nu mai poate fi ales pe documente noi, dar
 rămâne vizibil pe cele vechi.
 """
 
-from decimal import Decimal
-
 from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
 from django.db import models
 from django.urls import reverse
 
-from apps.core.models import Currency, SearchableModel, TimeStampedModel
+from apps.core.models import (
+    DEFAULT_VAT_RATE,
+    VAT_RATE_CHOICES,
+    Currency,
+    SearchableModel,
+    TimeStampedModel,
+)
 from apps.core.validators import normalize_cui, validate_cui
 
 
@@ -94,12 +98,6 @@ class Product(SearchableModel, TimeStampedModel):
         SET = "set", "set"
         PACK = "pachet", "pachet"
 
-    class VatRate(models.TextChoices):
-        # Cotele de TVA din România în vigoare din 1 august 2025 (I-20).
-        STANDARD = "21.00", "21% (standard)"
-        REDUCED = "11.00", "11% (redusă)"
-        ZERO = "0.00", "0% (scutit / taxare inversă)"
-
     code = models.CharField("cod", max_length=50, unique=True)
     name = models.CharField("denumire", max_length=200)
     unit = models.CharField("unitate de măsură", max_length=10, choices=Unit.choices)
@@ -107,8 +105,8 @@ class Product(SearchableModel, TimeStampedModel):
         "cota TVA (%)",
         max_digits=5,
         decimal_places=2,
-        choices=[(Decimal(value), label) for value, label in VatRate.choices],
-        default=Decimal(VatRate.STANDARD),
+        choices=VAT_RATE_CHOICES,
+        default=DEFAULT_VAT_RATE,
     )
     description = models.TextField("descriere", blank=True)
     is_active = models.BooleanField("activ", default=True)
