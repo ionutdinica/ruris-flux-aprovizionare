@@ -15,6 +15,7 @@ from django.core.validators import FileExtensionValidator
 from apps.accounts.models import User
 from apps.catalog.models import Product, Supplier
 from apps.core.forms import BootstrapFormMixin
+from apps.core.text import format_quantity
 
 from .models import PurchaseOrder, PurchaseOrderLine
 
@@ -106,7 +107,7 @@ class PurchaseOrderLineForm(BootstrapFormMixin, forms.ModelForm):
         # Fără zerouri inutile în câmpuri: „12”, nu „12.000”; „89.9”, nu „89.9000”.
         if line.pk:
             for name in ("quantity", "unit_price"):
-                self.initial[name] = f"{getattr(line, name).normalize():f}"
+                self.initial[name] = format_quantity(getattr(line, name))
 
         if line.pk and line.order.is_amendable:
             for name in self.LOCKED_AFTER_SENDING:

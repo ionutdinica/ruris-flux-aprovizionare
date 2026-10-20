@@ -14,22 +14,10 @@ from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
 
-
-class ImmutableRecordError(Exception):
-    """Încercare de a modifica sau șterge o înregistrare din jurnalul de audit."""
+from apps.core.models import AppendOnlyModel
 
 
-class AppendOnlyQuerySet(models.QuerySet):
-    """Blochează și modificările / ștergerile în masă (`.update()`, `.delete()`)."""
-
-    def update(self, **kwargs):
-        raise ImmutableRecordError("Jurnalul de audit nu poate fi modificat.")
-
-    def delete(self):
-        raise ImmutableRecordError("Jurnalul de audit nu poate fi șters.")
-
-
-class BusinessEvent(models.Model):
+class BusinessEvent(AppendOnlyModel):
     class Type(models.TextChoices):
         # Catalogul evenimentelor; se completează în fiecare capitol.
         LOGIN = "auth.login", "Autentificare"
@@ -40,6 +28,9 @@ class BusinessEvent(models.Model):
         ORDER_CLOSED = "order.closed", "Comandă închisă cu rest"
         ORDERS_IMPORTED = "orders.imported", "Comenzi importate din Excel"
         ORDERS_EXPORTED = "orders.exported", "Comenzi exportate în Excel"
+        RECEIPT_CONFIRMED = "receipt.confirmed", "Recepție confirmată"
+        DISCREPANCY_ATTACHED = "discrepancy.attached", "Discrepanță acceptată pe comandă"
+        DISCREPANCY_RETURNED = "discrepancy.returned", "Discrepanță returnată"
 
     timestamp = models.DateTimeField("data și ora", auto_now_add=True, db_index=True)
     # PROTECT: un utilizator cu istoric nu poate fi șters (doar dezactivat),
@@ -65,8 +56,6 @@ class BusinessEvent(models.Model):
     data = models.JSONField("detalii", default=dict, blank=True)  # ex. {"justificare": "..."}
     remote_addr = models.GenericIPAddressField("adresă IP", null=True, blank=True)
 
-    objects = AppendOnlyQuerySet.as_manager()
-
     class Meta:
         verbose_name = "eveniment"
         verbose_name_plural = "evenimente"
@@ -75,11 +64,3 @@ class BusinessEvent(models.Model):
 
     def __str__(self):
         return f"{self.timestamp:%d.%m.%Y %H:%M} · {self.get_event_type_display()}"
-
-    def save(self, *args, **kwargs):
-        if not self._state.adding:
-            raise ImmutableRecordError("Jurnalul de audit nu poate fi modificat.")
-        super().save(*args, **kwargs)
-
-    def delete(self, *args, **kwargs):
-        raise ImmutableRecordError("Jurnalul de audit nu poate fi șters.")

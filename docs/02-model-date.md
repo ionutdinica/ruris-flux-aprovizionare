@@ -109,7 +109,7 @@ Valori **calculate** (nu se stochează, ca să nu se poată desincroniza; se cal
 **GoodsReceipt** – recepție
 | Câmp | Tip | Observații |
 |---|---|---|
-| `number` | text, unic | `REC-AAAA-NNNN` |
+| `number` | text, unic | `REC-AAAA-NNNN`, dat **la confirmare** (o ciornă greșită se poate șterge fără goluri în numerotare) |
 | `supplier` | → Supplier | |
 | `purchase_order` | → PurchaseOrder, opțional | gol = marfă fără comandă |
 | `receipt_date` | dată | |
@@ -147,11 +147,13 @@ Valori **calculate** (nu se stochează, ca să nu se poată desincroniza; se cal
 | `quantity` | decimal(3) | **cu semn**: + intrare, − ieșire |
 | `date` | dată | |
 | `receipt_line` | → GoodsReceiptLine, opțional | |
-| `order_line` | → PurchaseOrderLine, opțional | pentru retururi pe o linie de comandă |
+| `order_line` | → PurchaseOrderLine, opțional | linia de comandă pe care s-a făcut intrarea sau returul (doar pentru `RECEIPT`, `DISCREPANCY_ACCEPTED`, `SUPPLIER_RETURN`) |
 | `discrepancy` | → Discrepancy, opțional | |
 | `reason` | text | obligatoriu pentru consum, retur, ajustare |
 
 Stocul disponibil al unui produs = Σ `quantity`. În carantină = Σ discrepanțe `OPEN`.
+
+**Un singur registru pentru stoc și pentru progresul comenzilor:** cantitatea recepționată a unei linii de comandă = Σ mișcărilor legate de acea linie (recepții + marfă acceptată din carantină − retururi). Stocul și „recepționatul” nu se pot contrazice. Registrul e *append-only* (nu se modifică, nu se șterge), iar baza de date verifică semnul fiecărui tip de mișcare.
 
 ### Contabilitate
 

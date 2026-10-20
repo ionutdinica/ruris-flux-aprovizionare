@@ -5,8 +5,9 @@ from django.urls import reverse
 
 from apps.accounts.tests.factories import TEST_PASSWORD
 from apps.audit.context import audit_context
-from apps.audit.models import BusinessEvent, ImmutableRecordError
+from apps.audit.models import BusinessEvent
 from apps.audit.services import record_event
+from apps.core.models import ImmutableRecordError
 
 pytestmark = pytest.mark.django_db
 

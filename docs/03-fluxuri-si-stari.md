@@ -52,7 +52,7 @@ stateDiagram-v2
 | `DRAFT` | Ciornă | tot | nu |
 | `SENT` | Trimisă | data estimată, linii noi, cantități mai mari | da |
 | `PARTIALLY_RECEIVED` | Parțial recepționată | idem | da |
-| `RECEIVED` | Recepționată | nu | nu |
+| `RECEIVED` | Recepționată | linii noi, cantități mai mari (regularizarea unui surplus) | nu |
 | `CLOSED` | Închisă | nu | nu |
 | `CANCELLED` | Anulată | nu | nu |
 
@@ -68,7 +68,7 @@ stateDiagram-v2
     CONFIRMED --> [*]
 ```
 
-La **confirmare**, într-o singură tranzacție:
+Numărul `REC-…` se dă la confirmare. La **confirmare**, într-o singură tranzacție:
 1. pentru fiecare linie: `accepted = min(primit, rest de recepționat pe linia de comandă)`, `quarantined = primit − accepted`;
 2. se creează mișcarea de stoc `RECEIPT` pentru `accepted`;
 3. dacă `quarantined > 0`, se creează o `Discrepancy` (`OVER_DELIVERY` sau `UNORDERED`);

@@ -20,6 +20,7 @@ from django.db.models import (
     F,
     OuterRef,
     Q,
+    Subquery,
     Sum,
     Value,
     When,
@@ -37,7 +38,7 @@ from apps.core.models import (
     SearchableModel,
     TimeStampedModel,
 )
-from apps.core.text import fold
+from apps.core.text import fold, format_quantity
 
 CENT = Decimal("0.01")
 ZERO = Decimal("0")
@@ -111,8 +112,9 @@ class PurchaseOrder(SearchableModel, TimeStampedModel):
 
     # Comenzi la care se așteaptă marfă (pot fi întârziate).
     OPEN_STATUSES = (Status.SENT, Status.PARTIALLY_RECEIVED)
-    # Comenzi care mai acceptă modificări controlate: termene, linii noi (I-07).
-    AMENDABLE_STATUSES = (Status.SENT, Status.PARTIALLY_RECEIVED)
+    # Comenzi care mai acceptă modificări controlate: termene, linii noi, cantități mai
+    # mari (I-07). Inclusiv cele recepționate complet: așa se poate regulariza un surplus.
+    AMENDABLE_STATUSES = (Status.SENT, Status.PARTIALLY_RECEIVED, Status.RECEIVED)
 
     number = models.CharField("număr", max_length=20, unique=True, editable=False)
     external_reference = models.CharField(
@@ -226,12 +228,24 @@ class PurchaseOrderLineQuerySet(models.QuerySet):
         """Adaugă cantitățile recepționate și facturate ale fiecărei linii.
 
         Calculate din documente, nu stocate (docs/02-model-date.md): nu se pot
-        desincroniza. Recepțiile apar în capitolul 5, facturile în capitolul 7;
-        până atunci cantitățile sunt zero.
+        desincroniza. Recepționat = suma mișcărilor de stoc ale liniei din registrul
+        depozitului (recepții + marfă acceptată din carantină − retururi).
+        Facturat: capitolul 7; până atunci zero.
         """
+        from apps.warehouse.models import StockMovement  # import aici: evită importul circular
+
         decimal = DecimalField(max_digits=15, decimal_places=3)
+        received = (
+            StockMovement.objects.filter(order_line=OuterRef("pk"))
+            .order_by()
+            .values("order_line")
+            .annotate(total=Sum("quantity"))
+            .values("total")
+        )
         return self.annotate(
-            received_qty=Value(ZERO, output_field=decimal),
+            received_qty=Coalesce(
+                Subquery(received, output_field=decimal), Value(ZERO), output_field=decimal
+            ),
             invoiced_qty=Value(ZERO, output_field=decimal),
         )
 
@@ -279,7 +293,7 @@ class PurchaseOrderLine(TimeStampedModel):
 
     def __str__(self):
         product = self.product.code if self.product_id else "?"
-        return f"{self.order} · {product} × {self.quantity.normalize():f}"
+        return f"{self.order} · {product} × {format_quantity(self.quantity)}"
 
     def get_additional_data(self):
         """Leagă intrările din jurnalul de audit de comandă: istoricul comenzii

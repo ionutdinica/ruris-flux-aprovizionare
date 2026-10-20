@@ -63,6 +63,9 @@ get_rate(moneda, data_factura):
 - Linie de recepție fără linie de comandă → integral în carantină, discrepanță `UNORDERED`.
 - Ieșirile (consum, retur, ajustare negativă) sunt refuzate dacă ar duce stocul disponibil sub zero (I-14).
 - Rezolvare discrepanță prin **atașare**: linia aleasă trebuie să fie a aceluiași furnizor și produs și să aibă rest de recepționat ≥ cantitatea din carantină. Dacă nu are, Achizițiile adaugă mai întâi o linie sau măresc cantitatea în comandă (regularizare), apoi atașează.
+- Scurtătură pentru **surplus** (`OVER_DELIVERY`): „Acceptă surplusul” mărește cantitatea comandată pe linie cu surplusul (vizibil în istoricul comenzii) și îl atașează, într-un singur pas. Nu e posibil pe o comandă închisă sau anulată.
+- La recepție, Depozitul introduce cantitatea **numărată**; cantitatea așteptată e afișată alături, dar câmpul nu e precompletat (altfel recepția ar deveni un click fără numărare).
+- Recepțiile pe aceeași comandă și ieșirile pe același produs sunt serializate (blocare în baza de date), ca operațiile simultane să nu producă stocuri sau cantități greșite.
 
 ## 4. Ce înseamnă „întârziat” și „blocat”
 

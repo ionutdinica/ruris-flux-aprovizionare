@@ -71,9 +71,11 @@ def cancel_order(order, reason):
     """Ciornă / Trimisă → Anulată. Doar dacă nu s-a recepționat nimic (I-08)."""
     reason = _require_reason(reason)
     order = _lock(order)
-    if order.status not in (Status.DRAFT, Status.SENT):
+    if order.status not in (Status.DRAFT, Status.SENT, Status.PARTIALLY_RECEIVED):
         raise TransitionError("Doar o comandă în ciornă sau trimisă poate fi anulată.")
-    if any(qty > 0 for qty in received_quantities(order).values()):
+    received = any(qty > 0 for qty in received_quantities(order).values())
+    if order.status == Status.PARTIALLY_RECEIVED or received:
+        # Mesajul spune și ce e de făcut, nu doar ce nu se poate.
         raise TransitionError(
             "S-a recepționat deja marfă pe această comandă; folosește „Închide cu rest nelivrat”."
         )

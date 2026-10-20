@@ -5,6 +5,39 @@ from django.db import models, transaction
 from .text import fold
 
 
+class ImmutableRecordError(Exception):
+    """Încercare de a modifica sau șterge o înregistrare dintr-un registru append-only
+    (jurnalul de audit, registrul de stoc)."""
+
+
+class AppendOnlyQuerySet(models.QuerySet):
+    """Blochează și modificările / ștergerile în masă (`.update()`, `.delete()`)."""
+
+    def update(self, **kwargs):
+        raise ImmutableRecordError("Înregistrările din acest registru nu pot fi modificate.")
+
+    def delete(self):
+        raise ImmutableRecordError("Înregistrările din acest registru nu pot fi șterse.")
+
+
+class AppendOnlyModel(models.Model):
+    """Bază pentru registre: o înregistrare se adaugă, dar nu se mai modifică și nu se
+    șterge. Corecturile se fac prin înregistrări noi, vizibile (ex. o ajustare de stoc)."""
+
+    objects = AppendOnlyQuerySet.as_manager()
+
+    class Meta:
+        abstract = True
+
+    def save(self, *args, **kwargs):
+        if not self._state.adding:
+            raise ImmutableRecordError("Înregistrările din acest registru nu pot fi modificate.")
+        super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        raise ImmutableRecordError("Înregistrările din acest registru nu pot fi șterse.")
+
+
 class TimeStampedModel(models.Model):
     """Bază pentru modelele aplicației: data creării și a ultimei modificări.
 

@@ -190,6 +190,10 @@ AUDITLOG_INCLUDE_TRACKING_MODELS = (
     {"model": "catalog.Product", "exclude_fields": _TIMESTAMPS},
     {"model": "purchasing.PurchaseOrder", "exclude_fields": _TIMESTAMPS},
     {"model": "purchasing.PurchaseOrderLine", "exclude_fields": _TIMESTAMPS},
+    {"model": "warehouse.GoodsReceipt", "exclude_fields": _TIMESTAMPS},
+    {"model": "warehouse.GoodsReceiptLine", "exclude_fields": _TIMESTAMPS},
+    {"model": "warehouse.Discrepancy", "exclude_fields": _TIMESTAMPS},
+    {"model": "warehouse.StockMovement", "exclude_fields": _TIMESTAMPS},
 )
 AUDITLOG_MASK_CALLABLE = "apps.audit.utils.mask_completely"
 AUDITLOG_STORE_JSON_CHANGES = True  # modificările se salvează structurat (JSON)

@@ -39,6 +39,9 @@ EVENT_STYLE = {
     BusinessEvent.Type.ORDER_CLOSED: ("warning", "slash-circle"),
     BusinessEvent.Type.ORDERS_IMPORTED: ("info", "file-earmark-arrow-up"),
     BusinessEvent.Type.ORDERS_EXPORTED: ("secondary", "file-earmark-arrow-down"),
+    BusinessEvent.Type.RECEIPT_CONFIRMED: ("success", "box-seam"),
+    BusinessEvent.Type.DISCREPANCY_ATTACHED: ("success", "link-45deg"),
+    BusinessEvent.Type.DISCREPANCY_RETURNED: ("warning", "arrow-return-left"),
 }
 DEFAULT_EVENT_STYLE = ("info", "flag")
 
