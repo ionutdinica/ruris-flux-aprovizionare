@@ -1,3 +1,7 @@
-from django.shortcuts import render
+from django.views.generic import TemplateView
 
-# Create your views here.
+
+class HomeView(TemplateView):
+    """Pagina de start. Provizorie: în capitolul 9 devine panoul de control pe rol."""
+
+    template_name = "dashboard/home.html"

@@ -1,0 +1,11 @@
+{# Un element de meniu. Dacă pagina nu există încă, e afișat dezactivat cu „în curând”. #}
+{% if item.url %}
+  <a class="{{ css }}{% if item.active %} active{% endif %}" href="{{ item.url }}"{% if item.active %} aria-current="page"{% endif %}>
+    <i class="bi bi-{{ item.icon }} me-1"></i>{{ item.label }}
+  </a>
+{% else %}
+  <span class="{{ css }} disabled" aria-disabled="true" title="Pagină în lucru">
+    <i class="bi bi-{{ item.icon }} me-1"></i>{{ item.label }}
+    <span class="badge text-bg-secondary fw-normal ms-1">în curând</span>
+  </span>
+{% endif %}

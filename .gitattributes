@@ -6,3 +6,5 @@
 *.pdf binary
 *.xlsx binary
 *.png binary
+*.woff binary
+*.woff2 binary

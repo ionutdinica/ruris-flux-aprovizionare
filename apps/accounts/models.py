@@ -29,3 +29,7 @@ class User(AbstractUser):
 
     def __str__(self):
         return self.get_full_name() or self.username
+
+    def has_role(self, *roles):
+        """Are utilizatorul unul dintre rolurile date? Ex.: user.has_role(Role.PROCUREMENT)."""
+        return self.role in roles

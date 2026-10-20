@@ -1,0 +1,88 @@
+{% load static %}<!doctype html>
+<html lang="ro">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Aprovizionare{% endblock %} · RURIS</title>
+  <link rel="stylesheet" href="{% static 'vendor/bootstrap/bootstrap.min.css' %}">
+  <link rel="stylesheet" href="{% static 'vendor/bootstrap-icons/bootstrap-icons.min.css' %}">
+  <link rel="stylesheet" href="{% static 'css/app.css' %}">
+</head>
+{# Tokenul CSRF e trimis automat de HTMX la fiecare cerere (protecție la cereri falsificate). #}
+<body hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+
+{% if user.is_authenticated %}
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary-dark">
+  <div class="container-fluid">
+    <a class="navbar-brand fw-semibold" href="{% url 'dashboard:home' %}">
+      <i class="bi bi-box-seam-fill me-1"></i> Aprovizionare
+    </a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav"
+            aria-controls="mainNav" aria-expanded="false" aria-label="Deschide meniul">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="collapse navbar-collapse" id="mainNav">
+      {# Meniul vine gata filtrat pe rol din apps/dashboard/navigation.py #}
+      <ul class="navbar-nav me-auto">
+        {% for entry in menu %}
+          {% if entry.children %}
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                <i class="bi bi-{{ entry.icon }} me-1"></i>{{ entry.label }}
+              </a>
+              <ul class="dropdown-menu">
+                {% for item in entry.children %}
+                  <li>{% include "partials/menu_link.html" with item=item css="dropdown-item" %}</li>
+                {% endfor %}
+              </ul>
+            </li>
+          {% else %}
+            <li class="nav-item">{% include "partials/menu_link.html" with item=entry css="nav-link" %}</li>
+          {% endif %}
+        {% endfor %}
+      </ul>
+
+      <ul class="navbar-nav">
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="bi bi-person-circle me-1"></i>{{ user }}
+            <span class="badge rounded-pill text-bg-light ms-1">{{ user.get_role_display|default:"fără rol" }}</span>
+          </a>
+          <ul class="dropdown-menu dropdown-menu-end">
+            <li><span class="dropdown-item-text small text-body-secondary">{{ user.email }}</span></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item" href="{% url 'accounts:password_change' %}"><i class="bi bi-key me-2"></i>Schimbă parola</a></li>
+            <li>
+              {# Ieșirea se face prin POST (nu printr-un simplu link), ca să nu poată fi declanșată de alt site. #}
+              <form method="post" action="{% url 'accounts:logout' %}">
+                {% csrf_token %}
+                <button type="submit" class="dropdown-item"><i class="bi bi-box-arrow-right me-2"></i>Ieșire</button>
+              </form>
+            </li>
+          </ul>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+{% endif %}
+
+<main class="{% block container_class %}container py-4{% endblock %}">
+  {% if messages %}
+    {% for message in messages %}
+      <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Închide"></button>
+      </div>
+    {% endfor %}
+  {% endif %}
+
+  {% block content %}{% endblock %}
+</main>
+
+<script src="{% static 'vendor/bootstrap/bootstrap.bundle.min.js' %}"></script>
+<script src="{% static 'vendor/htmx/htmx.min.js' %}"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

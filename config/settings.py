@@ -11,6 +11,7 @@ from decimal import Decimal
 from pathlib import Path
 
 import environ
+from django.contrib.messages import constants as message_constants
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -71,6 +72,10 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    # Toate paginile cer autentificare, cu excepția celor marcate explicit
+    # (pagina de login). „Sigur în mod implicit”: o pagină nouă nu poate
+    # rămâne publică din greșeală.
+    "django.contrib.auth.middleware.LoginRequiredMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
@@ -88,6 +93,7 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                "apps.dashboard.context_processors.navigation",  # meniul pe rol
             ],
         },
     },
@@ -108,6 +114,10 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 AUTH_USER_MODEL = "accounts.User"  # modelul propriu, cu rol
 
+LOGIN_URL = "accounts:login"
+LOGIN_REDIRECT_URL = "dashboard:home"  # după login
+LOGOUT_REDIRECT_URL = "accounts:login"  # după logout
+
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
     {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},
@@ -122,6 +132,7 @@ LANGUAGE_CODE = "ro"
 TIME_ZONE = "Europe/Bucharest"
 USE_I18N = True
 USE_TZ = True  # datele se salvează în UTC și se afișează în ora României
+USE_THOUSAND_SEPARATOR = True  # 1.250,00 (format românesc)
 
 
 # --- Fișiere statice (CSS, JavaScript, imagini) ---------------------------------
@@ -129,6 +140,12 @@ USE_TZ = True  # datele se salvează în UTC și se afișează în ora României
 STATIC_URL = "static/"
 STATICFILES_DIRS = [BASE_DIR / "static"]
 STATIC_ROOT = BASE_DIR / "staticfiles"  # unde se adună la publicarea online
+
+
+# --- Mesaje (confirmări / erori afișate utilizatorului) ------------------------
+
+# Bootstrap numește „danger” ce Django numește „error”.
+MESSAGE_TAGS = {message_constants.ERROR: "danger"}
 
 
 # --- Email ------------------------------------------------------------------------

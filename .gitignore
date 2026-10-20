@@ -30,3 +30,6 @@ htmlcov/
 .idea/
 Thumbs.db
 .DS_Store
+
+# Configurare locală a uneltelor de dezvoltare
+.claude/
