@@ -24,7 +24,9 @@ class SearchListMixin:
     partial_template_name = None
     paginate_by = 20
 
-    STATUS_CHOICES = [("", "Toate"), ("active", "Active"), ("inactive", "Inactive")]
+    # Opțiunile filtrului de status; listele cu alte statusuri le redefinesc
+    # împreună cu filter_status().
+    status_choices = [("", "Toate"), ("active", "Active"), ("inactive", "Inactive")]
 
     def get_queryset(self):
         queryset = super().get_queryset()
@@ -38,10 +40,13 @@ class SearchListMixin:
             queryset = queryset.filter(reduce(or_, conditions))
 
         status = self.request.GET.get("status", "")
+        return self.filter_status(queryset, status) if status else queryset
+
+    def filter_status(self, queryset, status):
         if status == "active":
-            queryset = queryset.filter(is_active=True)
-        elif status == "inactive":
-            queryset = queryset.filter(is_active=False)
+            return queryset.filter(is_active=True)
+        if status == "inactive":
+            return queryset.filter(is_active=False)
         return queryset
 
     def get_template_names(self):
@@ -54,6 +59,6 @@ class SearchListMixin:
         context.update(
             query=self.request.GET.get("q", ""),
             status=self.request.GET.get("status", ""),
-            status_choices=self.STATUS_CHOICES,
+            status_choices=self.status_choices,
         )
         return context

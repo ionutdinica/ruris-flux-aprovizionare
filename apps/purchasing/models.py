@@ -12,7 +12,18 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator
 from django.db import models
-from django.db.models import DecimalField, F, Q, Sum, Value
+from django.db.models import (
+    BooleanField,
+    Case,
+    DecimalField,
+    Exists,
+    F,
+    OuterRef,
+    Q,
+    Sum,
+    Value,
+    When,
+)
 from django.db.models.functions import Coalesce, Round
 from django.urls import reverse
 from django.utils import timezone
@@ -50,6 +61,27 @@ class PurchaseOrderQuerySet(models.QuerySet):
         )
         return self.open().filter(pk__in=late_lines.values("order_id"))
 
+    def with_late_flag(self, today=None):
+        """Adaugă `is_late` fiecărei comenzi (evidențiere în liste), calculat în baza de date."""
+        today = today or timezone.localdate()
+        late_lines = PurchaseOrderLine.objects.with_progress().filter(
+            order=OuterRef("pk"), expected_date__lt=today, received_qty__lt=F("quantity")
+        )
+        return self.annotate(
+            is_late=Case(
+                When(Q(status__in=PurchaseOrder.OPEN_STATUSES) & Exists(late_lines), then=True),
+                default=False,
+                output_field=BooleanField(),
+            )
+        )
+
+    def visible_to(self, user):
+        """Ciornele sunt interne Achizițiilor: celelalte echipe văd comenzile
+        abia după trimitere, când devin angajament față de furnizor."""
+        if user.can("orders.edit"):
+            return self
+        return self.exclude(status=PurchaseOrder.Status.DRAFT)
+
     def with_totals(self):
         """Adaugă valoarea fără TVA a fiecărei comenzi (pentru liste), calculată în baza de date."""
         line_net = Round(F("lines__quantity") * F("lines__unit_price"), 2)
@@ -66,6 +98,16 @@ class PurchaseOrder(SearchableModel, TimeStampedModel):
         RECEIVED = "RECEIVED", "Recepționată"
         CLOSED = "CLOSED", "Închisă"
         CANCELLED = "CANCELLED", "Anulată"
+
+    # Culoarea Bootstrap a fiecărui status, pentru etichete.
+    STATUS_COLORS = {
+        Status.DRAFT: "secondary",
+        Status.SENT: "primary",
+        Status.PARTIALLY_RECEIVED: "info",
+        Status.RECEIVED: "success",
+        Status.CLOSED: "dark",
+        Status.CANCELLED: "danger",
+    }
 
     # Comenzi la care se așteaptă marfă (pot fi întârziate).
     OPEN_STATUSES = (Status.SENT, Status.PARTIALLY_RECEIVED)
@@ -125,6 +167,10 @@ class PurchaseOrder(SearchableModel, TimeStampedModel):
             errors["expected_date"] = "Data estimată nu poate fi înaintea datei comenzii."
         if errors:
             raise ValidationError(errors)
+
+    @property
+    def status_color(self):
+        return self.STATUS_COLORS[self.status]
 
     # --- Ce se poate face în statusul curent --------------------------------------
 
@@ -224,7 +270,7 @@ class PurchaseOrderLine(TimeStampedModel):
 
     def clean(self):
         errors = {}
-        order = self.order if self.order_id else None
+        order = self._order_or_none()
         if self.product_id and not self.product.is_active and self._state.adding:
             errors["product"] = "Produsul este inactiv și nu mai poate fi ales pe documente noi."
         if order and self.expected_date and self.expected_date < order.order_date:
@@ -233,6 +279,13 @@ class PurchaseOrderLine(TimeStampedModel):
             errors.update(self._amendment_errors())
         if errors:
             raise ValidationError(errors)
+
+    def _order_or_none(self):
+        """Comanda liniei, chiar dacă încă nu e salvată (formularul „Comandă nouă”)."""
+        try:
+            return self.order
+        except PurchaseOrder.DoesNotExist:
+            return None
 
     def _amendment_errors(self):
         """După trimitere, o linie existentă se poate modifica doar controlat (I-07):

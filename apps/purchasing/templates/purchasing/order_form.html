@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% load static formatting %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+{% with locked=object.is_amendable %}
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb small">
+    <li class="breadcrumb-item"><a href="{% url 'purchasing:order_list' %}">Comenzi</a></li>
+    {% if object.pk %}<li class="breadcrumb-item"><a href="{{ object.get_absolute_url }}">{{ object }}</a></li>{% endif %}
+    <li class="breadcrumb-item active" aria-current="page">{% if object.pk %}Editare{% else %}Comandă nouă{% endif %}</li>
+  </ol>
+</nav>
+
+<h1 class="h3 mb-3">{{ page_title }}{% if object.pk %} {{ object.number }}{% endif %}</h1>
+
+{% if locked %}
+  <div class="alert alert-info small">
+    <i class="bi bi-info-circle me-1"></i>
+    Comanda a fost trimisă furnizorului: se pot modifica termenele, responsabilul, observațiile,
+    se pot adăuga linii și mări cantitățile. Furnizorul, produsele, prețurile și TVA sunt blocate.
+  </div>
+{% endif %}
+
+<form method="post" novalidate>
+  {% csrf_token %}
+  {% if form.non_field_errors %}<div class="alert alert-danger">{{ form.non_field_errors }}</div>{% endif %}
+
+  <div class="card shadow-sm mb-3">
+    <div class="card-header bg-body fw-semibold">Date generale</div>
+    <div class="card-body">
+      <div class="row">
+        <div class="col-md-6">{% include "partials/form_field.html" with field=form.supplier %}</div>
+        <div class="col-md-2">{% include "partials/form_field.html" with field=form.currency %}</div>
+        <div class="col-md-4">{% include "partials/form_field.html" with field=form.owner %}</div>
+        <div class="col-md-3">{% include "partials/form_field.html" with field=form.order_date %}</div>
+        <div class="col-md-3">{% include "partials/form_field.html" with field=form.expected_date %}</div>
+        <div class="col-md-6">{% include "partials/form_field.html" with field=form.notes %}</div>
+      </div>
+    </div>
+  </div>
+
+  {# data-formset: zona gestionată de static/js/formset.js (adăugare / ștergere linii, totaluri). #}
+  <div class="card shadow-sm mb-3" data-formset="{{ lines.prefix }}">
+    <div class="card-header bg-body fw-semibold d-flex justify-content-between align-items-center">
+      Linii
+      <button type="button" class="btn btn-sm btn-outline-primary" data-formset-add><i class="bi bi-plus-lg me-1"></i>Adaugă linie</button>
+    </div>
+    {{ lines.management_form }}
+    {% if lines.non_form_errors %}<div class="alert alert-danger m-3 mb-0">{{ lines.non_form_errors }}</div>{% endif %}
+    <div class="table-responsive">
+      <table class="table align-top mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>Produs</th>
+            <th>Cantitate</th>
+            <th>Preț unitar</th>
+            <th>TVA</th>
+            <th>Termen <i class="bi bi-question-circle text-body-secondary" title="Gol = termenul din datele generale"></i></th>
+            <th class="text-end">Valoare</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody data-formset-body>
+          {% for line_form in lines %}
+            {% include "purchasing/partials/order_line_row.html" with form=line_form %}
+          {% endfor %}
+        </tbody>
+        <tfoot class="table-group-divider">
+          <tr><td colspan="5" class="text-end">Total fără TVA</td><td class="text-end fw-semibold text-nowrap" data-total="net">0,00</td><td></td></tr>
+          <tr><td colspan="5" class="text-end">TVA</td><td class="text-end text-nowrap" data-total="vat">0,00</td><td></td></tr>
+          <tr><td colspan="5" class="text-end fw-semibold">Total</td><td class="text-end fw-bold text-nowrap" data-total="gross">0,00</td><td></td></tr>
+        </tfoot>
+      </table>
+    </div>
+    <template>{% include "purchasing/partials/order_line_row.html" with form=lines.empty_form %}</template>
+  </div>
+
+  <div class="d-flex gap-2">
+    <button type="submit" class="btn btn-primary-dark"><i class="bi bi-check-lg me-1"></i>Salvează</button>
+    <a href="{% if object.pk %}{{ object.get_absolute_url }}{% else %}{% url 'purchasing:order_list' %}{% endif %}" class="btn btn-outline-secondary">Renunță</a>
+  </div>
+</form>
+{% endwith %}
+{% endblock %}
+
+{% block scripts %}<script src="{% static 'js/formset.js' %}"></script>{% endblock %}

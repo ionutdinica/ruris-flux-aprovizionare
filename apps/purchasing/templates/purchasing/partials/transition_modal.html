@@ -1,0 +1,23 @@
+{# Fereastră de confirmare pentru o acțiune de status. Opțional cu câmp „Motiv” obligatoriu. #}
+<div class="modal fade" id="{{ modal_id }}" tabindex="-1" aria-labelledby="{{ modal_id }}Label" aria-hidden="true">
+  <div class="modal-dialog">
+    <form method="post" action="{% url action_url order.pk %}" class="modal-content">
+      {% csrf_token %}
+      <div class="modal-header">
+        <h2 class="modal-title fs-5" id="{{ modal_id }}Label">{{ title }}</h2>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Închide"></button>
+      </div>
+      <div class="modal-body">
+        <p class="mb-3">{{ text }}</p>
+        {% if with_reason %}
+          <label for="{{ modal_id }}Reason" class="form-label">Motiv <span class="text-danger">*</span></label>
+          <textarea name="reason" id="{{ modal_id }}Reason" rows="3" class="form-control" required></textarea>
+        {% endif %}
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Renunță</button>
+        <button type="submit" class="btn {{ button_class }}">{{ button }}</button>
+      </div>
+    </form>
+  </div>
+</div>

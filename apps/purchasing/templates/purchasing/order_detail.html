@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+{% load permissions audit formatting %}
+
+{% block title %}{{ order.number }}{% endblock %}
+
+{% block content %}
+{% with show_prices=user|can:"orders.view_prices" can_edit=user|can:"orders.edit" %}
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb small">
+    <li class="breadcrumb-item"><a href="{% url 'purchasing:order_list' %}">Comenzi</a></li>
+    <li class="breadcrumb-item active" aria-current="page">{{ order.number }}</li>
+  </ol>
+</nav>
+
+<div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+  <h1 class="h3 mb-0">
+    Comanda {{ order.number }}
+    <span class="fs-6 align-middle badge text-bg-{{ order.status_color }}">{{ order.get_status_display }}</span>
+  </h1>
+
+  {% if can_edit %}
+  <div class="d-flex flex-wrap gap-2">
+    {% if order.is_editable or order.is_amendable %}
+      <a href="{% url 'purchasing:order_update' order.pk %}" class="btn btn-outline-primary"><i class="bi bi-pencil me-1"></i>Editează</a>
+    {% endif %}
+    {% if order.status == "DRAFT" %}
+      <button type="button" class="btn btn-primary-dark" data-bs-toggle="modal" data-bs-target="#sendModal"><i class="bi bi-send me-1"></i>Trimite comanda</button>
+    {% endif %}
+    {% if order.status == "PARTIALLY_RECEIVED" %}
+      <button type="button" class="btn btn-outline-dark" data-bs-toggle="modal" data-bs-target="#closeModal"><i class="bi bi-slash-circle me-1"></i>Închide cu rest</button>
+    {% endif %}
+    {% if can_cancel %}
+      <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#cancelModal"><i class="bi bi-x-circle me-1"></i>Anulează</button>
+    {% endif %}
+  </div>
+  {% endif %}
+</div>
+
+{% if order.close_reason %}
+  <div class="alert alert-{% if order.status == 'CANCELLED' %}danger{% else %}secondary{% endif %} small">
+    <strong>{% if order.status == "CANCELLED" %}Motivul anulării{% else %}Motivul închiderii{% endif %}:</strong> {{ order.close_reason }}
+  </div>
+{% endif %}
+
+<div class="row g-3">
+  <div class="col-lg-8">
+    <div class="card shadow-sm mb-3">
+      <div class="card-body">
+        <dl class="row mb-0">
+          <dt class="col-sm-3">Furnizor</dt>
+          <dd class="col-sm-9"><a href="{{ order.supplier.get_absolute_url }}">{{ order.supplier }}</a></dd>
+          <dt class="col-sm-3">Responsabil</dt>
+          <dd class="col-sm-9">{{ order.owner }}</dd>
+          <dt class="col-sm-3">Data comenzii</dt>
+          <dd class="col-sm-9">{{ order.order_date|date:"d.m.Y" }}{% if order.sent_at %} <span class="text-body-secondary small">· trimisă la {{ order.sent_at|date:"d.m.Y H:i" }}</span>{% endif %}</dd>
+          <dt class="col-sm-3">Termen</dt>
+          <dd class="col-sm-9">{{ order.expected_date|date:"d.m.Y" }}</dd>
+          {% if show_prices %}
+            <dt class="col-sm-3">Monedă</dt>
+            <dd class="col-sm-9">{{ order.currency }}</dd>
+          {% endif %}
+          {% if order.notes %}
+            <dt class="col-sm-3">Observații</dt>
+            <dd class="col-sm-9 mb-0">{{ order.notes|linebreaksbr }}</dd>
+          {% endif %}
+        </dl>
+      </div>
+    </div>
+
+    <div class="card shadow-sm">
+      <div class="card-header bg-body fw-semibold">Linii</div>
+      <div class="table-responsive">
+        <table class="table align-middle mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>Produs</th>
+              <th class="text-end">Comandat</th>
+              <th class="text-end">Recepționat</th>
+              {% if show_prices %}<th class="text-end">Facturat</th><th class="text-end">Preț unitar</th><th class="text-end">Valoare</th>{% endif %}
+              <th>Termen</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for line in lines %}
+              <tr>
+                <td><a href="{{ line.product.get_absolute_url }}" class="text-decoration-none">{{ line.product }}</a></td>
+                <td class="text-end text-nowrap">{{ line.quantity|qty }} {{ line.product.unit }}</td>
+                <td class="text-end text-nowrap">
+                  {{ line.received_qty|qty }}
+                  <div class="progress mt-1" style="height: 4px" role="progressbar" aria-label="Recepționat">
+                    <div class="progress-bar bg-success" style="width: {% widthratio line.received_qty line.quantity 100 %}%"></div>
+                  </div>
+                </td>
+                {% if show_prices %}
+                  <td class="text-end">{{ line.invoiced_qty|qty }}</td>
+                  <td class="text-end text-nowrap">{{ line.unit_price|money }}</td>
+                  <td class="text-end text-nowrap">{{ line.net_amount|money }}</td>
+                {% endif %}
+                <td class="text-nowrap">{{ line.expected_date|date:"d.m.Y" }}</td>
+              </tr>
+            {% empty %}
+              <tr><td colspan="7" class="text-center text-body-secondary py-4">Comanda nu are încă linii.</td></tr>
+            {% endfor %}
+          </tbody>
+          {% if show_prices and lines %}
+          <tfoot class="table-group-divider">
+            <tr><td colspan="5" class="text-end">Total fără TVA</td><td class="text-end fw-semibold text-nowrap">{{ order.net_amount|money }}</td><td>{{ order.currency }}</td></tr>
+            <tr><td colspan="5" class="text-end">TVA</td><td class="text-end text-nowrap">{{ order.vat_amount|money }}</td><td>{{ order.currency }}</td></tr>
+            <tr><td colspan="5" class="text-end fw-semibold">Total</td><td class="text-end fw-bold text-nowrap">{{ order.gross_amount|money }}</td><td>{{ order.currency }}</td></tr>
+          </tfoot>
+          {% endif %}
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-4">
+    {% object_history order %}
+  </div>
+</div>
+
+{% if can_edit %}
+  {# Ferestrele de confirmare pentru acțiunile de status (POST + token CSRF). #}
+  {% include "purchasing/partials/transition_modal.html" with modal_id="sendModal" title="Trimiți comanda?" action_url="purchasing:order_send" button="Trimite" button_class="btn-primary-dark" text="După trimitere, comanda devine angajament față de furnizor: Depozitul o vede la livrările așteptate, iar produsele, prețurile și furnizorul nu se mai pot schimba." %}
+  {% include "purchasing/partials/transition_modal.html" with modal_id="cancelModal" title="Anulezi comanda?" action_url="purchasing:order_cancel" button="Anulează comanda" button_class="btn-danger" text="Anularea este definitivă și se înregistrează în jurnal împreună cu motivul." with_reason=True %}
+  {% include "purchasing/partials/transition_modal.html" with modal_id="closeModal" title="Închizi comanda cu rest nelivrat?" action_url="purchasing:order_close" button="Închide comanda" button_class="btn-dark" text="Cantitățile nerecepționate nu mai sunt așteptate. Comanda nu va mai apărea ca întârziată." with_reason=True %}
+{% endif %}
+{% endwith %}
+{% endblock %}

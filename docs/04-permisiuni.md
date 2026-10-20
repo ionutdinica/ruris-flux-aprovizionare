@@ -34,6 +34,7 @@ Legendă: **S** = creează / modifică · **C** = doar citește · **—** = fă
 
 ## Justificări
 
+- **Ciornele de comandă sunt interne Achizițiilor.** Depozitul și Contabilitatea văd o comandă abia după trimitere, când devine angajament față de furnizor.
 - **Depozitul nu vede prețuri și facturi.** Nu are nevoie de ele ca să numere marfa. Principiul minimului necesar reduce și riscul de scurgere a informațiilor comerciale.
 - **Achizițiile văd statusul facturilor.** Când o factură e blocată pe o comandă a lor, ei sunt cei care vorbesc cu furnizorul. Fără această vizibilitate am fi din nou la „întrebat pe email”.
 - **Contabilitatea vede comenzile și recepțiile în citire.** Exact informația care îi lipsea în cerință („ce s-a comandat și ce a ajuns efectiv”).

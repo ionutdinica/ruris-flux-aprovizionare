@@ -1,0 +1,51 @@
+{% load permissions formatting %}
+{% with show_prices=user|can:"orders.view_prices" %}
+<p class="text-body-secondary small mb-2">{{ page_obj.paginator.count }} comenzi</p>
+
+{% if object_list %}
+<div class="card shadow-sm">
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead class="table-light">
+        <tr>
+          <th>Număr</th>
+          <th>Furnizor</th>
+          <th class="d-none d-md-table-cell">Data</th>
+          <th>Termen</th>
+          <th>Status</th>
+          {% if show_prices %}<th class="text-end">Valoare fără TVA</th>{% endif %}
+          <th class="d-none d-lg-table-cell">Responsabil</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for order in object_list %}
+          <tr{% if order.is_late %} class="table-danger"{% endif %}>
+            <td class="text-nowrap"><a href="{{ order.get_absolute_url }}" class="fw-semibold text-decoration-none">{{ order.number }}</a></td>
+            <td>{{ order.supplier }}</td>
+            <td class="d-none d-md-table-cell text-nowrap">{{ order.order_date|date:"d.m.Y" }}</td>
+            <td class="text-nowrap">
+              {{ order.expected_date|date:"d.m.Y" }}
+              {% if order.is_late %}<span class="badge text-bg-danger ms-1" title="Cel puțin o linie a depășit termenul"><i class="bi bi-alarm"></i> întârziată</span>{% endif %}
+            </td>
+            <td><span class="badge text-bg-{{ order.status_color }}">{{ order.get_status_display }}</span></td>
+            {% if show_prices %}<td class="text-end text-nowrap">{{ order.net_total|money }} {{ order.currency }}</td>{% endif %}
+            <td class="d-none d-lg-table-cell small">{{ order.owner }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% include "partials/pagination.html" with page=page_obj target="#results" %}
+{% else %}
+  <div class="text-center text-body-secondary py-5">
+    <i class="bi bi-cart display-5"></i>
+    {% if query or status or supplier_filter %}
+      <p class="mt-2 mb-0">Nicio comandă nu corespunde filtrelor.</p>
+    {% else %}
+      <p class="mt-2">Nu există încă nicio comandă.</p>
+      {% if user|can:"orders.edit" %}<a href="{% url 'purchasing:order_create' %}" class="btn btn-primary-dark">Creează prima comandă</a>{% endif %}
+    {% endif %}
+  </div>
+{% endif %}
+{% endwith %}

@@ -55,11 +55,14 @@ def test_admin_sees_administration():
 
 
 def test_pages_not_built_yet_have_no_url():
-    """Paginile din capitolele viitoare apar ca „în curând” (fără link)."""
-    menu = {e["label"]: e for e in build_menu(User(role=R.ADMIN), "/")}
+    """O pagină din meniu care nu există încă apare ca „în curând” (fără link)."""
+    from apps.dashboard.navigation import MenuItem, _resolve
 
-    assert menu["Panou"]["url"] == "/"
-    assert menu["Comenzi"]["url"] is None
+    built = _resolve(MenuItem("Panou", "x", "dashboard:home"), "/")
+    future = _resolve(MenuItem("Viitor", "x", "modul:pagina_inexistenta"), "/")
+
+    assert built["url"] == "/"
+    assert future["url"] is None
 
 
 def test_active_item():
