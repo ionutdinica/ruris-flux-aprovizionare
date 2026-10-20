@@ -1,0 +1,26 @@
+# Configurarea uneltelor de dezvoltare (un singur fișier pentru toate).
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+extend-exclude = ["**/migrations/*"]  # fișiere generate automat de Django
+
+[tool.ruff.lint]
+select = [
+    "E", "W",  # stil (PEP 8)
+    "F",       # greșeli: importuri nefolosite, variabile nedefinite
+    "I",       # ordinea importurilor
+    "B",       # capcane frecvente (bugbear)
+    "UP",      # sintaxă modernă Python
+    "DJ",      # reguli specifice Django
+]
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "config.settings"
+python_files = ["test_*.py"]
+addopts = "--strict-markers -q"
+filterwarnings = ["error::RuntimeWarning"]
+
+[tool.coverage.run]
+source = ["apps"]
+omit = ["**/migrations/*", "**/tests/*"]

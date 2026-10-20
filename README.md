@@ -8,6 +8,31 @@ cu potrivire automată în 3 direcții (*three-way match*): o factură ajunge la
 
 > 🚧 Proiect în lucru. Progresul pe capitole este urmărit în [PLAN.md](PLAN.md).
 
+## Pornire locală (fără Docker)
+
+Cerințe: Python 3.12+.
+
+```bash
+python -m venv .venv
+.venv\Scripts\activate            # Windows  (Linux/macOS: source .venv/bin/activate)
+pip install -r requirements-dev.txt
+copy .env.example .env            # apoi completează SECRET_KEY în .env
+python manage.py migrate
+python manage.py createsuperuser
+python manage.py runserver
+```
+
+Aplicația pornește la http://127.0.0.1:8000.
+
+## Teste și calitatea codului
+
+```bash
+pytest                 # rulează testele
+pytest --cov           # + raport de acoperire a codului
+ruff check .           # verifică greșeli și stil
+ruff format .          # formatează codul uniform
+```
+
 ## Documentație de analiză și design
 
 | Document | Conținut |

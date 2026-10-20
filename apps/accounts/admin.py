@@ -9,6 +9,4 @@ class CustomUserAdmin(UserAdmin):
     list_display = ("username", "get_full_name", "email", "role", "is_active")
     list_filter = ("role", "is_active")
     fieldsets = UserAdmin.fieldsets + (("Rol în aplicație", {"fields": ("role",)}),)
-    add_fieldsets = UserAdmin.add_fieldsets + (
-        ("Date obligatorii", {"fields": ("email", "role")}),
-    )
+    add_fieldsets = UserAdmin.add_fieldsets + (("Date obligatorii", {"fields": ("email", "role")}),)

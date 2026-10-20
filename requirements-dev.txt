@@ -1,0 +1,9 @@
+# Unelte necesare doar dezvoltatorului și CI-ului (teste, verificarea codului).
+# Pe serverul online se instalează doar requirements.txt.
+-r requirements.txt
+
+ruff==0.17.1
+pytest==9.1.1
+pytest-django==4.14.0
+pytest-cov==7.1.0
+factory-boy==3.3.3

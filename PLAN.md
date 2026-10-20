@@ -46,7 +46,7 @@ Legendă: `[ ]` de făcut · `[x]` gata · **(opțional)** = după ce obligatori
   `accounts`, `audit`, `catalog`, `purchasing`, `warehouse`, `invoicing`, `currency`, `notifications`, `dashboard`
 - [x] 1.3 Configurare prin variabile de mediu (`.env` + `.env.example`): un singur `settings.py`, comportament diferit dev/prod doar prin variabile
 - [x] 1.4 Layout de bază: Bootstrap 5, HTMX, meniu în funcție de rol, mesaje flash
-- [ ] 1.5 `ruff`, `pytest` configurate · primul test care trece
+- [x] 1.5 `ruff`, `pytest` configurate · primele teste (autentificare, meniu pe rol) trec
 - [ ] 1.6 **Docker Compose**: `web` + `postgres` + `mailpit` + `scheduler`
 - [ ] 1.7 **GitHub Actions**: lint + teste la fiecare push
 
