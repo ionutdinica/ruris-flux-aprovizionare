@@ -37,6 +37,8 @@ EVENT_STYLE = {
     BusinessEvent.Type.ORDER_SENT: ("primary", "send"),
     BusinessEvent.Type.ORDER_CANCELLED: ("danger", "x-circle"),
     BusinessEvent.Type.ORDER_CLOSED: ("warning", "slash-circle"),
+    BusinessEvent.Type.ORDERS_IMPORTED: ("info", "file-earmark-arrow-up"),
+    BusinessEvent.Type.ORDERS_EXPORTED: ("secondary", "file-earmark-arrow-down"),
 }
 DEFAULT_EVENT_STYLE = ("info", "flag")
 

@@ -80,8 +80,8 @@ Legendă: `[ ]` de făcut · `[x]` gata · **(opțional)** = după ce obligatori
 - [x] 4.2 Tranzițiile de status (`services.py`: trimite, anulează, închide cu rest, recalculare automată), cu blocare în baza de date și evenimente în jurnal; numerotare `CMD-AAAA-NNNN` fără goluri
 - [x] 4.3 Progres pe fiecare linie (comandat / recepționat / facturat), calculat din documente; se completează automat în cap. 5 și 7
 - [x] 4.4 Lista comenzilor: căutare, filtre (status, furnizor, deschise, **întârziate**), întârziatele evidențiate; ciornele vizibile doar Achizițiilor; prețurile ascunse Depozitului
-- [ ] 4.5 **Import din Excel**: șablon descărcabil, validare rând cu rând, raport de erori, previzualizare înainte de salvare
-- [ ] 4.6 **Export în Excel**: comenzile filtrate, cu cantitățile recepționate și facturate
+- [x] 4.5 **Import din Excel**: șablon generat din datele curente (liste derulante cu furnizori și produse), citire tolerantă (antet în orice ordine, numere în stil RO/EN, date în mai multe formate), validare cu regulile modelului și **toate erorile pe rând dintr-o dată**, previzualizare, confirmare unică, comenzi create ca ciorne; import dublu blocat de baza de date (referință externă unică per furnizor); protecții la fișiere rău intenționate
+- [x] 4.6 **Export în Excel**: comenzile cu filtrele curente — foile Comenzi, Linii (cu recepționat / facturat / rest) și Informații; valori numerice reale, formate românești; exportul intră în jurnal
 - [ ] 4.7 ~~Rezolvarea discrepanțelor~~ → mutat în capitolul 5 (discrepanțele apar la recepție)
 
 ---

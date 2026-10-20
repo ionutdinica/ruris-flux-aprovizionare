@@ -10,6 +10,7 @@ Ce se poate modifica depinde de status (docs/03-fluxuri-si-stari.md, I-07):
 
 from django import forms
 from django.core.exceptions import ValidationError
+from django.core.validators import FileExtensionValidator
 
 from apps.accounts.models import User
 from apps.catalog.models import Product, Supplier
@@ -45,7 +46,15 @@ class PurchaseOrderForm(BootstrapFormMixin, forms.ModelForm):
 
     class Meta:
         model = PurchaseOrder
-        fields = ["supplier", "currency", "owner", "order_date", "expected_date", "notes"]
+        fields = [
+            "supplier",
+            "currency",
+            "owner",
+            "order_date",
+            "expected_date",
+            "external_reference",
+            "notes",
+        ]
         widgets = {
             "supplier": SupplierSelect,
             "order_date": forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d"),
@@ -139,3 +148,21 @@ class ReasonForm(BootstrapFormMixin, forms.Form):
     """Motivul anulării / închiderii cu rest (obligatoriu, intră în jurnal)."""
 
     reason = forms.CharField(label="Motiv", widget=forms.Textarea(attrs={"rows": 3}))
+
+
+class ImportFileForm(BootstrapFormMixin, forms.Form):
+    """Încărcarea fișierului Excel cu comenzi (pasul 1 al importului)."""
+
+    MAX_SIZE = 5 * 1024 * 1024  # 5 MB
+
+    file = forms.FileField(
+        label="Fișier Excel (.xlsx)",
+        validators=[FileExtensionValidator(["xlsx"], "Sunt acceptate doar fișiere Excel .xlsx.")],
+        widget=forms.FileInput(attrs={"accept": ".xlsx"}),
+    )
+
+    def clean_file(self):
+        uploaded = self.cleaned_data["file"]
+        if uploaded.size > self.MAX_SIZE:
+            raise ValidationError("Fișierul depășește 5 MB.")
+        return uploaded

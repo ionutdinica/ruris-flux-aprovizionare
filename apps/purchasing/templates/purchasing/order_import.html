@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+{% load formatting %}
+
+{% block title %}Import comenzi{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb small">
+    <li class="breadcrumb-item"><a href="{% url 'purchasing:order_list' %}">Comenzi</a></li>
+    <li class="breadcrumb-item active" aria-current="page">Import din Excel</li>
+  </ol>
+</nav>
+
+<h1 class="h3 mb-3"><i class="bi bi-file-earmark-arrow-up me-2"></i>Import comenzi din Excel</h1>
+
+{% if plan and plan.is_valid and token %}
+  {# --- Previzualizare: fișier valid, se așteaptă confirmarea ------------------------------ #}
+  <div class="alert alert-success">
+    <i class="bi bi-check-circle me-1"></i>
+    Fișierul <strong>{{ filename }}</strong> este valid. Se vor crea
+    <strong>{{ plan.orders|length }} comenzi</strong> ({{ plan.line_count }} linii) ca <strong>ciorne</strong>.
+    Nimic nu a fost salvat încă.
+  </div>
+
+  <div class="card shadow-sm mb-3">
+    <div class="table-responsive">
+      <table class="table align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>Referință</th>
+            <th>Furnizor</th>
+            <th>Data</th>
+            <th>Termen</th>
+            <th class="text-end">Linii</th>
+            <th class="text-end">Valoare fără TVA</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for planned in plan.orders %}
+            <tr>
+              <td class="fw-semibold">{{ planned.reference }}</td>
+              <td>{{ planned.order.supplier }}</td>
+              <td class="text-nowrap">{{ planned.order.order_date|date:"d.m.Y" }}</td>
+              <td class="text-nowrap">{{ planned.order.expected_date|date:"d.m.Y" }}</td>
+              <td class="text-end">
+                <details>
+                  <summary>{{ planned.lines|length }}</summary>
+                  <ul class="list-unstyled small text-start mt-2 mb-0">
+                    {% for row, line in planned.lines %}
+                      <li>{{ line.product }} · {{ line.quantity|qty }} {{ line.product.unit }} × {{ line.unit_price|money }} · termen {{ line.expected_date|date:"d.m.Y" }}</li>
+                    {% endfor %}
+                  </ul>
+                </details>
+              </td>
+              <td class="text-end text-nowrap">{{ planned.net_amount|money }} {{ planned.order.currency }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <form method="post" action="{% url 'purchasing:order_import_confirm' %}" class="d-flex gap-2">
+    {% csrf_token %}
+    <input type="hidden" name="token" value="{{ token }}">
+    <button type="submit" class="btn btn-primary-dark"><i class="bi bi-check-lg me-1"></i>Importă {{ plan.orders|length }} comenzi</button>
+    <a href="{% url 'purchasing:order_import' %}" class="btn btn-outline-secondary">Renunță / alt fișier</a>
+  </form>
+
+{% else %}
+  {# --- Încărcare (eventual după un fișier cu erori) ---------------------------------------- #}
+  {% if plan and plan.errors %}
+    {% with errors=plan.error_messages %}
+      <div class="alert alert-danger">
+        <p class="fw-semibold mb-2">
+          <i class="bi bi-x-circle me-1"></i>
+          Fișierul {{ filename }} are {{ errors|length }} erori. Nicio comandă nu a fost creată.
+        </p>
+        <ul class="small mb-0">
+          {% for error in errors|slice:":100" %}<li>{{ error }}</li>{% endfor %}
+          {% if errors|length > 100 %}<li>… și încă {{ errors|length|add:"-100" }}.</li>{% endif %}
+        </ul>
+      </div>
+    {% endwith %}
+  {% endif %}
+
+  <div class="row g-3">
+    <div class="col-lg-5 order-lg-2">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <h2 class="h6">Cum funcționează</h2>
+          <ol class="small mb-3 ps-3">
+            <li>Descarcă șablonul: conține lista actuală de furnizori și produse, cu liste derulante.</li>
+            <li>Completează un rând pentru fiecare linie de comandă. Rândurile cu aceeași <em>referință</em> formează o comandă.</li>
+            <li>Încarcă fișierul: vezi o previzualizare și eventualele erori, pe rând, înainte să se salveze ceva.</li>
+            <li>După confirmare, comenzile apar ca <strong>ciorne</strong>, gata de verificat și trimis.</li>
+          </ol>
+          <a href="{% url 'purchasing:order_import_template' %}" class="btn btn-outline-success btn-sm">
+            <i class="bi bi-file-earmark-excel me-1"></i> Descarcă șablonul
+          </a>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-7 order-lg-1">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <form method="post" enctype="multipart/form-data" novalidate>
+            {% csrf_token %}
+            {% include "partials/form_field.html" with field=form.file %}
+            <button type="submit" class="btn btn-primary-dark"><i class="bi bi-upload me-1"></i>Verifică fișierul</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endif %}
+{% endblock %}

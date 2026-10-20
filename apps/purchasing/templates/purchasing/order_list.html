@@ -6,9 +6,14 @@
 {% block content %}
 <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
   <h1 class="h3 mb-0"><i class="bi bi-cart me-2"></i>Comenzi</h1>
-  {% if user|can:"orders.edit" %}
-    <a href="{% url 'purchasing:order_create' %}" class="btn btn-primary-dark"><i class="bi bi-plus-lg me-1"></i>Comandă nouă</a>
-  {% endif %}
+  <div class="d-flex gap-2">
+    {% if user|can:"orders.import" %}
+      <a href="{% url 'purchasing:order_import' %}" class="btn btn-outline-secondary"><i class="bi bi-file-earmark-arrow-up me-1"></i>Import Excel</a>
+    {% endif %}
+    {% if user|can:"orders.edit" %}
+      <a href="{% url 'purchasing:order_create' %}" class="btn btn-primary-dark"><i class="bi bi-plus-lg me-1"></i>Comandă nouă</a>
+    {% endif %}
+  </div>
 </div>
 
 <form method="get" class="card card-body shadow-sm mb-3" role="search"

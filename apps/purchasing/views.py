@@ -2,20 +2,28 @@
 pentru cei din afara Achizițiilor; modificare și statusuri: Achiziții și Admin
 (orders.edit). Prețurile sunt ascunse pentru Depozit (orders.view_prices)."""
 
+import secrets
+
 from django.contrib import messages
-from django.db import transaction
+from django.db import IntegrityError, transaction
 from django.http import HttpResponseRedirect
-from django.shortcuts import get_object_or_404, redirect
+from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
+from django.utils import timezone
 from django.views import View
-from django.views.generic import DetailView, ListView
+from django.views.generic import DetailView, FormView, ListView
 from django.views.generic.edit import CreateView, UpdateView
 
 from apps.accounts.permissions import PermissionMixin
+from apps.audit.models import BusinessEvent
+from apps.audit.services import record_event
 from apps.catalog.models import Supplier
+from apps.core.excel import xlsx_response
 from apps.core.views import SearchListMixin
 
-from . import services
-from .forms import PurchaseOrderForm, PurchaseOrderLineFormSet, ReasonForm
+from . import excel_import, services
+from .excel_export import build_import_template, build_orders_export
+from .forms import ImportFileForm, PurchaseOrderForm, PurchaseOrderLineFormSet, ReasonForm
 from .models import PurchaseOrder, PurchaseOrderLine
 
 Status = PurchaseOrder.Status
@@ -71,6 +79,46 @@ class OrderListView(PermissionMixin, VisibleOrdersMixin, SearchListMixin, ListVi
         context["suppliers"] = Supplier.objects.filter(orders__isnull=False).distinct()
         context["supplier_filter"] = self.request.GET.get("supplier", "")
         return context
+
+    def describe_filters(self):
+        """Filtrele curente, pe înțelesul omului (pentru export și jurnal)."""
+        parts = []
+        query = self.request.GET.get("q", "").strip()
+        if query:
+            parts.append(f"căutare „{query}”")
+        status = self.request.GET.get("status", "")
+        if status:
+            parts.append(f"status: {dict(self.status_choices).get(status, status)}")
+        supplier_id = self.request.GET.get("supplier", "")
+        if supplier_id.isdigit():
+            supplier = Supplier.objects.filter(pk=supplier_id).first()
+            if supplier:
+                parts.append(f"furnizor: {supplier}")
+        return "; ".join(parts)
+
+
+class OrderExportView(OrderListView):
+    """Lista de comenzi, cu filtrele curente, ca fișier Excel (fără paginare)."""
+
+    permission = "orders.export"
+    paginate_by = None
+
+    def get(self, request, *args, **kwargs):
+        orders = list(self.get_queryset().prefetch_related("lines"))
+        lines = (
+            PurchaseOrderLine.objects.with_progress()
+            .filter(order__in=[order.pk for order in orders])
+            .select_related("order__supplier", "product")
+            .order_by("-order__order_date", "-order__number", "id")
+        )
+        filters = self.describe_filters()
+        workbook = build_orders_export(orders, lines, user=request.user, filters=filters)
+        record_event(
+            BusinessEvent.Type.ORDERS_EXPORTED,
+            f"Export Excel: {len(orders)} comenzi.",
+            data={"filtre": filters or "fără filtre"},
+        )
+        return xlsx_response(workbook, f"comenzi_{timezone.localdate():%Y-%m-%d}.xlsx")
 
 
 # --- Detaliu ----------------------------------------------------------------------
@@ -209,3 +257,84 @@ class OrderCloseView(OrderTransitionView):
     transition = staticmethod(services.close_order)
     needs_reason = True
     success_message = "Comanda %(number)s a fost închisă cu rest nelivrat."
+
+
+# --- Import din Excel ------------------------------------------------------------------------
+
+IMPORT_SESSION_KEY = "order_import"
+
+
+class OrderImportTemplateView(PermissionMixin, View):
+    permission = "orders.import"
+
+    def get(self, request):
+        return xlsx_response(build_import_template(), "sablon_import_comenzi.xlsx")
+
+
+class OrderImportView(PermissionMixin, FormView):
+    """Pasul 1: încărcarea fișierului → validare completă → previzualizare sau erori."""
+
+    permission = "orders.import"
+    template_name = "purchasing/order_import.html"
+    form_class = ImportFileForm
+
+    def form_valid(self, form):
+        uploaded = form.cleaned_data["file"]
+        try:
+            rows = excel_import.read_rows(uploaded)
+        except excel_import.ImportFileError as error:
+            form.add_error("file", str(error))
+            return self.form_invalid(form)
+
+        plan = excel_import.plan_import(rows, self.request.user)
+        context = {"plan": plan, "filename": uploaded.name}
+        if plan.is_valid:
+            # Rândurile citite așteaptă confirmarea în sesiune. Token-ul leagă confirmarea
+            # de ACEASTĂ previzualizare (nu de una mai veche, deschisă în alt tab).
+            context["token"] = token = secrets.token_urlsafe(16)
+            self.request.session[IMPORT_SESSION_KEY] = {
+                "token": token,
+                "filename": uploaded.name,
+                "rows": rows,
+            }
+        return self.render_to_response(self.get_context_data(**context))
+
+
+class OrderImportConfirmView(PermissionMixin, View):
+    """Pasul 2: confirmarea previzualizării → comenzile se creează ca ciorne."""
+
+    permission = "orders.import"
+    http_method_names = ["post"]
+
+    def post(self, request):
+        pending = request.session.get(IMPORT_SESSION_KEY)
+        if not pending or pending["token"] != request.POST.get("token"):
+            messages.warning(
+                request, "Importul a expirat sau a fost deja efectuat. Încarcă din nou fișierul."
+            )
+            return redirect("purchasing:order_import")
+        del request.session[IMPORT_SESSION_KEY]  # o previzualizare se confirmă o singură dată
+
+        # Validare din nou: de la previzualizare, un produs putea fi dezactivat etc.
+        plan = excel_import.plan_import(pending["rows"], request.user)
+        if not plan.is_valid:
+            messages.error(
+                request,
+                "Datele s-au schimbat de la previzualizare, iar importul nu a fost efectuat. "
+                "Corectează erorile de mai jos și încarcă din nou fișierul.",
+            )
+            context = {"form": ImportFileForm(), "plan": plan, "filename": pending["filename"]}
+            return render(request, "purchasing/order_import.html", context)
+
+        try:
+            created = excel_import.execute_import(plan, pending["filename"])
+        except IntegrityError:  # aceleași comenzi importate simultan, din alt tab
+            messages.error(request, "Comenzile din acest fișier au fost deja importate.")
+            return redirect("purchasing:order_import")
+
+        messages.success(
+            request,
+            f"Au fost importate {len(created)} comenzi ca ciorne ({created[0]} – {created[-1]}). "
+            "Verifică-le și trimite-le furnizorilor.",
+        )
+        return redirect(f"{reverse('purchasing:order_list')}?status={Status.DRAFT}")

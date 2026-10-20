@@ -115,6 +115,12 @@ class PurchaseOrder(SearchableModel, TimeStampedModel):
     AMENDABLE_STATUSES = (Status.SENT, Status.PARTIALLY_RECEIVED)
 
     number = models.CharField("număr", max_length=20, unique=True, editable=False)
+    external_reference = models.CharField(
+        "referință externă",
+        max_length=50,
+        blank=True,
+        help_text="Opțional: numărul comenzii din Excel-ul vechi sau de la furnizor.",
+    )
     supplier = models.ForeignKey(
         Supplier, verbose_name="furnizor", on_delete=models.PROTECT, related_name="orders"
     )
@@ -143,6 +149,18 @@ class PurchaseOrder(SearchableModel, TimeStampedModel):
         verbose_name = "comandă"
         verbose_name_plural = "comenzi"
         ordering = ["-order_date", "-number"]
+        constraints = [
+            # Aceeași referință externă nu poate apărea de două ori la același furnizor
+            # (ex. același fișier Excel importat de două ori). Garantat de baza de date.
+            models.UniqueConstraint(
+                fields=["supplier", "external_reference"],
+                condition=~Q(external_reference=""),
+                name="unique_external_reference_per_supplier",
+                violation_error_message=(
+                    "Există deja o comandă cu această referință externă pentru acest furnizor."
+                ),
+            )
+        ]
 
     def __str__(self):
         return self.number or "comandă nouă"
@@ -157,7 +175,7 @@ class PurchaseOrder(SearchableModel, TimeStampedModel):
 
     def build_search_text(self):
         supplier = self.supplier.name if self.supplier_id else ""
-        return fold(f"{self.number} {supplier} {self.notes}")
+        return fold(f"{self.number} {self.external_reference} {supplier} {self.notes}")
 
     def clean(self):
         errors = {}

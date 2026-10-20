@@ -49,6 +49,10 @@
         <dl class="row mb-0">
           <dt class="col-sm-3">Furnizor</dt>
           <dd class="col-sm-9"><a href="{{ order.supplier.get_absolute_url }}">{{ order.supplier }}</a></dd>
+          {% if order.external_reference %}
+            <dt class="col-sm-3">Referință externă</dt>
+            <dd class="col-sm-9">{{ order.external_reference }}</dd>
+          {% endif %}
           <dt class="col-sm-3">Responsabil</dt>
           <dd class="col-sm-9">{{ order.owner }}</dd>
           <dt class="col-sm-3">Data comenzii</dt>

@@ -1,6 +1,14 @@
 {% load permissions formatting %}
 {% with show_prices=user|can:"orders.view_prices" %}
-<p class="text-body-secondary small mb-2">{{ page_obj.paginator.count }} comenzi</p>
+<div class="d-flex justify-content-between align-items-center mb-2">
+  <span class="text-body-secondary small">{{ page_obj.paginator.count }} comenzi</span>
+  {% if user|can:"orders.export" and object_list %}
+    {# Exportul păstrează filtrele curente (fără pagină: toate rezultatele). #}
+    <a href="{% url 'purchasing:order_export' %}{% querystring page=None %}" class="btn btn-sm btn-outline-success">
+      <i class="bi bi-file-earmark-excel me-1"></i>Export Excel
+    </a>
+  {% endif %}
+</div>
 
 {% if object_list %}
 <div class="card shadow-sm">
