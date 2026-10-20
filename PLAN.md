@@ -68,9 +68,9 @@ Legendă: `[ ]` de făcut · `[x]` gata · **(opțional)** = după ce obligatori
 
 ## Capitolul 3 – Nomenclatoare
 
-- [ ] 3.1 Furnizori: CRUD, CUI, email de contact, monedă implicită — model + validare CUI (cifra de control) + audit ✔, paginile în etapa (b)
-- [ ] 3.2 Produse: CRUD, cod, denumire, unitate de măsură — model + cote TVA în vigoare + audit ✔, paginile în etapa (b)
-- [ ] 3.3 Căutare și paginare pe liste (HTMX)
+- [x] 3.1 Furnizori: listă, detaliu cu istoric, adăugare, editare, dezactivare; CUI validat cu cifra de control; furnizori străini (cod TVA)
+- [x] 3.2 Produse: listă, detaliu cu istoric, adăugare, editare, dezactivare; unități de măsură; cotele TVA în vigoare
+- [x] 3.3 Căutare instantanee (HTMX) **fără diacritice** („otel” găsește „Oțelăria”), filtru activ/inactiv, paginare; piese reutilizabile în `core` pentru capitolele următoare
 
 ---
 

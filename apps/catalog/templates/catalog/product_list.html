@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% load permissions %}
+
+{% block title %}Produse{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+  <h1 class="h3 mb-0"><i class="bi bi-tag me-2"></i>Produse</h1>
+  {% if user|can:"catalog.edit" %}
+    <a href="{% url 'catalog:product_create' %}" class="btn btn-primary-dark"><i class="bi bi-plus-lg me-1"></i>Produs nou</a>
+  {% endif %}
+</div>
+
+{% include "partials/list_search.html" with placeholder="Caută după cod sau denumire…" %}
+
+<div id="results">
+  {% include "catalog/partials/product_table.html" %}
+</div>
+{% endblock %}

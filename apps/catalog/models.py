@@ -12,7 +12,7 @@ from django.core.validators import RegexValidator
 from django.db import models
 from django.urls import reverse
 
-from apps.core.models import Currency, TimeStampedModel
+from apps.core.models import Currency, SearchableModel, TimeStampedModel
 from apps.core.validators import normalize_cui, validate_cui
 
 
@@ -21,7 +21,9 @@ class ActiveQuerySet(models.QuerySet):
         return self.filter(is_active=True)
 
 
-class Supplier(TimeStampedModel):
+class Supplier(SearchableModel, TimeStampedModel):
+    SEARCH_FIELDS = ("name", "tax_id", "email")
+
     name = models.CharField("denumire", max_length=200)
     country = models.CharField(
         "țara",
@@ -79,7 +81,9 @@ class Supplier(TimeStampedModel):
                 self.tax_id = self.tax_id.strip().upper().replace(" ", "")
 
 
-class Product(TimeStampedModel):
+class Product(SearchableModel, TimeStampedModel):
+    SEARCH_FIELDS = ("code", "name")
+
     class Unit(models.TextChoices):
         PIECE = "buc", "bucată (buc)"
         KG = "kg", "kilogram (kg)"

@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% load permissions audit %}
+
+{% block title %}{{ supplier.name }}{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb small">
+    <li class="breadcrumb-item"><a href="{% url 'catalog:supplier_list' %}">Furnizori</a></li>
+    <li class="breadcrumb-item active" aria-current="page">{{ supplier.name }}</li>
+  </ol>
+</nav>
+
+<div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+  <h1 class="h3 mb-0">{{ supplier.name }} <span class="fs-6 align-middle">{% include "partials/active_badge.html" with active=supplier.is_active %}</span></h1>
+  {% if user|can:"catalog.edit" %}
+    <a href="{% url 'catalog:supplier_update' supplier.pk %}" class="btn btn-outline-primary"><i class="bi bi-pencil me-1"></i>Editează</a>
+  {% endif %}
+</div>
+
+<div class="row g-3">
+  <div class="col-lg-7">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <dl class="row mb-0">
+          <dt class="col-sm-4">Cod fiscal</dt>
+          <dd class="col-sm-8">{% if supplier.country == "RO" %}{{ supplier.tax_id }} <span class="text-body-secondary small">(CUI)</span>{% else %}{{ supplier.tax_id }}{% endif %}</dd>
+          <dt class="col-sm-4">Țara</dt>
+          <dd class="col-sm-8">{{ supplier.country }}</dd>
+          <dt class="col-sm-4">Email</dt>
+          <dd class="col-sm-8">{% if supplier.email %}<a href="mailto:{{ supplier.email }}">{{ supplier.email }}</a>{% else %}—{% endif %}</dd>
+          <dt class="col-sm-4">Telefon</dt>
+          <dd class="col-sm-8">{{ supplier.phone|default:"—" }}</dd>
+          <dt class="col-sm-4">Adresă</dt>
+          <dd class="col-sm-8">{{ supplier.address|default:"—"|linebreaksbr }}</dd>
+          <dt class="col-sm-4">Moneda implicită</dt>
+          <dd class="col-sm-8">{{ supplier.default_currency }}</dd>
+          <dt class="col-sm-4">Adăugat la</dt>
+          <dd class="col-sm-8 mb-0">{{ supplier.created_at|date:"d.m.Y H:i" }}</dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-5">
+    {% object_history supplier %}
+  </div>
+</div>
+{% endblock %}

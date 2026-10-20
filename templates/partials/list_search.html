@@ -1,0 +1,21 @@
+{# Bara de căutare + filtru activ/inactiv a unei liste. Rezultatele se actualizează pe măsură ce tastezi. #}
+{# Folosire: {% include "partials/list_search.html" with placeholder="Caută după..." %} #}
+<form method="get" class="card card-body shadow-sm mb-3" role="search"
+      hx-get="{{ request.path }}" hx-target="#results" hx-push-url="true"
+      hx-trigger="input delay:300ms, change, submit">
+  <div class="row g-2">
+    <div class="col-12 col-md-8">
+      <div class="input-group">
+        <span class="input-group-text"><i class="bi bi-search"></i></span>
+        <input type="search" name="q" value="{{ query }}" class="form-control" placeholder="{{ placeholder }}" aria-label="Caută" autofocus>
+      </div>
+    </div>
+    <div class="col-12 col-md-4">
+      <select name="status" class="form-select" aria-label="Status">
+        {% for value, label in status_choices %}
+          <option value="{{ value }}"{% if value == status %} selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+  </div>
+</form>

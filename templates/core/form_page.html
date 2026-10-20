@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{# Pagina generică de adăugare / editare, folosită de toate formularele simple. #}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb small">
+    <li class="breadcrumb-item"><a href="{{ list_url }}">{{ list_label }}</a></li>
+    {% if object.pk %}<li class="breadcrumb-item"><a href="{{ object.get_absolute_url }}">{{ object }}</a></li>{% endif %}
+    <li class="breadcrumb-item active" aria-current="page">{% if object.pk %}Editare{% else %}Adăugare{% endif %}</li>
+  </ol>
+</nav>
+
+<div class="row justify-content-center">
+  <div class="col-lg-8">
+    <h1 class="h3 mb-3">{{ page_title }}</h1>
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <form method="post" novalidate>
+          {% csrf_token %}
+          {% if form.non_field_errors %}
+            <div class="alert alert-danger">{% for error in form.non_field_errors %}{{ error }} {% endfor %}</div>
+          {% endif %}
+          {% for field in form %}
+            {% include "partials/form_field.html" %}
+          {% endfor %}
+          <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-primary-dark"><i class="bi bi-check-lg me-1"></i>Salvează</button>
+            <a href="{% if object.pk %}{{ object.get_absolute_url }}{% else %}{{ list_url }}{% endif %}" class="btn btn-outline-secondary">Renunță</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

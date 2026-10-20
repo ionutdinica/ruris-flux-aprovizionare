@@ -1,0 +1,21 @@
+{# Un câmp de formular în stil Bootstrap: etichetă, câmp, erori, explicație. #}
+{# Folosire: {% include "partials/form_field.html" with field=form.name %} #}
+{% if field.is_hidden %}
+  {{ field }}
+{% elif field.widget_type == "checkbox" %}
+  <div class="form-check mb-3">
+    {{ field }}
+    <label class="form-check-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+    {% for error in field.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+    {% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}
+  </div>
+{% else %}
+  <div class="mb-3">
+    <label class="form-label" for="{{ field.id_for_label }}">
+      {{ field.label|capfirst }}{% if field.field.required %} <span class="text-danger" title="obligatoriu">*</span>{% endif %}
+    </label>
+    {{ field }}
+    {% for error in field.errors %}<div class="invalid-feedback">{{ error }}</div>{% endfor %}
+    {% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}
+  </div>
+{% endif %}

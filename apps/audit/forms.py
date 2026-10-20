@@ -1,6 +1,7 @@
 from django import forms
 
 from apps.accounts.models import User
+from apps.core.forms import BootstrapFormMixin
 
 from .models import BusinessEvent
 from .timeline import CHANGE
@@ -14,7 +15,7 @@ def _kind_choices():
     ]
 
 
-class ActivityFilterForm(forms.Form):
+class ActivityFilterForm(BootstrapFormMixin, forms.Form):
     """Filtrele paginii „Jurnal de activitate”. Toate sunt opționale."""
 
     actor = forms.ModelChoiceField(
@@ -33,12 +34,6 @@ class ActivityFilterForm(forms.Form):
     # Istoricul unui singur document (din link-ul „istoric complet”)
     ct = forms.IntegerField(required=False, widget=forms.HiddenInput)
     obj = forms.CharField(required=False, max_length=64, widget=forms.HiddenInput)
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        for field in self.fields.values():  # aspectul Bootstrap pentru toate câmpurile
-            is_select = isinstance(field.widget, forms.Select)
-            field.widget.attrs["class"] = "form-select" if is_select else "form-control"
 
     def clean(self):
         data = super().clean()

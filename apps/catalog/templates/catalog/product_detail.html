@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% load permissions audit %}
+
+{% block title %}{{ product.code }}{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb small">
+    <li class="breadcrumb-item"><a href="{% url 'catalog:product_list' %}">Produse</a></li>
+    <li class="breadcrumb-item active" aria-current="page">{{ product.code }}</li>
+  </ol>
+</nav>
+
+<div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+  <h1 class="h3 mb-0">{{ product }} <span class="fs-6 align-middle">{% include "partials/active_badge.html" with active=product.is_active %}</span></h1>
+  {% if user|can:"catalog.edit" %}
+    <a href="{% url 'catalog:product_update' product.pk %}" class="btn btn-outline-primary"><i class="bi bi-pencil me-1"></i>Editează</a>
+  {% endif %}
+</div>
+
+<div class="row g-3">
+  <div class="col-lg-7">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <dl class="row mb-0">
+          <dt class="col-sm-4">Cod</dt>
+          <dd class="col-sm-8">{{ product.code }}</dd>
+          <dt class="col-sm-4">Denumire</dt>
+          <dd class="col-sm-8">{{ product.name }}</dd>
+          <dt class="col-sm-4">Unitate de măsură</dt>
+          <dd class="col-sm-8">{{ product.get_unit_display }}</dd>
+          <dt class="col-sm-4">Cota TVA</dt>
+          <dd class="col-sm-8">{{ product.get_vat_rate_display }}</dd>
+          <dt class="col-sm-4">Descriere</dt>
+          <dd class="col-sm-8">{{ product.description|default:"—"|linebreaksbr }}</dd>
+          <dt class="col-sm-4">Adăugat la</dt>
+          <dd class="col-sm-8 mb-0">{{ product.created_at|date:"d.m.Y H:i" }}</dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-5">
+    {% object_history product %}
+  </div>
+</div>
+{% endblock %}

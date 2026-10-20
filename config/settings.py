@@ -177,8 +177,8 @@ MESSAGE_TAGS = {message_constants.ERROR: "danger"}
 # ștergere a lor se înregistrează automat: cine, când, IP, câmp vechi → nou.
 # Se completează în fiecare capitol, pe măsură ce apar modele noi.
 
-# Datele „creat la / modificat la” se schimbă la fiecare salvare: zgomot în jurnal.
-_TIMESTAMPS = ["created_at", "updated_at"]
+# Câmpuri tehnice, recalculate la fiecare salvare: ar fi doar zgomot în jurnal.
+_TIMESTAMPS = ["created_at", "updated_at", "search_text"]
 
 AUDITLOG_INCLUDE_TRACKING_MODELS = (
     {
