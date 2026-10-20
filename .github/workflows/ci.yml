@@ -1,0 +1,74 @@
+# Integrare continuă (CI): la fiecare push și pull request, GitHub rulează
+# automat verificarea codului și testele, pe un server curat.
+# Rezultatul apare lângă fiecare commit: bifă verde sau X roșu.
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  lint:
+    name: Calitatea codului (ruff)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+          cache: pip
+      - run: pip install ruff==0.17.1
+      - name: Greșeli și stil
+        run: ruff check --output-format=github .  # erorile apar direct pe liniile de cod
+      - name: Formatare
+        run: ruff format --check .
+
+  tests:
+    name: Teste (PostgreSQL)
+    runs-on: ubuntu-latest
+
+    # Testele rulează pe PostgreSQL, ca în producție, nu pe SQLite.
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: aprovizionare
+          POSTGRES_USER: aprovizionare
+          POSTGRES_PASSWORD: aprovizionare
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U aprovizionare"
+          --health-interval 3s --health-timeout 3s --health-retries 20
+
+    env:
+      SECRET_KEY: cheie-doar-pentru-ci
+      DEBUG: "False"
+      DATABASE_URL: postgres://aprovizionare:aprovizionare@localhost:5432/aprovizionare
+
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: requirements*.txt
+      - run: pip install -r requirements-dev.txt
+
+      - name: Verificările Django
+        run: python manage.py check
+
+      - name: Nicio migrație uitată
+        # Pică dacă cineva a modificat un model fără să genereze migrația.
+        run: python manage.py makemigrations --check --dry-run
+
+      - name: Teste
+        run: pytest --cov --cov-report=term-missing:skip-covered --cov-report=markdown-append:$GITHUB_STEP_SUMMARY
+
+  docker:
+    name: Imaginea Docker se construiește
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - run: docker build -t aprovizionare:ci .

@@ -48,7 +48,7 @@ Legendă: `[ ]` de făcut · `[x]` gata · **(opțional)** = după ce obligatori
 - [x] 1.4 Layout de bază: Bootstrap 5, HTMX, meniu în funcție de rol, mesaje flash
 - [x] 1.5 `ruff`, `pytest` configurate · primele teste (autentificare, meniu pe rol) trec
 - [x] 1.6 **Docker Compose**: `web` (Gunicorn + WhiteNoise) + `postgres` + `mailpit`; serviciul `scheduler` se adaugă odată cu primele job-uri (capitolul 6)
-- [ ] 1.7 **GitHub Actions**: lint + teste la fiecare push
+- [x] 1.7 **GitHub Actions**: lint + teste pe PostgreSQL + verificare migrații + build Docker, la fiecare push; insignă în README
 
 **Rezultat:** aplicația pornește local cu `python manage.py runserver` și cu `docker compose up`, iar CI-ul trece.
 

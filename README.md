@@ -1,5 +1,7 @@
 # Flux de aprovizionare – RURIS
 
+[![CI](https://github.com/ionutdinica/ruris-flux-aprovizionare/actions/workflows/ci.yml/badge.svg)](https://github.com/ionutdinica/ruris-flux-aprovizionare/actions/workflows/ci.yml)
+
 Aplicație web internă care leagă **Achizițiile**, **Depozitul** și **Contabilitatea** într-un singur flux:
 
 **Comandă → Recepție → Factură → Plată**
