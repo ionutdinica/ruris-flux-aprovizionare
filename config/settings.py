@@ -19,6 +19,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Valorile implicite sunt alese pentru dezvoltare locală.
 env = environ.Env(
     DEBUG=(bool, False),
+    USE_HTTPS=(bool, None),
     ALLOWED_HOSTS=(list, ["localhost", "127.0.0.1"]),
     CSRF_TRUSTED_ORIGINS=(list, []),
     SITE_URL=(str, "http://127.0.0.1:8000"),
@@ -37,12 +38,15 @@ DEBUG = env("DEBUG")  # True doar local: afișează erorile detaliat
 ALLOWED_HOSTS = env("ALLOWED_HOSTS")  # domeniile de pe care răspunde aplicația
 CSRF_TRUSTED_ORIGINS = env("CSRF_TRUSTED_ORIGINS")
 
-if not DEBUG:
-    # În producție aplicația rulează în spatele unui proxy HTTPS.
+# Aplicația e servită prin HTTPS? Implicit: da în producție (DEBUG=False).
+# Docker Compose local setează USE_HTTPS=False (rulează pe http://localhost).
+USE_HTTPS = env("USE_HTTPS") if env("USE_HTTPS") is not None else not DEBUG
+
+if USE_HTTPS:
+    # Online, aplicația rulează în spatele unui proxy care face HTTPS.
     SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
     SESSION_COOKIE_SECURE = True  # cookie-ul de sesiune se trimite doar pe HTTPS
     CSRF_COOKIE_SECURE = True
-    SECURE_CONTENT_TYPE_NOSNIFF = True
 
 
 # --- Module -------------------------------------------------------------------
@@ -68,6 +72,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",  # fișierele statice în producție
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -139,7 +144,18 @@ USE_THOUSAND_SEPARATOR = True  # 1.250,00 (format românesc)
 
 STATIC_URL = "static/"
 STATICFILES_DIRS = [BASE_DIR / "static"]
-STATIC_ROOT = BASE_DIR / "staticfiles"  # unde se adună la publicarea online
+STATIC_ROOT = BASE_DIR / "staticfiles"  # unde le adună `collectstatic` pentru producție
+
+STORAGES = {
+    "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+    # În producție, WhiteNoise comprimă fișierele și le adaugă o amprentă în nume
+    # (ex. app.3f2a1b.css), ca browserele să nu folosească o versiune veche din cache.
+    "staticfiles": {
+        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"
+        if DEBUG
+        else "whitenoise.storage.CompressedManifestStaticFilesStorage"
+    },
+}
 
 
 # --- Mesaje (confirmări / erori afișate utilizatorului) ------------------------

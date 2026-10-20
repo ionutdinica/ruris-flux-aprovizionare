@@ -19,7 +19,11 @@ select = [
 DJANGO_SETTINGS_MODULE = "config.settings"
 python_files = ["test_*.py"]
 addopts = "--strict-markers -q"
-filterwarnings = ["error::RuntimeWarning"]
+filterwarnings = [
+    "error::RuntimeWarning",
+    # WhiteNoise: folderul staticfiles/ există doar după `collectstatic` (Docker / online).
+    "ignore:No directory at:UserWarning",
+]
 
 [tool.coverage.run]
 source = ["apps"]

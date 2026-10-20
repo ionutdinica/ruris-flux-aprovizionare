@@ -8,6 +8,28 @@ cu potrivire automată în 3 direcții (*three-way match*): o factură ajunge la
 
 > 🚧 Proiect în lucru. Progresul pe capitole este urmărit în [PLAN.md](PLAN.md).
 
+## Pornire cu Docker (recomandat)
+
+Cerințe: [Docker Desktop](https://www.docker.com/products/docker-desktop/).
+
+```bash
+docker compose up --build
+```
+
+| Serviciu | Adresă | Rol |
+|---|---|---|
+| Aplicația | http://localhost:8000 | Django + Gunicorn |
+| Mailpit | http://localhost:8025 | căsuța de email de test: aici apar emailurile trimise de aplicație |
+| PostgreSQL | (intern) | baza de date |
+
+Crearea unui cont de administrator:
+
+```bash
+docker compose exec web python manage.py createsuperuser
+```
+
+Oprire: `docker compose down` (datele rămân) sau `docker compose down -v` (șterge și baza de date).
+
 ## Pornire locală (fără Docker)
 
 Cerințe: Python 3.12+.

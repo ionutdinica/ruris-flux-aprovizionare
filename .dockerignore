@@ -1,0 +1,15 @@
+# Ce NU se copiază în imaginea Docker (mai mică, mai rapidă, fără secrete).
+.git
+.venv
+venv
+.env
+db.sqlite3
+staticfiles
+media
+**/__pycache__
+.pytest_cache
+.ruff_cache
+.coverage
+htmlcov
+.claude
+*.pdf

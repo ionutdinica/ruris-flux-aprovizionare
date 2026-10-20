@@ -47,7 +47,7 @@ Legendă: `[ ]` de făcut · `[x]` gata · **(opțional)** = după ce obligatori
 - [x] 1.3 Configurare prin variabile de mediu (`.env` + `.env.example`): un singur `settings.py`, comportament diferit dev/prod doar prin variabile
 - [x] 1.4 Layout de bază: Bootstrap 5, HTMX, meniu în funcție de rol, mesaje flash
 - [x] 1.5 `ruff`, `pytest` configurate · primele teste (autentificare, meniu pe rol) trec
-- [ ] 1.6 **Docker Compose**: `web` + `postgres` + `mailpit` + `scheduler`
+- [x] 1.6 **Docker Compose**: `web` (Gunicorn + WhiteNoise) + `postgres` + `mailpit`; serviciul `scheduler` se adaugă odată cu primele job-uri (capitolul 6)
 - [ ] 1.7 **GitHub Actions**: lint + teste la fiecare push
 
 **Rezultat:** aplicația pornește local cu `python manage.py runserver` și cu `docker compose up`, iar CI-ul trece.

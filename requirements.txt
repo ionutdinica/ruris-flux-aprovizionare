@@ -1,5 +1,8 @@
-asgiref==3.12.1
-Django==5.2.18
-django-environ==0.14.0
-sqlparse==0.6.0
-tzdata==2026.5
+# Bibliotecile aplicației (versiuni fixate, ca instalarea să fie reproductibilă).
+# Uneltele de dezvoltare sunt în requirements-dev.txt.
+
+Django==5.2.18                # framework-ul web
+django-environ==0.14.0        # citește setările din variabile de mediu / .env
+psycopg[binary]==3.3.6        # conectorul pentru PostgreSQL
+gunicorn==26.2.0              # serverul web de producție (Linux / Docker)
+whitenoise==6.12.0            # servește fișierele statice (CSS, JS) în producție

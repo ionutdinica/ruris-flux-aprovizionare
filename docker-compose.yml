@@ -1,0 +1,47 @@
+# Pornește tot sistemul cu o singură comandă:   docker compose up --build
+#
+#   Aplicația   → http://localhost:8000
+#   Mailpit     → http://localhost:8025   (emailurile trimise de aplicație)
+#
+# Setările de aici sunt pentru rulare LOCALĂ / demonstrație, nu pentru producție.
+
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: aprovizionare
+      POSTGRES_USER: aprovizionare
+      POSTGRES_PASSWORD: aprovizionare
+    volumes:
+      - pgdata:/var/lib/postgresql/data  # datele rămân după oprirea containerului
+    healthcheck:  # „e gata baza de date să primească conexiuni?”
+      test: ["CMD-SHELL", "pg_isready -U aprovizionare -d aprovizionare"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  mailpit:
+    image: axllent/mailpit:v1.27
+    ports:
+      - "8025:8025"  # interfața web pentru citirea emailurilor
+
+  web:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      SECRET_KEY: cheie-doar-pentru-docker-local-nu-pentru-productie
+      DEBUG: "False"
+      USE_HTTPS: "False"  # local rulăm pe http://localhost
+      ALLOWED_HOSTS: localhost,127.0.0.1
+      DATABASE_URL: postgres://aprovizionare:aprovizionare@db:5432/aprovizionare
+      EMAIL_URL: smtp://mailpit:1025
+      SITE_URL: http://localhost:8000
+    depends_on:
+      db:
+        condition: service_healthy  # pornește abia după ce baza de date e gata
+      mailpit:
+        condition: service_started
+
+volumes:
+  pgdata:

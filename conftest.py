@@ -10,6 +10,16 @@ from apps.accounts.models import User
 from apps.accounts.tests.factories import UserFactory
 
 
+@pytest.fixture(autouse=True)
+def _simple_static_storage(settings):
+    """În teste, fișierele statice se servesc simplu, fără pasul `collectstatic`
+    cerut de stocarea de producție (indiferent de valoarea lui DEBUG)."""
+    settings.STORAGES = {
+        **settings.STORAGES,
+        "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"},
+    }
+
+
 @pytest.fixture
 def procurement_user(db):
     return UserFactory(role=User.Role.PROCUREMENT)
