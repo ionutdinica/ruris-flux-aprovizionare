@@ -61,6 +61,7 @@ INSTALLED_APPS = [
     # Biblioteci externe
     "auditlog",  # jurnalul automat al modificărilor (cine, ce, când)
     # Modulele aplicației (vezi PLAN.md, capitolul 1.2)
+    "apps.core",
     "apps.accounts",
     "apps.audit",
     "apps.catalog",
@@ -176,12 +177,17 @@ MESSAGE_TAGS = {message_constants.ERROR: "danger"}
 # ștergere a lor se înregistrează automat: cine, când, IP, câmp vechi → nou.
 # Se completează în fiecare capitol, pe măsură ce apar modele noi.
 
+# Datele „creat la / modificat la” se schimbă la fiecare salvare: zgomot în jurnal.
+_TIMESTAMPS = ["created_at", "updated_at"]
+
 AUDITLOG_INCLUDE_TRACKING_MODELS = (
     {
         "model": "accounts.User",
         "exclude_fields": ["last_login"],  # se schimbă la fiecare login: zgomot
         "mask_fields": ["password"],  # se vede că s-a schimbat, nu și valoarea
     },
+    {"model": "catalog.Supplier", "exclude_fields": _TIMESTAMPS},
+    {"model": "catalog.Product", "exclude_fields": _TIMESTAMPS},
 )
 AUDITLOG_MASK_CALLABLE = "apps.audit.utils.mask_completely"
 AUDITLOG_STORE_JSON_CHANGES = True  # modificările se salvează structurat (JSON)

@@ -8,7 +8,7 @@ Convenții generale:
   - prețuri unitare: 4 zecimale
   - valori (totaluri): 2 zecimale
   - curs valutar: 4 zecimale (precizia BNR)
-- fiecare model are `created_at`, `created_by`, `updated_at`; istoricul complet al modificărilor e în jurnalul de audit;
+- fiecare model are `created_at` și `updated_at` (modelul abstract `TimeStampedModel`); **cine** a creat sau modificat și **ce** anume se află în jurnalul de audit;
 - documentele (comenzi, recepții, facturi) au un **număr intern** generat automat: `CMD-2026-0001`, `REC-2026-0001`, `FAC-2026-0001`.
 
 ## Diagrama entităților
@@ -57,7 +57,8 @@ erDiagram
 | Câmp | Tip | Observații |
 |---|---|---|
 | `name` | text | |
-| `tax_id` (CUI) | text, unic | |
+| `country` | cod ISO, 2 litere | implicit `RO` |
+| `tax_id` | text, unic | pentru `RO`: CUI validat cu cifra de control și salvat fără prefixul RO (`RO14399840` = `14399840`); pentru alte țări: codul de TVA |
 | `email`, `phone`, `address` | text | |
 | `default_currency` | enum `RON`/`EUR` | propusă automat la comenzi noi |
 | `is_active` | bool | |
@@ -68,7 +69,8 @@ erDiagram
 | `code` | text, unic | |
 | `name` | text | |
 | `unit` | enum | `buc`, `kg`, `m`, `l`, `set` … |
-| `vat_rate` | decimal | implicit 21% |
+| `vat_rate` | decimal | doar cotele în vigoare: 21% (implicit), 11%, 0% |
+| `description` | text | opțional |
 | `is_active` | bool | |
 
 ### Achiziții
