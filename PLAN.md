@@ -41,8 +41,8 @@ Legendă: `[ ]` de făcut · `[x]` gata · **(opțional)** = după ce obligatori
 
 ## Capitolul 1 – Fundația proiectului
 
-- [ ] 1.1 Repository Git local + repository pe GitHub, `.gitignore`, `README.md` inițial
-- [ ] 1.2 Proiect Django, structurat pe aplicații:
+- [x] 1.1 Repository Git local + repository pe GitHub, `.gitignore`, `README.md` inițial
+- [x] 1.2 Proiect Django, structurat pe aplicații:
   `accounts`, `audit`, `catalog`, `purchasing`, `warehouse`, `invoicing`, `currency`, `notifications`, `dashboard`
 - [ ] 1.3 Configurare prin variabile de mediu (`.env` + `.env.example`), setări separate dev/prod
 - [ ] 1.4 Layout de bază: Bootstrap 5, HTMX, meniu în funcție de rol, mesaje flash
