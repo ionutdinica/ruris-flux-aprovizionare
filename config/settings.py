@@ -58,6 +58,8 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    # Biblioteci externe
+    "auditlog",  # jurnalul automat al modificărilor (cine, ce, când)
     # Modulele aplicației (vezi PLAN.md, capitolul 1.2)
     "apps.accounts",
     "apps.audit",
@@ -81,6 +83,11 @@ MIDDLEWARE = [
     # (pagina de login). „Sigur în mod implicit”: o pagină nouă nu poate
     # rămâne publică din greșeală.
     "django.contrib.auth.middleware.LoginRequiredMiddleware",
+    # Rețin utilizatorul și IP-ul cererii curente, ca jurnalul de audit să știe
+    # CINE a făcut fiecare acțiune: primul pentru modificările de câmpuri
+    # (django-auditlog), al doilea pentru evenimentele de business.
+    "auditlog.middleware.AuditlogMiddleware",
+    "apps.audit.context.AuditContextMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
@@ -162,6 +169,22 @@ STORAGES = {
 
 # Bootstrap numește „danger” ce Django numește „error”.
 MESSAGE_TAGS = {message_constants.ERROR: "danger"}
+
+
+# --- Jurnal de audit (django-auditlog) -----------------------------------------
+# Lista modelelor urmărite, într-un singur loc. Orice creare / modificare /
+# ștergere a lor se înregistrează automat: cine, când, IP, câmp vechi → nou.
+# Se completează în fiecare capitol, pe măsură ce apar modele noi.
+
+AUDITLOG_INCLUDE_TRACKING_MODELS = (
+    {
+        "model": "accounts.User",
+        "exclude_fields": ["last_login"],  # se schimbă la fiecare login: zgomot
+        "mask_fields": ["password"],  # se vede că s-a schimbat, nu și valoarea
+    },
+)
+AUDITLOG_MASK_CALLABLE = "apps.audit.utils.mask_completely"
+AUDITLOG_STORE_JSON_CHANGES = True  # modificările se salvează structurat (JSON)
 
 
 # --- Email ------------------------------------------------------------------------

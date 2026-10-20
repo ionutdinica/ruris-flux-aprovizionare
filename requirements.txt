@@ -3,6 +3,7 @@
 
 Django==5.2.18                # framework-ul web
 django-environ==0.14.0        # citește setările din variabile de mediu / .env
+django-auditlog==3.4.1        # jurnalul automat al modificărilor (audit)
 psycopg[binary]==3.3.6        # conectorul pentru PostgreSQL
 gunicorn==26.2.0              # serverul web de producție (Linux / Docker)
 whitenoise==6.12.0            # servește fișierele statice (CSS, JS) în producție

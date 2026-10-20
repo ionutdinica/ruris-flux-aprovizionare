@@ -20,6 +20,13 @@ def _simple_static_storage(settings):
     }
 
 
+@pytest.fixture(autouse=True)
+def _fast_password_hashing(settings):
+    """Criptarea parolelor e intenționat lentă (protecție la ghicire). În teste
+    nu contează securitatea, ci viteza, așa că folosim un algoritm rapid."""
+    settings.PASSWORD_HASHERS = ["django.contrib.auth.hashers.MD5PasswordHasher"]
+
+
 @pytest.fixture
 def procurement_user(db):
     return UserFactory(role=User.Role.PROCUREMENT)

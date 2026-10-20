@@ -58,8 +58,8 @@ Legendă: `[ ]` de făcut · `[x]` gata · **(opțional)** = după ce obligatori
 
 - [x] 2.1 Login / logout, schimbarea parolei, model `User` cu rol (câmp pe utilizator: exact un rol, I-02)
 - [x] 2.2 Matricea de permisiuni în cod (`permissions.py`), `PermissionMixin`, `user.can()`, filtrul `|can` în șabloane, meniul pe permisiuni, pagini 403/404
-- [ ] 2.3 Audit automat pe toate modelele importante (django-auditlog: utilizator, acțiune, câmpuri vechi → noi, dată, IP)
-- [ ] 2.4 Evenimente de business în audit (ex.: „Factură aprobată forțat – justificare: …”)
+- [x] 2.3 Audit automat (django-auditlog): utilizator, acțiune, câmpuri vechi → noi, dată, IP; modelele urmărite declarate centralizat în setări; parola mascată; utilizatorii nu se pot șterge
+- [x] 2.4 Evenimente de business (`BusinessEvent`, `record_event()`): autentificări reușite/eșuate, ieșiri; jurnal append-only; context cine/IP limitat strict la cerere
 - [ ] 2.5 Pagina **Jurnal de activitate** (Admin), cu filtre după utilizator, tip document, perioadă
 - [ ] 2.6 Istoric pe fiecare document (secțiunea „Istoric” pe pagina comenzii / facturii)
 - [ ] 2.7 Teste: fiecare rol primește 403 pe ce nu are voie
