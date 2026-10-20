@@ -6,21 +6,38 @@ from datetime import timedelta
 from decimal import Decimal
 
 from django.contrib import messages
+from django.core.paginator import Paginator
 from django.db import transaction
 from django.db.models import Exists, OuterRef
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views import View
-from django.views.generic import DetailView, ListView
+from django.views.generic import DetailView, FormView, ListView
 
 from apps.accounts.permissions import PermissionMixin
+from apps.catalog.models import Product
+from apps.core.text import format_quantity
 from apps.core.views import SearchListMixin
 from apps.purchasing.models import PurchaseOrder, PurchaseOrderLine
 
 from . import services
-from .forms import ReceiptForm, receipt_line_formset
+from .forms import (
+    AttachDiscrepancyForm,
+    NoteForm,
+    ReceiptForm,
+    ReturnDiscrepancyForm,
+    StockMovementForm,
+    receipt_line_formset,
+)
 from .models import Discrepancy, GoodsReceipt
-from .selectors import expected_deliveries
+from .selectors import (
+    available_stock,
+    expected_deliveries,
+    products_with_stock,
+    quarantined_stock,
+    returnable_order_lines,
+    stock_ledger,
+)
 
 ZERO = Decimal("0")
 
@@ -253,3 +270,251 @@ class ReceiptUpdateView(ReceiptFormView):
             messages.error(self.request, "O recepție confirmată nu se mai poate modifica.")
             return redirect(receipt)
         return receipt
+
+
+# --- Discrepanțe (marfa din carantină) -----------------------------------------------------------
+
+
+class DiscrepancyListView(PermissionMixin, SearchListMixin, ListView):
+    permission = "discrepancies.view"
+    model = Discrepancy
+    template_name = "warehouse/discrepancy_list.html"
+    partial_template_name = "warehouse/partials/discrepancy_table.html"
+    search_fields = [
+        "receipt_line__product__search_text",
+        "receipt_line__receipt__supplier__search_text",
+        "receipt_line__receipt__search_text",
+    ]
+    status_choices = [
+        ("", "Toate"),
+        (Discrepancy.Status.OPEN, "Deschise (așteaptă decizia)"),
+        (Discrepancy.Status.RESOLVED, "Rezolvate"),
+        (Discrepancy.Type.OVER_DELIVERY, "Livrări peste comandă"),
+        (Discrepancy.Type.UNORDERED, "Marfă necomandată"),
+    ]
+
+    def base_queryset(self):
+        return (
+            super()
+            .base_queryset()
+            .select_related(
+                "receipt_line__product",
+                "receipt_line__receipt__supplier",
+                "receipt_line__receipt__purchase_order",
+                "resolved_by",
+            )
+            .order_by("status", "-created_at")  # „OPEN” < „RESOLVED”: deschisele primele
+        )
+
+    def filter_status(self, queryset, status):
+        if status in Discrepancy.Status.values:
+            return queryset.filter(status=status)
+        if status in Discrepancy.Type.values:
+            return queryset.filter(type=status)
+        return queryset
+
+
+class DiscrepancyDetailView(PermissionMixin, DetailView):
+    permission = "discrepancies.view"
+    model = Discrepancy
+    template_name = "warehouse/discrepancy_detail.html"
+    context_object_name = "discrepancy"
+
+    def get_queryset(self):
+        return (
+            super()
+            .get_queryset()
+            .select_related(
+                "receipt_line__product",
+                "receipt_line__order_line__order",
+                "receipt_line__receipt__supplier",
+                "receipt_line__receipt__purchase_order",
+                "attached_order_line__order",
+                "resolved_by",
+            )
+        )
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        discrepancy = self.object
+        if discrepancy.is_open and self.request.user.can("discrepancies.resolve"):
+            candidates = services.attach_candidates(discrepancy)
+            context.update(
+                candidates=candidates,
+                attach_form=AttachDiscrepancyForm(candidates=candidates),
+                note_form=NoteForm(),
+                return_form=ReturnDiscrepancyForm(),
+            )
+            surplus_line = discrepancy.receipt_line.order_line
+            if (
+                discrepancy.type == Discrepancy.Type.OVER_DELIVERY
+                and surplus_line.order.is_amendable
+            ):
+                context["surplus_line"] = surplus_line
+                context["surplus_new_quantity"] = surplus_line.quantity + discrepancy.quantity
+        return context
+
+
+class DiscrepancyActionView(PermissionMixin, View):
+    """O decizie asupra mărfii din carantină (POST). Erorile de business devin mesaje."""
+
+    permission = "discrepancies.resolve"
+    http_method_names = ["post"]
+
+    def post(self, request, pk):
+        discrepancy = get_object_or_404(Discrepancy, pk=pk)
+        try:
+            messages.success(request, self.act(discrepancy))
+        except services.WarehouseError as error:
+            messages.error(request, " ".join(error.messages))
+        return redirect(discrepancy)
+
+    def act(self, discrepancy):
+        raise NotImplementedError
+
+
+class DiscrepancyAttachView(DiscrepancyActionView):
+    def act(self, discrepancy):
+        form = AttachDiscrepancyForm(
+            self.request.POST, candidates=services.attach_candidates(discrepancy)
+        )
+        if not form.is_valid():
+            raise services.WarehouseError("Alege una dintre liniile de comandă propuse.")
+        line = form.cleaned_data["order_line"]
+        services.attach_discrepancy(discrepancy, line, self.request.user, form.cleaned_data["note"])
+        return f"Marfa a intrat în stoc și a fost atașată comenzii {line.order}."
+
+
+class DiscrepancyAcceptSurplusView(DiscrepancyActionView):
+    def act(self, discrepancy):
+        form = NoteForm(self.request.POST)
+        note = form.cleaned_data["note"] if form.is_valid() else ""
+        services.accept_over_delivery(discrepancy, self.request.user, note)
+        return (
+            "Surplusul a fost acceptat: cantitatea comandată a crescut, iar marfa a intrat în stoc."
+        )
+
+
+class DiscrepancyReturnView(DiscrepancyActionView):
+    def act(self, discrepancy):
+        form = ReturnDiscrepancyForm(self.request.POST)
+        note = form.cleaned_data["note"] if form.is_valid() else ""
+        services.return_discrepancy(discrepancy, self.request.user, note)
+        return "Marfa a fost marcată pentru retur la furnizor; nu intră în stoc."
+
+
+# --- Stoc ---------------------------------------------------------------------------------
+
+
+class StockListView(PermissionMixin, SearchListMixin, ListView):
+    permission = "stock.view"
+    model = Product
+    template_name = "warehouse/stock_list.html"
+    partial_template_name = "warehouse/partials/stock_table.html"
+    status_choices = [
+        ("", "Toate produsele"),
+        ("available", "Cu stoc disponibil"),
+        ("quarantine", "Cu marfă în carantină"),
+        ("empty", "Fără stoc"),
+    ]
+
+    def base_queryset(self):
+        return products_with_stock(super().base_queryset()).order_by("code")
+
+    def filter_status(self, queryset, status):
+        if status == "available":
+            return queryset.filter(stock_available__gt=0)
+        if status == "quarantine":
+            return queryset.filter(stock_quarantined__gt=0)
+        if status == "empty":
+            return queryset.filter(stock_available=0)
+        return queryset
+
+
+class StockProductView(PermissionMixin, DetailView):
+    """Stocul unui produs și registrul lui complet de mișcări, cu soldul după fiecare."""
+
+    permission = "stock.view"
+    model = Product
+    template_name = "warehouse/stock_product.html"
+    context_object_name = "product"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        product = self.object
+        context.update(
+            available=available_stock(product),
+            quarantined=quarantined_stock(product),
+            open_discrepancies=Discrepancy.objects.filter(
+                receipt_line__product=product, status=Discrepancy.Status.OPEN
+            ).select_related("receipt_line__receipt__supplier"),
+            page=Paginator(stock_ledger(product), 25).get_page(self.request.GET.get("page")),
+        )
+        return context
+
+
+class StockMovementCreateView(PermissionMixin, FormView):
+    """Consum, retur la furnizor sau ajustare de inventar (Depozit)."""
+
+    permission = "stock.move"
+    template_name = "warehouse/stock_movement_form.html"
+    form_class = StockMovementForm
+
+    def selected_product(self):
+        product_id = self.request.POST.get("product") or self.request.GET.get("produs")
+        if product_id and str(product_id).isdigit():
+            return Product.objects.filter(pk=product_id).first()
+        return None
+
+    def get_initial(self):
+        return {"product": self.selected_product(), "date": timezone.localdate()}
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["returnable_lines"] = returnable_order_lines(self.selected_product())
+        return kwargs
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        product = self.selected_product()
+        if product:
+            context.update(product=product, available=available_stock(product))
+        return context
+
+    def form_valid(self, form):
+        data = form.cleaned_data
+        try:
+            movement = services.record_stock_movement(
+                data["product"],
+                data["kind"],
+                data["quantity"],
+                self.request.user,
+                data["reason"],
+                order_line=data["order_line"],
+                date=data["date"],
+            )
+        except services.WarehouseError as error:
+            form.add_error(None, error)
+            return self.form_invalid(form)
+        messages.success(
+            self.request,
+            f"Mișcarea a fost înregistrată: {movement.get_type_display().lower()} "
+            f"{format_quantity(movement.quantity, sign=True)} {movement.product.unit}.",
+        )
+        return redirect("warehouse:stock_product", pk=movement.product_id)
+
+
+class StockMovementProductInfoView(PermissionMixin, View):
+    """Fragment HTMX: la schimbarea produsului în formular, stocul lui disponibil și
+    liniile de comandă pe care se poate face un retur."""
+
+    permission = "stock.move"
+
+    def get(self, request):
+        product_id = request.GET.get("product", "")
+        product = Product.objects.filter(pk=product_id).first() if product_id.isdigit() else None
+        form = StockMovementForm(returnable_lines=returnable_order_lines(product))
+        context = {"form": form, "product": product}
+        if product:
+            context["available"] = available_stock(product)
+        return render(request, "warehouse/partials/movement_product_info.html", context)

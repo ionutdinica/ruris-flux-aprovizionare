@@ -15,7 +15,9 @@ class SearchListMixin:
             partial_template_name = "catalog/partials/supplier_table.html"
 
     Căutarea folosește `search_text` pentru modelele SearchableModel (fără diacritice),
-    altfel câmpurile din `search_fields` ale view-ului.
+    altfel câmpurile din `search_fields` ale view-ului. Un câmp din `search_fields` care
+    se termină în „search_text” (ex. "receipt_line__product__search_text") e căutat tot
+    fără diacritice: așa se caută și prin documentele legate.
     Parametri din adresă: ?q=text&status=active|inactive&page=2
     Cererile HTMX primesc doar tabelul (`partial_template_name`), nu toată pagina.
 
@@ -44,7 +46,12 @@ class SearchListMixin:
             queryset = queryset.filter(search_text__contains=fold(query))
         elif query and self.search_fields:
             # Caută textul în oricare dintre câmpuri: nume SAU cod SAU email...
-            conditions = [Q(**{f"{field}__icontains": query}) for field in self.search_fields]
+            conditions = [
+                Q(**{f"{field}__contains": fold(query)})
+                if field.endswith("search_text")
+                else Q(**{f"{field}__icontains": query})
+                for field in self.search_fields
+            ]
             queryset = queryset.filter(reduce(or_, conditions))
 
         status = self.request.GET.get("status", "")

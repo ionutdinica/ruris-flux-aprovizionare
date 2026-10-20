@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block title %}Ieșire / ajustare de stoc{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb small">
+    <li class="breadcrumb-item"><a href="{% url 'warehouse:stock' %}">Stoc</a></li>
+    <li class="breadcrumb-item active" aria-current="page">Ieșire / ajustare</li>
+  </ol>
+</nav>
+
+<div class="row justify-content-center">
+  <div class="col-lg-8">
+    <h1 class="h3 mb-3"><i class="bi bi-arrow-left-right me-2"></i>Ieșire sau ajustare de stoc</h1>
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <form method="post" novalidate>
+          {% csrf_token %}
+          {% if form.non_field_errors %}
+            <div class="alert alert-danger">{% for error in form.non_field_errors %}{{ error }} {% endfor %}</div>
+          {% endif %}
+          <div class="row">
+            <div class="col-md-8">{% include "partials/form_field.html" with field=form.product %}</div>
+            <div class="col-md-4">{% include "partials/form_field.html" with field=form.date %}</div>
+          </div>
+          {% include "warehouse/partials/movement_product_info.html" %}
+          <div class="row">
+            <div class="col-md-8">{% include "partials/form_field.html" with field=form.kind %}</div>
+            <div class="col-md-4">{% include "partials/form_field.html" with field=form.quantity %}</div>
+          </div>
+          {% include "partials/form_field.html" with field=form.reason %}
+          <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-primary-dark"><i class="bi bi-check-lg me-1"></i>Înregistrează</button>
+            <a href="{% if product %}{% url 'warehouse:stock_product' product.pk %}{% else %}{% url 'warehouse:stock' %}{% endif %}" class="btn btn-outline-secondary">Renunță</a>
+          </div>
+        </form>
+      </div>
+    </div>
+    <p class="text-body-secondary small mt-2">
+      Registrul de stoc nu se modifică și nu se șterge: o greșeală se corectează printr-o ajustare nouă, vizibilă.
+    </p>
+  </div>
+</div>
+{% endblock %}

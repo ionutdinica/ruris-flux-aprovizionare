@@ -109,7 +109,9 @@
                     {{ line.quantity_quarantined|qty }}
                     {% if line.discrepancy %}
                       <div class="small">
-                        {% if line.discrepancy.is_open %}<span class="badge text-bg-warning">așteaptă decizia Achizițiilor</span>{% else %}<span class="badge text-bg-light border">{{ line.discrepancy.get_resolution_display }}</span>{% endif %}
+                        <a href="{{ line.discrepancy.get_absolute_url }}" class="text-decoration-none">
+                          {% if line.discrepancy.is_open %}<span class="badge text-bg-warning">așteaptă decizia Achizițiilor</span>{% else %}<span class="badge text-bg-light border">{{ line.discrepancy.get_resolution_display }}</span>{% endif %}
+                        </a>
                       </div>
                     {% endif %}
                   </td>

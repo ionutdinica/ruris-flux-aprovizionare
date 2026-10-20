@@ -1,0 +1,11 @@
+{% load formatting %}
+{# Partea formularului care depinde de produs; înlocuită prin HTMX la schimbarea produsului. #}
+<div id="product-dependent">
+  {% if product %}
+    <div class="alert alert-light border small py-2">
+      Stoc disponibil acum: <strong>{{ available|qty }} {{ product.unit }}</strong>
+      {% if not available %}· doar o ajustare „plus” este posibilă.{% endif %}
+    </div>
+  {% endif %}
+  {% include "partials/form_field.html" with field=form.order_line %}
+</div>

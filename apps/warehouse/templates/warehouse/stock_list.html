@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% load permissions %}
+
+{% block title %}Stoc{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+  <h1 class="h3 mb-0"><i class="bi bi-boxes me-2"></i>Stoc</h1>
+  {% if user|can:"stock.move" %}
+    <a href="{% url 'warehouse:stock_movement' %}" class="btn btn-primary-dark"><i class="bi bi-arrow-left-right me-1"></i>Ieșire / ajustare</a>
+  {% endif %}
+</div>
+
+{% include "partials/list_search.html" with placeholder="Caută după cod sau denumire…" %}
+
+<div id="results">
+  {% include "warehouse/partials/stock_table.html" %}
+</div>
+{% endblock %}

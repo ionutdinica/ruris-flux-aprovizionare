@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+
+{% block title %}Discrepanțe{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap align-items-baseline justify-content-between gap-2 mb-3">
+  <h1 class="h3 mb-0"><i class="bi bi-exclamation-triangle me-2"></i>Discrepanțe</h1>
+  <span class="text-body-secondary small">Marfă primită, dar neacoperită de o comandă: stă în carantină până decid Achizițiile.</span>
+</div>
+
+{% include "partials/list_search.html" with placeholder="Caută după produs, furnizor sau recepție…" %}
+
+<div id="results">
+  {% include "warehouse/partials/discrepancy_table.html" %}
+</div>
+{% endblock %}

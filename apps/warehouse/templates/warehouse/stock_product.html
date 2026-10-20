@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% load permissions formatting %}
+
+{% block title %}Stoc {{ product.code }}{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb small">
+    <li class="breadcrumb-item"><a href="{% url 'warehouse:stock' %}">Stoc</a></li>
+    <li class="breadcrumb-item active" aria-current="page">{{ product.code }}</li>
+  </ol>
+</nav>
+
+<div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+  <h1 class="h3 mb-0">{{ product }}</h1>
+  <div class="d-flex gap-2">
+    <a href="{{ product.get_absolute_url }}" class="btn btn-outline-secondary"><i class="bi bi-tag me-1"></i>Fișa produsului</a>
+    {% if user|can:"stock.move" %}
+      <a href="{% url 'warehouse:stock_movement' %}?produs={{ product.pk }}" class="btn btn-primary-dark"><i class="bi bi-arrow-left-right me-1"></i>Ieșire / ajustare</a>
+    {% endif %}
+  </div>
+</div>
+
+<div class="row g-3 mb-3">
+  <div class="col-sm-6 col-lg-3">
+    <div class="card shadow-sm h-100"><div class="card-body">
+      <div class="text-body-secondary small">Stoc disponibil</div>
+      <div class="fs-3 fw-semibold">{{ available|qty }} <span class="fs-6 fw-normal">{{ product.unit }}</span></div>
+    </div></div>
+  </div>
+  <div class="col-sm-6 col-lg-3">
+    <div class="card shadow-sm h-100{% if quarantined %} border-warning{% endif %}"><div class="card-body">
+      <div class="text-body-secondary small">În carantină (nedisponibil)</div>
+      <div class="fs-3 fw-semibold">{{ quarantined|qty }} <span class="fs-6 fw-normal">{{ product.unit }}</span></div>
+    </div></div>
+  </div>
+</div>
+
+{% if open_discrepancies %}
+  <div class="alert alert-warning small">
+    <i class="bi bi-exclamation-triangle me-1"></i> Marfă în carantină, care așteaptă decizia Achizițiilor:
+    {% for discrepancy in open_discrepancies %}
+      <a href="{{ discrepancy.get_absolute_url }}">{{ discrepancy.quantity|qty }} {{ product.unit }} de la {{ discrepancy.receipt_line.receipt.supplier }}</a>{% if not forloop.last %}, {% endif %}
+    {% endfor %}
+  </div>
+{% endif %}
+
+<div class="card shadow-sm">
+  <div class="card-header bg-body fw-semibold">Registrul de mișcări</div>
+  <div class="table-responsive">
+    <table class="table align-middle mb-0">
+      <thead class="table-light">
+        <tr>
+          <th>Data</th>
+          <th>Tip</th>
+          <th class="text-end">Cantitate</th>
+          <th class="text-end">Sold</th>
+          <th>Document</th>
+          <th class="d-none d-md-table-cell">Motiv</th>
+          <th class="d-none d-lg-table-cell">Operat de</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for movement in page.object_list %}
+          <tr>
+            <td class="text-nowrap small">{{ movement.date|date:"d.m.Y" }}</td>
+            <td class="small">{{ movement.get_type_display }}</td>
+            <td class="text-end text-nowrap fw-semibold {% if movement.quantity > 0 %}text-success{% else %}text-danger{% endif %}">{% if movement.quantity > 0 %}+{% endif %}{{ movement.quantity|qty }}</td>
+            <td class="text-end text-nowrap">{{ movement.balance|qty }}</td>
+            <td class="small text-nowrap">
+              {% if movement.receipt_line %}<a href="{{ movement.receipt_line.receipt.get_absolute_url }}">{{ movement.receipt_line.receipt }}</a>{% endif %}
+              {% if movement.order_line %}<div><a href="{{ movement.order_line.order.get_absolute_url }}" class="text-body-secondary">{{ movement.order_line.order }}</a></div>{% endif %}
+            </td>
+            <td class="d-none d-md-table-cell small">{{ movement.reason }}</td>
+            <td class="d-none d-lg-table-cell small">{{ movement.created_by|default:"" }}</td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="7" class="text-center text-body-secondary py-4">Nicio mișcare de stoc pentru acest produs.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% include "partials/pagination.html" %}
+{% endblock %}

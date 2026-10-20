@@ -9,9 +9,10 @@ Recepția are două feluri de rânduri:
 from decimal import Decimal
 
 from django import forms
+from django.urls import reverse
 
 from apps.catalog.models import Product, Supplier
-from apps.core.forms import BootstrapFormMixin
+from apps.core.forms import BootstrapFormMixin, DateInput
 
 from .models import GoodsReceipt, GoodsReceiptLine
 
@@ -23,7 +24,7 @@ class ReceiptForm(BootstrapFormMixin, forms.ModelForm):
         model = GoodsReceipt
         fields = ["supplier", "receipt_date", "delivery_note", "notes"]
         widgets = {
-            "receipt_date": forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d"),
+            "receipt_date": DateInput,
             "notes": forms.Textarea(attrs={"rows": 2}),
         }
 
@@ -104,3 +105,84 @@ def receipt_line_formset(extra):
         extra=extra,
         can_delete=True,
     )
+
+
+# --- Discrepanțe (decizia Achizițiilor) ----------------------------------------------------
+
+
+class OrderLineChoiceField(forms.ModelChoiceField):
+    def label_from_instance(self, line):
+        return f"{line.order} · termen {line.expected_date:%d.%m.%Y}"
+
+
+class AttachDiscrepancyForm(BootstrapFormMixin, forms.Form):
+    """Alegerea liniei de comandă: doar dintre liniile potrivite (services.attach_candidates)."""
+
+    order_line = OrderLineChoiceField(
+        label="Linia de comandă", queryset=None, widget=forms.RadioSelect, empty_label=None
+    )
+    note = forms.CharField(label="Observații", required=False, max_length=500)
+
+    def __init__(self, *args, candidates, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["order_line"].queryset = candidates
+
+
+class NoteForm(BootstrapFormMixin, forms.Form):
+    note = forms.CharField(label="Observații", required=False, max_length=500)
+
+
+class ReturnDiscrepancyForm(BootstrapFormMixin, forms.Form):
+    note = forms.CharField(
+        label="Motivul returului",
+        max_length=500,
+        widget=forms.Textarea(attrs={"rows": 2}),
+        help_text="Ex. „Marfă necomandată, returnată cu avizul 1234”.",
+    )
+
+
+# --- Ieșiri și ajustări de stoc -----------------------------------------------------------------
+
+
+class StockMovementForm(BootstrapFormMixin, forms.Form):
+    KIND_CHOICES = [
+        ("CONSUMPTION", "Consum (ieșire în producție / vânzare)"),
+        ("SUPPLIER_RETURN", "Retur la furnizor (ieșire)"),
+        ("ADJUSTMENT_PLUS", "Ajustare de inventar: plus (s-a găsit mai mult)"),
+        ("ADJUSTMENT_MINUS", "Ajustare de inventar: minus (lipsă la numărare)"),
+    ]
+
+    product = forms.ModelChoiceField(label="Produs", queryset=Product.objects.order_by("code"))
+    kind = forms.ChoiceField(label="Tip", choices=KIND_CHOICES)
+    quantity = forms.DecimalField(
+        label="Cantitate",
+        min_value=Decimal("0.001"),
+        max_digits=12,
+        decimal_places=3,
+        widget=forms.NumberInput(attrs={"step": "0.001", "min": "0"}),
+    )
+    date = forms.DateField(label="Data", widget=DateInput)
+    order_line = forms.ModelChoiceField(
+        label="Linia de comandă returnată (opțional)",
+        queryset=None,
+        required=False,
+        help_text="Doar pentru retur: comanda redevine „parțial recepționată”, furnizorul "
+        "datorează din nou marfa.",
+    )
+    reason = forms.CharField(
+        label="Motiv",
+        max_length=200,
+        help_text="Obligatoriu. Ex. „Consum comanda de producție 45”, „Inventar lunar”.",
+    )
+
+    def __init__(self, *args, returnable_lines, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["order_line"].queryset = returnable_lines
+        # La alegerea produsului, HTMX cere stocul lui și liniile returnabile (fără reîncărcare).
+        self.fields["product"].widget.attrs.update(
+            {
+                "hx-get": reverse("warehouse:stock_movement_product"),
+                "hx-target": "#product-dependent",
+                "hx-swap": "outerHTML",
+            }
+        )

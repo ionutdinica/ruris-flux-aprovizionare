@@ -32,3 +32,20 @@ def test_format_quantity_with_sign():
 
     assert format_quantity("5", sign=True) == "+5"
     assert format_quantity("-3.50", sign=True) == "-3.5"
+
+
+def test_date_input_renders_iso_format_for_the_browser():
+    """Cu limba română, Django ar scrie „21.10.2026”, pe care <input type="date"> îl ignoră."""
+    from datetime import date
+
+    from django import forms
+
+    from apps.core.forms import DateInput
+
+    class Form(forms.Form):
+        day = forms.DateField(widget=DateInput)
+
+    html = str(Form(initial={"day": date(2026, 10, 21)})["day"])
+
+    assert 'type="date"' in html
+    assert 'value="2026-10-21"' in html

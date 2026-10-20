@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load permissions audit %}
+{% load permissions audit stock %}
 
 {% block title %}{{ product.code }}{% endblock %}
 
@@ -40,6 +40,7 @@
     </div>
   </div>
   <div class="col-lg-5">
+    {% product_stock product %}
     {% object_history product %}
   </div>
 </div>

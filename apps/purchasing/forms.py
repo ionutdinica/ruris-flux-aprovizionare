@@ -14,7 +14,7 @@ from django.core.validators import FileExtensionValidator
 
 from apps.accounts.models import User
 from apps.catalog.models import Product, Supplier
-from apps.core.forms import BootstrapFormMixin
+from apps.core.forms import BootstrapFormMixin, DateInput
 from apps.core.text import format_quantity
 
 from .models import PurchaseOrder, PurchaseOrderLine
@@ -58,8 +58,8 @@ class PurchaseOrderForm(BootstrapFormMixin, forms.ModelForm):
         ]
         widgets = {
             "supplier": SupplierSelect,
-            "order_date": forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d"),
-            "expected_date": forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d"),
+            "order_date": DateInput,
+            "expected_date": DateInput,
             "notes": forms.Textarea(attrs={"rows": 2}),
         }
 
@@ -92,7 +92,7 @@ class PurchaseOrderLineForm(BootstrapFormMixin, forms.ModelForm):
             "product": ProductSelect,
             "quantity": forms.NumberInput(attrs={"step": "0.001", "min": "0"}),
             "unit_price": forms.NumberInput(attrs={"step": "0.0001", "min": "0"}),
-            "expected_date": forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d"),
+            "expected_date": DateInput,
         }
 
     def __init__(self, *args, **kwargs):

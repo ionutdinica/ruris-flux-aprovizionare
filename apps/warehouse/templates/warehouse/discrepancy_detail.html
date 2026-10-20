@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+{% load permissions audit formatting %}
+
+{% block title %}Discrepanță{% endblock %}
+
+{% block content %}
+{% with line=discrepancy.receipt_line product=discrepancy.receipt_line.product %}
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb small">
+    <li class="breadcrumb-item"><a href="{% url 'warehouse:discrepancy_list' %}">Discrepanțe</a></li>
+    <li class="breadcrumb-item active" aria-current="page">{{ product.code }}</li>
+  </ol>
+</nav>
+
+<div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+  <h1 class="h3 mb-0">
+    {{ discrepancy.get_type_display }}: {{ discrepancy.quantity|qty }} {{ product.unit }} {{ product.code }}
+    {% if discrepancy.is_open %}
+      <span class="fs-6 align-middle badge text-bg-warning">în carantină</span>
+    {% else %}
+      <span class="fs-6 align-middle badge text-bg-success">rezolvată</span>
+    {% endif %}
+  </h1>
+</div>
+
+<div class="row g-3">
+  <div class="col-lg-8">
+    <div class="card shadow-sm mb-3">
+      <div class="card-body">
+        <dl class="row mb-0">
+          <dt class="col-sm-3">Produs</dt>
+          <dd class="col-sm-9"><a href="{% url 'warehouse:stock_product' product.pk %}">{{ product }}</a></dd>
+          <dt class="col-sm-3">Furnizor</dt>
+          <dd class="col-sm-9"><a href="{{ discrepancy.supplier.get_absolute_url }}">{{ discrepancy.supplier }}</a></dd>
+          <dt class="col-sm-3">Recepție</dt>
+          <dd class="col-sm-9">
+            <a href="{{ line.receipt.get_absolute_url }}">{{ line.receipt }}</a>
+            <span class="text-body-secondary small">· {{ line.receipt.receipt_date|date:"d.m.Y" }}{% if line.receipt.purchase_order %} · pe comanda <a href="{{ line.receipt.purchase_order.get_absolute_url }}">{{ line.receipt.purchase_order }}</a>{% endif %}</span>
+          </dd>
+          <dt class="col-sm-3">Ce s-a întâmplat</dt>
+          <dd class="col-sm-9">
+            {% if discrepancy.type == "OVER_DELIVERY" %}
+              S-au numărat {{ line.quantity_received|qty }} {{ product.unit }}, din care comanda mai aștepta {{ line.quantity_accepted|qty }}: surplusul de {{ discrepancy.quantity|qty }} a intrat în carantină.
+            {% else %}
+              Produsul a sosit fără să fie pe vreo comandă: toată cantitatea a intrat în carantină.
+            {% endif %}
+            {% if line.notes %}<div class="small text-body-secondary">Notă la recepție: {{ line.notes }}</div>{% endif %}
+          </dd>
+          {% if not discrepancy.is_open %}
+            <dt class="col-sm-3">Decizie</dt>
+            <dd class="col-sm-9">
+              {{ discrepancy.get_resolution_display }}
+              {% if discrepancy.attached_order_line %} · comanda <a href="{{ discrepancy.attached_order_line.order.get_absolute_url }}">{{ discrepancy.attached_order_line.order }}</a>{% endif %}
+              <div class="small text-body-secondary">{{ discrepancy.resolved_at|date:"d.m.Y H:i" }} · {{ discrepancy.resolved_by }}</div>
+              {% if discrepancy.resolution_note %}<div class="small">{{ discrepancy.resolution_note }}</div>{% endif %}
+            </dd>
+          {% endif %}
+        </dl>
+      </div>
+    </div>
+
+    {% if discrepancy.is_open %}
+      {% if user|can:"discrepancies.resolve" %}
+        <h2 class="h5 mb-3">Ce se întâmplă cu marfa?</h2>
+
+        {% if surplus_line %}
+          {# --- 1. Acceptă surplusul (scurtătura pentru livrările peste comandă) --- #}
+          <div class="card shadow-sm mb-3 border-success">
+            <div class="card-body">
+              <h3 class="h6"><i class="bi bi-check2-circle text-success me-1"></i>Păstrăm surplusul</h3>
+              <p class="small mb-2">
+                Cantitatea comandată pe linia comenzii <a href="{{ surplus_line.order.get_absolute_url }}">{{ surplus_line.order }}</a>
+                crește de la <strong>{{ surplus_line.quantity|qty }}</strong> la <strong>{{ surplus_new_quantity|qty }} {{ product.unit }}</strong>,
+                iar marfa intră în stoc. Modificarea apare în istoricul comenzii.
+              </p>
+              <form method="post" action="{% url 'warehouse:discrepancy_accept_surplus' discrepancy.pk %}" class="d-flex flex-wrap gap-2">
+                {% csrf_token %}
+                <input type="text" name="note" class="form-control form-control-sm w-auto flex-grow-1" placeholder="Observații (opțional)" maxlength="500">
+                <button type="submit" class="btn btn-sm btn-success">Acceptă surplusul</button>
+              </form>
+            </div>
+          </div>
+        {% endif %}
+
+        {# --- 2. Atașare la o linie de comandă existentă --- #}
+        <div class="card shadow-sm mb-3">
+          <div class="card-body">
+            <h3 class="h6"><i class="bi bi-link-45deg me-1"></i>Atașez marfa la o comandă</h3>
+            {% if candidates %}
+              <p class="small text-body-secondary">Comenzile active ale furnizorului care mai așteaptă cel puțin {{ discrepancy.quantity|qty }} {{ product.unit }} din acest produs:</p>
+              <form method="post" action="{% url 'warehouse:discrepancy_attach' discrepancy.pk %}">
+                {% csrf_token %}
+                <div class="list-group mb-2">
+                  {% for candidate in candidates %}
+                    <label class="list-group-item d-flex gap-2 align-items-center">
+                      <input class="form-check-input mt-0" type="radio" name="order_line" value="{{ candidate.pk }}"{% if forloop.first %} checked{% endif %}>
+                      <span class="flex-grow-1">{{ candidate.order }} <span class="small text-body-secondary">· termen {{ candidate.expected_date|date:"d.m.Y" }}</span></span>
+                      <span class="small">mai așteaptă {{ candidate.remaining_qty|qty }} {{ product.unit }}</span>
+                    </label>
+                  {% endfor %}
+                </div>
+                <div class="d-flex flex-wrap gap-2">
+                  <input type="text" name="note" class="form-control form-control-sm w-auto flex-grow-1" placeholder="Observații (opțional)" maxlength="500">
+                  <button type="submit" class="btn btn-sm btn-primary-dark">Atașează și intră în stoc</button>
+                </div>
+              </form>
+            {% else %}
+              <p class="small mb-0">
+                Nicio comandă activă a furnizorului {{ discrepancy.supplier }} nu mai așteaptă {{ discrepancy.quantity|qty }} {{ product.unit }} din acest produs.
+                Dacă marfa e păstrată, adaugă o linie pe o comandă (regularizare) din
+                <a href="{% url 'purchasing:order_list' %}?supplier={{ discrepancy.supplier.pk }}">comenzile furnizorului</a>, apoi revino aici.
+              </p>
+            {% endif %}
+          </div>
+        </div>
+
+        {# --- 3. Retur --- #}
+        <div class="card shadow-sm mb-3 border-danger-subtle">
+          <div class="card-body">
+            <h3 class="h6"><i class="bi bi-arrow-return-left me-1"></i>Returnez marfa furnizorului</h3>
+            <p class="small text-body-secondary">Marfa nu intră în stoc. Motivul se înregistrează în jurnal.</p>
+            <form method="post" action="{% url 'warehouse:discrepancy_return' discrepancy.pk %}">
+              {% csrf_token %}
+              {% include "partials/form_field.html" with field=return_form.note %}
+              <button type="submit" class="btn btn-sm btn-outline-danger">Marchează pentru retur</button>
+            </form>
+          </div>
+        </div>
+      {% else %}
+        <div class="alert alert-warning">
+          <i class="bi bi-hourglass-split me-1"></i> Marfa stă în carantină până când Achizițiile decid ce se întâmplă cu ea: o atașează la o comandă sau o returnează.
+        </div>
+      {% endif %}
+    {% endif %}
+  </div>
+
+  <div class="col-lg-4">
+    {% object_history discrepancy %}
+  </div>
+</div>
+{% endwith %}
+{% endblock %}

@@ -82,7 +82,7 @@ Legendă: `[ ]` de făcut · `[x]` gata · **(opțional)** = după ce obligatori
 - [x] 4.4 Lista comenzilor: căutare, filtre (status, furnizor, deschise, **întârziate**), întârziatele evidențiate; ciornele vizibile doar Achizițiilor; prețurile ascunse Depozitului
 - [x] 4.5 **Import din Excel**: șablon generat din datele curente (liste derulante cu furnizori și produse), citire tolerantă (antet în orice ordine, numere în stil RO/EN, date în mai multe formate), validare cu regulile modelului și **toate erorile pe rând dintr-o dată**, previzualizare, confirmare unică, comenzi create ca ciorne; import dublu blocat de baza de date (referință externă unică per furnizor); protecții la fișiere rău intenționate
 - [x] 4.6 **Export în Excel**: comenzile cu filtrele curente — foile Comenzi, Linii (cu recepționat / facturat / rest) și Informații; valori numerice reale, formate românești; exportul intră în jurnal
-- [ ] 4.7 ~~Rezolvarea discrepanțelor~~ → mutat în capitolul 5 (discrepanțele apar la recepție)
+- [x] 4.7 ~~Rezolvarea discrepanțelor~~ → realizată în capitolul 5: pagina de decizie a Achizițiilor (atașare la comandă, acceptarea surplusului, retur)
 
 ---
 
@@ -95,8 +95,8 @@ Legendă: `[ ]` de făcut · `[x]` gata · **(opțional)** = după ce obligatori
   - livrare parțială (comanda rămâne deschisă)
   - livrare peste cantitatea comandată (generează discrepanță)
   - **marfă necomandată** (recepție fără comandă sau linie în plus, care generează discrepanță spre Achiziții)
-- [ ] 5.5 Stoc curent pe produs, calculat din registrul de mișcări, cu istoricul mișcărilor
-- [ ] 5.6 Ieșiri de stoc (consum, retur la furnizor) și ajustări de inventar, cu motiv; stocul nu poate deveni negativ
+- [x] 5.5 Stoc curent pe produs (disponibil + carantină), calculat din registrul de mișcări; registrul fiecărui produs cu **soldul după fiecare mișcare**; cardul de stoc pe fișa produsului
+- [x] 5.6 Ieșiri de stoc (consum, retur la furnizor, opțional legat de o linie de comandă) și ajustări de inventar, cu motiv; stocul nu poate deveni negativ; formular cu stocul produsului actualizat prin HTMX
 
 ---
 

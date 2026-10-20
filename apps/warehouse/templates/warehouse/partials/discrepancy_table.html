@@ -1,0 +1,47 @@
+{% load formatting %}
+<p class="text-body-secondary small mb-2">{{ page_obj.paginator.count }} discrepanțe</p>
+
+{% if object_list %}
+<div class="card shadow-sm">
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead class="table-light">
+        <tr>
+          <th>Data</th>
+          <th>Produs</th>
+          <th class="text-end">Cantitate</th>
+          <th>Tip</th>
+          <th>Furnizor</th>
+          <th class="d-none d-md-table-cell">Recepție</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for discrepancy in object_list %}
+          <tr{% if discrepancy.is_open %} class="table-warning"{% endif %}>
+            <td class="text-nowrap small">{{ discrepancy.created_at|date:"d.m.Y" }}</td>
+            <td><a href="{{ discrepancy.get_absolute_url }}" class="fw-semibold text-decoration-none">{{ discrepancy.receipt_line.product }}</a></td>
+            <td class="text-end text-nowrap">{{ discrepancy.quantity|qty }} {{ discrepancy.receipt_line.product.unit }}</td>
+            <td class="small">{{ discrepancy.get_type_display }}</td>
+            <td>{{ discrepancy.receipt_line.receipt.supplier }}</td>
+            <td class="d-none d-md-table-cell small"><a href="{{ discrepancy.receipt_line.receipt.get_absolute_url }}" class="text-decoration-none">{{ discrepancy.receipt_line.receipt }}</a></td>
+            <td class="small">
+              {% if discrepancy.is_open %}
+                <span class="badge text-bg-warning">așteaptă decizia</span>
+              {% else %}
+                <span class="badge text-bg-light border">{{ discrepancy.get_resolution_display }}</span>
+              {% endif %}
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% include "partials/pagination.html" with page=page_obj target="#results" %}
+{% else %}
+  <div class="text-center text-body-secondary py-5">
+    <i class="bi bi-check2-circle display-5"></i>
+    <p class="mt-2 mb-0">{% if query or status %}Nicio discrepanță nu corespunde filtrelor.{% else %}Nu există discrepanțe: toată marfa primită a fost acoperită de comenzi.{% endif %}</p>
+  </div>
+{% endif %}

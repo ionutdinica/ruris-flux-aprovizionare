@@ -1,0 +1,11 @@
+{% load formatting %}
+<div class="card shadow-sm mb-3">
+  <div class="card-header bg-body d-flex justify-content-between align-items-center">
+    <span class="fw-semibold"><i class="bi bi-boxes me-1"></i> Stoc</span>
+    <a href="{% url 'warehouse:stock_product' product.pk %}" class="small">Registrul de mișcări</a>
+  </div>
+  <div class="card-body d-flex gap-4">
+    <div><div class="small text-body-secondary">Disponibil</div><div class="fs-5 fw-semibold">{{ available|qty }} {{ product.unit }}</div></div>
+    <div><div class="small text-body-secondary">În carantină</div><div class="fs-5 fw-semibold{% if quarantined %} text-warning-emphasis{% endif %}">{{ quarantined|qty }} {{ product.unit }}</div></div>
+  </div>
+</div>

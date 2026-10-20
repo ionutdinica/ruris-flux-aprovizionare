@@ -1,7 +1,7 @@
 from django import forms
 
 from apps.accounts.models import User
-from apps.core.forms import BootstrapFormMixin
+from apps.core.forms import BootstrapFormMixin, DateInput
 
 from .models import BusinessEvent
 from .timeline import CHANGE
@@ -25,12 +25,8 @@ class ActivityFilterForm(BootstrapFormMixin, forms.Form):
         empty_label="Toți",
     )
     kind = forms.ChoiceField(label="Tip", choices=_kind_choices, required=False)
-    date_from = forms.DateField(
-        label="De la", required=False, widget=forms.DateInput(attrs={"type": "date"})
-    )
-    date_to = forms.DateField(
-        label="Până la", required=False, widget=forms.DateInput(attrs={"type": "date"})
-    )
+    date_from = forms.DateField(label="De la", required=False, widget=DateInput)
+    date_to = forms.DateField(label="Până la", required=False, widget=DateInput)
     # Istoricul unui singur document (din link-ul „istoric complet”)
     ct = forms.IntegerField(required=False, widget=forms.HiddenInput)
     obj = forms.CharField(required=False, max_length=64, widget=forms.HiddenInput)
