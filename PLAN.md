@@ -56,8 +56,8 @@ Legendă: `[ ]` de făcut · `[x]` gata · **(opțional)** = după ce obligatori
 
 ## Capitolul 2 – Utilizatori, roluri, audit
 
-- [ ] 2.1 Login / logout, schimbarea parolei, model `User` cu rol (grupuri Django)
-- [ ] 2.2 Mixin-uri / decoratori de permisiuni + filtrarea datelor pe rol (ex.: Depozitul nu vede prețurile)
+- [x] 2.1 Login / logout, schimbarea parolei, model `User` cu rol (câmp pe utilizator: exact un rol, I-02)
+- [x] 2.2 Matricea de permisiuni în cod (`permissions.py`), `PermissionMixin`, `user.can()`, filtrul `|can` în șabloane, meniul pe permisiuni, pagini 403/404
 - [ ] 2.3 Audit automat pe toate modelele importante (django-auditlog: utilizator, acțiune, câmpuri vechi → noi, dată, IP)
 - [ ] 2.4 Evenimente de business în audit (ex.: „Factură aprobată forțat – justificare: …”)
 - [ ] 2.5 Pagina **Jurnal de activitate** (Admin), cu filtre după utilizator, tip document, perioadă

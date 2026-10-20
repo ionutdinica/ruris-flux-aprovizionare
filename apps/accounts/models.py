@@ -33,3 +33,10 @@ class User(AbstractUser):
     def has_role(self, *roles):
         """Are utilizatorul unul dintre rolurile date? Ex.: user.has_role(Role.PROCUREMENT)."""
         return self.role in roles
+
+    def can(self, permission):
+        """Poate face acțiunea dată? Ex.: user.can("orders.edit").
+        Regulile sunt în apps/accounts/permissions.py."""
+        from .permissions import has_permission  # import aici: evită importul circular
+
+        return has_permission(self, permission)

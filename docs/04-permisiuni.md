@@ -40,8 +40,14 @@ Legendă: **S** = creează / modifică · **C** = doar citește · **—** = fă
 - **Doar Achizițiile rezolvă discrepanțele.** Doar ei știu dacă marfa necomandată trebuie păstrată (și pe ce comandă) sau returnată.
 - **Admin** are acces complet pentru administrare și suport, dar și acțiunile lui apar în audit.
 
-## Implementare (pe scurt)
+## Implementare
 
-- rolul e câmp pe `User`; câte un mixin pe view (`RoleRequiredMixin(roles=[...])`) și verificări în servicii pentru acțiuni;
-- formularele și șabloanele primesc rolul și omit câmpurile financiare pentru Depozit;
-- teste automate pentru **fiecare celulă „—”** din matrice: utilizatorul primește 403.
+- Rolul e un câmp pe `User` (un utilizator are exact un rol, I-02).
+- Matricea de mai sus este transcrisă **o singură dată** în cod, în [`apps/accounts/permissions.py`](../apps/accounts/permissions.py), ca dicționar `cheie de permisiune → roluri`: `"orders.edit": {Achiziții, Admin}`.
+- Restul aplicației verifică doar permisiuni, niciodată roluri direct:
+  - view-uri: `class OrderCreateView(PermissionMixin, CreateView): permission = "orders.edit"` → 403 fără permisiune;
+  - cod Python: `user.can("orders.edit")`;
+  - șabloane: `{% if user|can:"orders.view_prices" %}` (ex. Depozitul nu vede coloana de prețuri);
+  - meniul: fiecare element declară permisiunea necesară.
+- O cheie de permisiune scrisă greșit ridică eroare (nu întoarce în tăcere „fără acces”).
+- Testul [`test_permissions.py`](../apps/accounts/tests/test_permissions.py) conține matricea rescrisă independent și o compară cu codul, pentru fiecare permisiune × fiecare rol.

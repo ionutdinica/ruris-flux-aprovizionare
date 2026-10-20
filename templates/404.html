@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+
+{% block title %}Pagină inexistentă{% endblock %}
+
+{% block content %}
+<div class="text-center py-5">
+  <i class="bi bi-signpost-split display-3 text-body-secondary"></i>
+  <h1 class="h3 mt-3">Pagina nu există</h1>
+  <p class="text-body-secondary">Adresa este greșită sau documentul a fost mutat.</p>
+  <a href="{% url 'dashboard:home' %}" class="btn btn-primary-dark mt-2">
+    <i class="bi bi-house me-1"></i> Înapoi la panou
+  </a>
+</div>
+{% endblock %}

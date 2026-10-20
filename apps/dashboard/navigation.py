@@ -1,8 +1,9 @@
-"""Meniul principal al aplicației, filtrat după rolul utilizatorului.
+"""Meniul principal al aplicației, filtrat după permisiunile utilizatorului.
 
 Meniul e definit o singură dată, aici, ca date. Fiecare element spune ce
-roluri îl văd (conform docs/04-permisiuni.md). Șablonul doar afișează ce
-primește, fără logică de permisiuni în HTML.
+permisiune trebuie să aibă utilizatorul ca să-l vadă (vezi
+apps/accounts/permissions.py). Șablonul doar afișează ce primește,
+fără logică de permisiuni în HTML.
 
 Elementele ale căror pagini nu există încă (capitolele viitoare) apar
 dezactivate, cu eticheta „în curând”, și devin active automat când
@@ -13,18 +14,13 @@ from dataclasses import dataclass
 
 from django.urls import NoReverseMatch, reverse
 
-from apps.accounts.models import User
-
-R = User.Role
-ALL_ROLES = (R.PROCUREMENT, R.WAREHOUSE, R.ACCOUNTING, R.ADMIN)
-
 
 @dataclass(frozen=True)
 class MenuItem:
     label: str
     icon: str  # numele unei iconițe Bootstrap Icons, ex. "cart"
     url_name: str  # numele rutei Django, ex. "purchasing:order_list"
-    roles: tuple = ALL_ROLES
+    permission: str | None = None  # None = vizibil pentru orice utilizator autentificat
 
 
 @dataclass(frozen=True)
@@ -38,37 +34,38 @@ class MenuGroup:
 
 MENU = (
     MenuItem("Panou", "speedometer2", "dashboard:home"),
-    MenuItem("Comenzi", "cart", "purchasing:order_list"),
-    MenuItem("Recepții", "box-seam", "warehouse:receipt_list"),
-    MenuItem("Discrepanțe", "exclamation-triangle", "warehouse:discrepancy_list"),
-    MenuItem("Stoc", "boxes", "warehouse:stock"),
+    MenuItem("Comenzi", "cart", "purchasing:order_list", "orders.view"),
+    MenuItem("Recepții", "box-seam", "warehouse:receipt_list", "receipts.view"),
     MenuItem(
-        "Facturi", "receipt", "invoicing:invoice_list", (R.PROCUREMENT, R.ACCOUNTING, R.ADMIN)
+        "Discrepanțe", "exclamation-triangle", "warehouse:discrepancy_list", "discrepancies.view"
     ),
+    MenuItem("Stoc", "boxes", "warehouse:stock", "stock.view"),
+    MenuItem("Facturi", "receipt", "invoicing:invoice_list", "invoices.view"),
     MenuGroup(
         "Nomenclatoare",
         "journal-text",
         (
-            MenuItem("Furnizori", "truck", "catalog:supplier_list"),
-            MenuItem("Produse", "tag", "catalog:product_list"),
-            MenuItem(
-                "Cursuri BNR",
-                "currency-exchange",
-                "currency:rate_list",
-                (R.PROCUREMENT, R.ACCOUNTING, R.ADMIN),
-            ),
+            MenuItem("Furnizori", "truck", "catalog:supplier_list", "catalog.view"),
+            MenuItem("Produse", "tag", "catalog:product_list", "catalog.view"),
+            MenuItem("Cursuri BNR", "currency-exchange", "currency:rate_list", "rates.view"),
         ),
     ),
     MenuGroup(
         "Administrare",
         "gear",
         (
-            MenuItem("Jurnal de activitate", "clock-history", "audit:log", (R.ADMIN,)),
-            MenuItem("Notificări trimise", "envelope", "notifications:log", (R.ADMIN,)),
-            MenuItem("Utilizatori", "people", "admin:accounts_user_changelist", (R.ADMIN,)),
+            MenuItem("Jurnal de activitate", "clock-history", "audit:log", "audit.view"),
+            MenuItem(
+                "Notificări trimise", "envelope", "notifications:log", "notifications.view_all"
+            ),
+            MenuItem("Utilizatori", "people", "admin:accounts_user_changelist", "users.manage"),
         ),
     ),
 )
+
+
+def _visible(item, user):
+    return item.permission is None or user.can(item.permission)
 
 
 def _resolve(item, current_path):
@@ -89,9 +86,9 @@ def build_menu(user, current_path):
     menu = []
     for entry in MENU:
         if isinstance(entry, MenuGroup):
-            items = [_resolve(i, current_path) for i in entry.items if user.has_role(*i.roles)]
+            items = [_resolve(i, current_path) for i in entry.items if _visible(i, user)]
             if items:  # un grup fără niciun element vizibil nu se afișează
                 menu.append({"label": entry.label, "icon": entry.icon, "children": items})
-        elif user.has_role(*entry.roles):
+        elif _visible(entry, user):
             menu.append(_resolve(entry, current_path))
     return menu
