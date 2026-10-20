@@ -1,0 +1,205 @@
+# 02 · Modelul de date
+
+Numele modelelor și câmpurilor sunt în engleză (ca în cod); descrierile sunt în română.
+Convenții generale:
+
+- toate sumele și cantitățile sunt `Decimal` (niciodată `float`):
+  - cantități: 3 zecimale (pentru UM precum kg, m)
+  - prețuri unitare: 4 zecimale
+  - valori (totaluri): 2 zecimale
+  - curs valutar: 4 zecimale (precizia BNR)
+- fiecare model are `created_at`, `created_by`, `updated_at`; istoricul complet al modificărilor e în jurnalul de audit;
+- documentele (comenzi, recepții, facturi) au un **număr intern** generat automat: `CMD-2026-0001`, `REC-2026-0001`, `FAC-2026-0001`.
+
+## Diagrama entităților
+
+```mermaid
+erDiagram
+    User ||--o{ PurchaseOrder : "e responsabil de"
+    Supplier ||--o{ PurchaseOrder : "primește"
+    Supplier ||--o{ GoodsReceipt : "livrează"
+    Supplier ||--o{ Invoice : "emite"
+
+    PurchaseOrder ||--|{ PurchaseOrderLine : "conține"
+    Product ||--o{ PurchaseOrderLine : ""
+
+    GoodsReceipt ||--|{ GoodsReceiptLine : "conține"
+    PurchaseOrder |o--o{ GoodsReceipt : "referință (opțional)"
+    PurchaseOrderLine |o--o{ GoodsReceiptLine : "acoperă (opțional)"
+    Product ||--o{ GoodsReceiptLine : ""
+
+    GoodsReceiptLine ||--o| Discrepancy : "partea neacoperită"
+    Discrepancy }o--o| PurchaseOrderLine : "atașată la (la rezolvare)"
+
+    Invoice ||--|{ InvoiceLine : "conține"
+    PurchaseOrderLine ||--o{ InvoiceLine : "facturată prin"
+
+    Product ||--o{ StockMovement : ""
+    GoodsReceiptLine |o--o{ StockMovement : "generează"
+    PurchaseOrderLine |o--o{ StockMovement : "retur pe linie"
+
+    ExchangeRate }o..o{ Invoice : "curs folosit (copiat pe factură)"
+    User ||--o{ NotificationLog : "destinatar"
+```
+
+## Entități
+
+### Utilizatori și nomenclatoare
+
+**User** – extinde utilizatorul Django
+| Câmp | Tip | Observații |
+|---|---|---|
+| `username`, `email`, `first_name`, `last_name` | text | emailul e obligatoriu (notificări) |
+| `role` | enum | `PROCUREMENT`, `WAREHOUSE`, `ACCOUNTING`, `ADMIN` |
+| `is_active` | bool | utilizatorii nu se șterg, se dezactivează |
+
+**Supplier** – furnizor
+| Câmp | Tip | Observații |
+|---|---|---|
+| `name` | text | |
+| `tax_id` (CUI) | text, unic | |
+| `email`, `phone`, `address` | text | |
+| `default_currency` | enum `RON`/`EUR` | propusă automat la comenzi noi |
+| `is_active` | bool | |
+
+**Product** – produs
+| Câmp | Tip | Observații |
+|---|---|---|
+| `code` | text, unic | |
+| `name` | text | |
+| `unit` | enum | `buc`, `kg`, `m`, `l`, `set` … |
+| `vat_rate` | decimal | implicit 21% |
+| `is_active` | bool | |
+
+### Achiziții
+
+**PurchaseOrder** – comandă
+| Câmp | Tip | Observații |
+|---|---|---|
+| `number` | text, unic | `CMD-AAAA-NNNN` |
+| `supplier` | → Supplier | |
+| `owner` | → User | responsabilul (primește notificările) |
+| `currency` | enum | `RON`/`EUR` |
+| `order_date` | dată | |
+| `expected_date` | dată | implicit pentru linii |
+| `status` | enum | vezi [03-fluxuri-si-stari.md](03-fluxuri-si-stari.md) |
+| `close_reason` | text | obligatoriu la închidere cu rest nelivrat |
+| `notes` | text | |
+
+**PurchaseOrderLine** – linie de comandă
+| Câmp | Tip | Observații |
+|---|---|---|
+| `order` | → PurchaseOrder | |
+| `product` | → Product | |
+| `quantity` | decimal(3) | > 0 |
+| `unit_price` | decimal(4) | în moneda comenzii |
+| `vat_rate` | decimal | preluat din produs, modificabil |
+| `expected_date` | dată | |
+
+Valori **calculate** (nu se stochează, ca să nu se poată desincroniza; se calculează prin agregări în interogări):
+- `received_qty` = Σ cantități acoperite din recepții confirmate + Σ discrepanțe atașate − Σ retururi pe linie
+- `invoiced_qty` = Σ cantități pe facturi nerespinse
+- `remaining_qty` = `quantity` − `received_qty`
+- `is_late` = `expected_date` < azi și `remaining_qty` > 0 și comanda e deschisă
+
+### Depozit
+
+**GoodsReceipt** – recepție
+| Câmp | Tip | Observații |
+|---|---|---|
+| `number` | text, unic | `REC-AAAA-NNNN` |
+| `supplier` | → Supplier | |
+| `purchase_order` | → PurchaseOrder, opțional | gol = marfă fără comandă |
+| `receipt_date` | dată | |
+| `delivery_note` | text | nr. aviz / CMR de la transportator |
+| `status` | enum | `DRAFT`, `CONFIRMED` |
+| `confirmed_by`, `confirmed_at` | | |
+
+**GoodsReceiptLine** – linie de recepție
+| Câmp | Tip | Observații |
+|---|---|---|
+| `receipt` | → GoodsReceipt | |
+| `product` | → Product | |
+| `order_line` | → PurchaseOrderLine, opțional | |
+| `quantity_received` | decimal(3) | ce s-a numărat efectiv |
+| `quantity_accepted` | decimal(3) | calculat la confirmare: partea acoperită de comandă |
+| `quantity_quarantined` | decimal(3) | calculat la confirmare: restul |
+| `notes` | text | de ex. „ambalaj deteriorat” |
+
+**Discrepancy** – discrepanță
+| Câmp | Tip | Observații |
+|---|---|---|
+| `receipt_line` | → GoodsReceiptLine | |
+| `type` | enum | `UNORDERED` (necomandat), `OVER_DELIVERY` (peste comandă) |
+| `quantity` | decimal(3) | cantitatea în carantină |
+| `status` | enum | `OPEN`, `RESOLVED` |
+| `resolution` | enum | `ATTACHED`, `RETURNED` |
+| `attached_order_line` | → PurchaseOrderLine | la rezolvarea prin atașare |
+| `resolution_note`, `resolved_by`, `resolved_at` | | |
+
+**StockMovement** – mișcare de stoc (registru append-only)
+| Câmp | Tip | Observații |
+|---|---|---|
+| `product` | → Product | |
+| `type` | enum | `RECEIPT`, `DISCREPANCY_ACCEPTED`, `CONSUMPTION`, `SUPPLIER_RETURN`, `ADJUSTMENT` |
+| `quantity` | decimal(3) | **cu semn**: + intrare, − ieșire |
+| `date` | dată | |
+| `receipt_line` | → GoodsReceiptLine, opțional | |
+| `order_line` | → PurchaseOrderLine, opțional | pentru retururi pe o linie de comandă |
+| `discrepancy` | → Discrepancy, opțional | |
+| `reason` | text | obligatoriu pentru consum, retur, ajustare |
+
+Stocul disponibil al unui produs = Σ `quantity`. În carantină = Σ discrepanțe `OPEN`.
+
+### Contabilitate
+
+**Invoice** – factură
+| Câmp | Tip | Observații |
+|---|---|---|
+| `internal_number` | text, unic | `FAC-AAAA-NNNN` |
+| `supplier` | → Supplier | |
+| `supplier_invoice_number` | text | unic împreună cu `supplier` (I-21) |
+| `invoice_date`, `due_date` | dată | |
+| `currency` | enum | `RON`/`EUR` |
+| `declared_net`, `declared_vat`, `declared_total` | decimal(2) | de pe documentul fizic |
+| `exchange_rate` | decimal(4) | 1 pentru RON |
+| `exchange_rate_date` | dată | data efectivă a cursului BNR folosit |
+| `total_ron` | decimal(2) | `declared_total` × `exchange_rate` |
+| `status` | enum | vezi [03-fluxuri-si-stari.md](03-fluxuri-si-stari.md) |
+| `match_result` | JSON | lista motivelor de blocare (cod + detalii) de la ultima potrivire |
+| `matched_at` | dată-oră | |
+| `override_reason`, `approved_by`, `approved_at` | | forțare / aprobare |
+| `paid_at`, `payment_reference` | | |
+
+**InvoiceLine** – linie de factură
+| Câmp | Tip | Observații |
+|---|---|---|
+| `invoice` | → Invoice | |
+| `order_line` | → PurchaseOrderLine | linia de comandă facturată |
+| `quantity` | decimal(3) | |
+| `unit_price` | decimal(4) | |
+| `vat_rate` | decimal | |
+| `net_amount`, `vat_amount` | decimal(2) | calculate |
+
+### Infrastructură
+
+**ExchangeRate** – curs BNR
+| Câmp | Tip | Observații |
+|---|---|---|
+| `date` | dată | data publicării BNR |
+| `currency` | text | `EUR` (se salvează toate monedele din flux; folosim EUR) |
+| `rate` | decimal(4) | RON pentru 1 unitate |
+| `multiplier` | int | BNR folosește multiplicator pentru unele monede (ex. 100 HUF) |
+| unic: (`date`, `currency`) | | |
+
+**NotificationLog** – email trimis
+| Câmp | Tip | Observații |
+|---|---|---|
+| `recipient` | → User | |
+| `sent_at` | dată-oră | |
+| `subject` | text | |
+| `items` | JSON | ce probleme au fost incluse (pentru marcajul „NOU” data viitoare) |
+| `status` | enum | `SENT`, `FAILED` |
+| `error` | text | |
+
+**Jurnal de audit** – gestionat de `django-auditlog` (`LogEntry`): utilizator, acțiune (creare / modificare / ștergere), obiect, diferențe câmp cu câmp, dată-oră, IP. Plus evenimente de business explicite (ex. `invoice.force_approved`), cu mesaj și justificare.

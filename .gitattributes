@@ -1,0 +1,8 @@
+# Normalizează sfârșitul de rând (LF) pentru toate fișierele text,
+# ca să nu apară diferențe false între Windows și Linux (Docker, GitHub Actions).
+* text=auto eol=lf
+
+# Fișiere binare – nu se modifică
+*.pdf binary
+*.xlsx binary
+*.png binary

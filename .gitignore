@@ -1,0 +1,32 @@
+# Mediul virtual Python (se recreează din requirements)
+.venv/
+venv/
+
+# Fișiere generate de Python
+__pycache__/
+*.py[cod]
+
+# Configurare locală cu parole / chei – NU se publică (există .env.example)
+.env
+
+# Baza de date locală de dezvoltare
+db.sqlite3
+
+# Fișiere statice colectate și fișiere încărcate de utilizatori
+staticfiles/
+media/
+
+# Rapoarte de teste și acoperire
+.pytest_cache/
+.coverage
+htmlcov/
+.ruff_cache/
+
+# Documentul cu cerința primit de la companie – rămâne doar local
+*.pdf
+
+# Editoare și sistem de operare
+.vscode/
+.idea/
+Thumbs.db
+.DS_Store

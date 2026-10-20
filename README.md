@@ -1,0 +1,19 @@
+# Flux de aprovizionare – RURIS
+
+Aplicație web internă care leagă **Achizițiile**, **Depozitul** și **Contabilitatea** într-un singur flux:
+
+**Comandă → Recepție → Factură → Plată**
+
+cu potrivire automată în 3 direcții (*three-way match*): o factură ajunge la plată doar dacă se potrivește cu ce s-a comandat **și** cu ce a ajuns efectiv în depozit.
+
+> 🚧 Proiect în lucru. Progresul pe capitole este urmărit în [PLAN.md](PLAN.md).
+
+## Documentație de analiză și design
+
+| Document | Conținut |
+|---|---|
+| [Ipoteze și glosar](docs/01-ipoteze.md) | Deciziile luate acolo unde cerința nu e explicită |
+| [Modelul de date](docs/02-model-date.md) | Entitățile, relațiile și câmpurile |
+| [Fluxuri și stări](docs/03-fluxuri-si-stari.md) | Fluxul între echipe și ciclul de viață al documentelor |
+| [Roluri și permisiuni](docs/04-permisiuni.md) | Cine ce vede și ce poate face |
+| [Reguli de business](docs/05-reguli-business.md) | Potrivirea facturilor, cursul BNR, întârzieri, blocaje, notificări |
