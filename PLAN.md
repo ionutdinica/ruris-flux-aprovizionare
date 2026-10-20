@@ -44,7 +44,7 @@ Legendă: `[ ]` de făcut · `[x]` gata · **(opțional)** = după ce obligatori
 - [x] 1.1 Repository Git local + repository pe GitHub, `.gitignore`, `README.md` inițial
 - [x] 1.2 Proiect Django, structurat pe aplicații:
   `accounts`, `audit`, `catalog`, `purchasing`, `warehouse`, `invoicing`, `currency`, `notifications`, `dashboard`
-- [ ] 1.3 Configurare prin variabile de mediu (`.env` + `.env.example`), setări separate dev/prod
+- [x] 1.3 Configurare prin variabile de mediu (`.env` + `.env.example`): un singur `settings.py`, comportament diferit dev/prod doar prin variabile
 - [ ] 1.4 Layout de bază: Bootstrap 5, HTMX, meniu în funcție de rol, mesaje flash
 - [ ] 1.5 `ruff`, `pytest` configurate · primul test care trece
 - [ ] 1.6 **Docker Compose**: `web` + `postgres` + `mailpit` + `scheduler`
