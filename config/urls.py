@@ -13,5 +13,6 @@ urlpatterns = [
     path("jurnal/", include("apps.audit.urls")),
     path("nomenclatoare/", include("apps.catalog.urls")),
     path("comenzi/", include("apps.purchasing.urls")),
+    path("receptii/", include("apps.warehouse.urls")),
     path("", include("apps.dashboard.urls")),
 ]

@@ -20,6 +20,7 @@ from apps.audit.services import record_event
 from apps.catalog.models import Supplier
 from apps.core.excel import xlsx_response
 from apps.core.views import SearchListMixin
+from apps.warehouse.models import GoodsReceipt
 
 from . import excel_import, services
 from .excel_export import build_import_template, build_orders_export
@@ -49,10 +50,10 @@ class OrderListView(PermissionMixin, VisibleOrdersMixin, SearchListMixin, ListVi
         *Status.choices,
     ]
 
-    def get_queryset(self):
+    def base_queryset(self):
         queryset = (
             super()
-            .get_queryset()
+            .base_queryset()
             .select_related("supplier", "owner")
             .with_totals()
             .with_late_flag()
@@ -69,7 +70,7 @@ class OrderListView(PermissionMixin, VisibleOrdersMixin, SearchListMixin, ListVi
         if status == "open":
             return queryset.open()
         if status == "late":
-            return queryset.late()
+            return queryset.filter(is_late=True)  # calculat în base_queryset()
         if status in Status.values:
             return queryset.filter(status=status)
         return queryset
@@ -141,6 +142,8 @@ class OrderDetailView(PermissionMixin, VisibleOrdersMixin, DetailView):
         )
         context["reason_form"] = ReasonForm()
         context["can_cancel"] = order.status in (Status.DRAFT, Status.SENT)
+        context["receipts"] = order.receipts.select_related("confirmed_by")
+        context["can_receive"] = order.status in GoodsReceipt.RECEIVABLE_ORDER_STATUSES
         return context
 
 

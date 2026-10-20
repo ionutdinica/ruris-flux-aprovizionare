@@ -88,10 +88,10 @@ Legendă: `[ ]` de făcut · `[x]` gata · **(opțional)** = după ce obligatori
 
 ## Capitolul 5 – Depozit: recepții și stoc
 
-- [ ] 5.1 Lista livrărilor așteptate (comenzi trimise, sortate după data estimată, fără prețuri)
-- [ ] 5.2 Recepție pe o comandă: completare cantități primite; oricâte tranșe pe aceeași comandă
-- [ ] 5.3 Confirmarea recepției generează mișcările de stoc (în tranzacție atomică)
-- [ ] 5.4 Cazuri speciale:
+- [x] 5.1 **Livrări așteptate**: comenzile cu marfă de primit, după cel mai apropiat termen (calculat în baza de date); întârziatele și cele de azi evidențiate; filtre
+- [x] 5.2 Recepție pe comandă: cantitatea **numărată** (așteptatul doar afișat), produse în plus, oricâte tranșe; recepție fără comandă; ciornă editabilă / ștergibilă
+- [x] 5.3 Confirmare cu **previzualizare** (în stoc / în carantină, aceeași funcție ca la confirmare); mișcări de stoc, discrepanțe și statusul comenzii într-o singură tranzacție
+- [x] 5.4 Cazuri speciale (regulile în `services.py`, discrepanțele rezolvate de Achiziții în etapa c):
   - livrare parțială (comanda rămâne deschisă)
   - livrare peste cantitatea comandată (generează discrepanță)
   - **marfă necomandată** (recepție fără comandă sau linie în plus, care generează discrepanță spre Achiziții)

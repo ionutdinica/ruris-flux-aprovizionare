@@ -18,6 +18,10 @@ class SearchListMixin:
     altfel câmpurile din `search_fields` ale view-ului.
     Parametri din adresă: ?q=text&status=active|inactive&page=2
     Cererile HTMX primesc doar tabelul (`partial_template_name`), nu toată pagina.
+
+    O listă care are nevoie de calcule suplimentare (totaluri, marcaje) le declară în
+    `base_queryset()`; căutarea și filtrele se aplică ÎNTOTDEAUNA după, deci filtrele
+    se pot baza pe acele calcule.
     """
 
     search_fields = []
@@ -28,8 +32,12 @@ class SearchListMixin:
     # împreună cu filter_status().
     status_choices = [("", "Toate"), ("active", "Active"), ("inactive", "Inactive")]
 
+    def base_queryset(self):
+        """Lista de pornire, cu calculele de care au nevoie filtrele. Suprascrisă de liste."""
+        return super().get_queryset()
+
     def get_queryset(self):
-        queryset = super().get_queryset()
+        queryset = self.base_queryset()
         query = self.request.GET.get("q", "").strip()
         if query and issubclass(queryset.model, SearchableModel):
             # Căutare fără diacritice: „otel” găsește „Oțelăria” (vezi SearchableModel).

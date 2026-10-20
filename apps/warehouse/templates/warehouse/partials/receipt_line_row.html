@@ -1,0 +1,33 @@
+{# Un rând al recepției. Rândurile de pe comandă au produsul fix; cele în plus au listă de produse. #}
+{% load formatting %}
+<tr data-line>
+  <td style="min-width: 16rem">
+    {% for hidden in form.hidden_fields %}{{ hidden }}{% endfor %}
+    {% if form.is_order_row %}
+      <span class="fw-semibold">{{ form.pending.product }}</span>
+    {% else %}
+      {{ form.product }}
+      {% for error in form.product.errors %}<div class="invalid-feedback">{{ error }}</div>{% endfor %}
+    {% endif %}
+    {% for error in form.non_field_errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+  </td>
+  <td class="text-end text-nowrap align-middle">
+    {% if form.is_order_row %}
+      {{ form.pending.remaining_qty|qty }} {{ form.pending.product.unit }}
+      {% if not form.pending.remaining_qty %}<div><span class="badge text-bg-success">complet</span></div>{% endif %}
+    {% else %}
+      <span class="badge text-bg-warning" title="Merge integral în carantină">nu e pe comandă</span>
+    {% endif %}
+  </td>
+  <td style="min-width: 8rem">
+    {{ form.quantity_received }}
+    {% for error in form.quantity_received.errors %}<div class="invalid-feedback">{{ error }}</div>{% endfor %}
+  </td>
+  <td style="min-width: 12rem">{{ form.notes }}</td>
+  <td class="text-end align-middle">
+    {% if not form.is_order_row %}
+      <span class="d-none">{{ form.DELETE }}</span>
+      <button type="button" class="btn btn-sm btn-outline-danger" data-formset-remove title="Șterge rândul"><i class="bi bi-trash"></i></button>
+    {% endif %}
+  </td>
+</tr>

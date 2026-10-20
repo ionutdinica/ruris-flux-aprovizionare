@@ -43,6 +43,34 @@ def _lock_order(order_id):
 # --- Recepția ------------------------------------------------------------------------------
 
 
+def split_quantity(quantity, order_line, already_received):
+    """Regula carantinei (I-11): câtă marfă intră în stoc și câtă merge în carantină.
+
+    acceptat = min(numărat, comandat − recepționat deja); restul → carantină.
+    Fără linie de comandă (marfă necomandată), totul merge în carantină.
+    Folosită ȘI la previzualizare, ȘI la confirmare: cele două nu pot calcula diferit.
+    """
+    if order_line is None:
+        return ZERO, quantity
+    remaining = max(order_line.quantity - already_received, ZERO)
+    accepted = min(quantity, remaining)
+    return accepted, quantity - accepted
+
+
+def preview_receipt(receipt):
+    """Ce s-ar întâmpla la confirmare, fără să salveze nimic: [(linie, acceptat, carantină)]."""
+    received = received_quantities(receipt.purchase_order) if receipt.purchase_order_id else {}
+    return [
+        (
+            line,
+            *split_quantity(
+                line.quantity_received, line.order_line, received.get(line.order_line_id, ZERO)
+            ),
+        )
+        for line in receipt.lines.select_related("product", "order_line")
+    ]
+
+
 @transaction.atomic
 def confirm_receipt(receipt, user):
     """Confirmă o recepție: împarte fiecare linie în acceptat (stoc) și carantină (I-11).
@@ -78,12 +106,9 @@ def confirm_receipt(receipt, user):
         ):
             raise WarehouseError(f"Linia cu produsul {line.product} nu corespunde comenzii.")
 
-        if line.order_line_id:
-            remaining = max(line.order_line.quantity - received.get(line.order_line_id, ZERO), ZERO)
-            accepted = min(line.quantity_received, remaining)
-        else:
-            accepted = ZERO  # necomandat: totul în carantină
-        quarantined = line.quantity_received - accepted
+        accepted, quarantined = split_quantity(
+            line.quantity_received, line.order_line, received.get(line.order_line_id, ZERO)
+        )
 
         line.quantity_accepted, line.quantity_quarantined = accepted, quarantined
         line.save(update_fields=["quantity_accepted", "quantity_quarantined", "updated_at"])

@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Recepție{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb small">
+    <li class="breadcrumb-item"><a href="{% url 'warehouse:expected' %}">Recepții</a></li>
+    {% if receipt.pk %}<li class="breadcrumb-item"><a href="{{ receipt.get_absolute_url }}">{{ receipt }}</a></li>{% endif %}
+    <li class="breadcrumb-item active" aria-current="page">{% if receipt.pk %}Editare{% else %}Recepție nouă{% endif %}</li>
+  </ol>
+</nav>
+
+<h1 class="h3 mb-1">
+  {% if order %}Recepție pe comanda <a href="{{ order.get_absolute_url }}" class="text-decoration-none">{{ order }}</a>{% else %}Recepție marfă fără comandă{% endif %}
+</h1>
+<p class="text-body-secondary mb-3">{% if order %}{{ order.supplier }}{% else %}Toată marfa va merge în carantină, iar Achizițiile vor decide ce se întâmplă cu ea.{% endif %}</p>
+
+<div class="alert alert-info small">
+  <i class="bi bi-info-circle me-1"></i>
+  Introdu cantitatea <strong>numărată efectiv</strong>. Cantitatea așteptată este afișată doar ca referință;
+  ce vine în plus nu se pierde: merge în carantină. Un câmp lăsat gol înseamnă că produsul nu a sosit.
+</div>
+
+<form method="post" novalidate>
+  {% csrf_token %}
+  {% if form.non_field_errors %}<div class="alert alert-danger">{{ form.non_field_errors }}</div>{% endif %}
+
+  <div class="card shadow-sm mb-3">
+    <div class="card-header bg-body fw-semibold">Date generale</div>
+    <div class="card-body">
+      <div class="row">
+        {% if form.supplier %}<div class="col-md-6">{% include "partials/form_field.html" with field=form.supplier %}</div>{% endif %}
+        <div class="col-md-3">{% include "partials/form_field.html" with field=form.receipt_date %}</div>
+        <div class="col-md-3">{% include "partials/form_field.html" with field=form.delivery_note %}</div>
+        <div class="col-12">{% include "partials/form_field.html" with field=form.notes %}</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card shadow-sm mb-3" data-formset="{{ lines.prefix }}">
+    <div class="card-header bg-body fw-semibold d-flex justify-content-between align-items-center">
+      Marfa primită
+      <button type="button" class="btn btn-sm btn-outline-primary" data-formset-add>
+        <i class="bi bi-plus-lg me-1"></i>{% if order %}Produs care nu e pe comandă{% else %}Adaugă produs{% endif %}
+      </button>
+    </div>
+    {{ lines.management_form }}
+    {% if lines.non_form_errors %}<div class="alert alert-danger m-3 mb-0">{{ lines.non_form_errors }}</div>{% endif %}
+    <div class="table-responsive">
+      <table class="table align-top mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>Produs</th>
+            <th class="text-end">Așteptat</th>
+            <th>Numărat</th>
+            <th>Observații (ex. ambalaj deteriorat)</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody data-formset-body>
+          {% for line_form in lines %}
+            {% include "warehouse/partials/receipt_line_row.html" with form=line_form %}
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% if not order and not lines.forms %}
+      <p class="text-body-secondary small m-3">Adaugă produsele sosite cu butonul de mai sus.</p>
+    {% endif %}
+    <template>{% include "warehouse/partials/receipt_line_row.html" with form=lines.empty_form %}</template>
+  </div>
+
+  <div class="d-flex gap-2">
+    <button type="submit" class="btn btn-primary-dark"><i class="bi bi-check-lg me-1"></i>Salvează ciorna</button>
+    <a href="{% if receipt.pk %}{{ receipt.get_absolute_url }}{% else %}{% url 'warehouse:expected' %}{% endif %}" class="btn btn-outline-secondary">Renunță</a>
+  </div>
+  <p class="text-body-secondary small mt-2">După salvare vei vedea ce intră în stoc și ce merge în carantină, înainte de confirmare.</p>
+</form>
+{% endblock %}
+
+{% block scripts %}<script src="{% static 'js/formset.js' %}"></script>{% endblock %}

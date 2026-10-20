@@ -1,0 +1,171 @@
+{% extends "base.html" %}
+{% load permissions audit formatting %}
+
+{% block title %}{{ receipt }}{% endblock %}
+
+{% block content %}
+{% with can_edit=user|can:"receipts.edit" %}
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb small">
+    <li class="breadcrumb-item"><a href="{% url 'warehouse:receipt_list' %}">Recepții</a></li>
+    <li class="breadcrumb-item active" aria-current="page">{{ receipt }}</li>
+  </ol>
+</nav>
+
+<div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+  <h1 class="h3 mb-0">
+    {% if receipt.number %}Recepția {{ receipt.number }}{% else %}Recepție neconfirmată{% endif %}
+    <span class="fs-6 align-middle badge text-bg-{% if receipt.is_draft %}secondary{% else %}success{% endif %}">{{ receipt.get_status_display }}</span>
+  </h1>
+  {% if can_edit and receipt.is_draft %}
+    <div class="d-flex flex-wrap gap-2">
+      <a href="{% url 'warehouse:receipt_update' receipt.pk %}" class="btn btn-outline-primary"><i class="bi bi-pencil me-1"></i>Editează</a>
+      <button type="button" class="btn btn-primary-dark" data-bs-toggle="modal" data-bs-target="#confirmModal"><i class="bi bi-check2-square me-1"></i>Confirmă recepția</button>
+      <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteModal"><i class="bi bi-trash me-1"></i>Șterge ciorna</button>
+    </div>
+  {% endif %}
+</div>
+
+<div class="row g-3">
+  <div class="col-lg-8">
+    <div class="card shadow-sm mb-3">
+      <div class="card-body">
+        <dl class="row mb-0">
+          <dt class="col-sm-3">Furnizor</dt>
+          <dd class="col-sm-9"><a href="{{ receipt.supplier.get_absolute_url }}">{{ receipt.supplier }}</a></dd>
+          <dt class="col-sm-3">Comandă</dt>
+          <dd class="col-sm-9">{% if receipt.purchase_order %}<a href="{{ receipt.purchase_order.get_absolute_url }}">{{ receipt.purchase_order }}</a>{% else %}<span class="badge text-bg-light border">fără comandă</span>{% endif %}</dd>
+          <dt class="col-sm-3">Data recepției</dt>
+          <dd class="col-sm-9">{{ receipt.receipt_date|date:"d.m.Y" }}</dd>
+          {% if receipt.delivery_note %}
+            <dt class="col-sm-3">Aviz</dt>
+            <dd class="col-sm-9">{{ receipt.delivery_note }}</dd>
+          {% endif %}
+          {% if receipt.confirmed_at %}
+            <dt class="col-sm-3">Confirmată</dt>
+            <dd class="col-sm-9">{{ receipt.confirmed_at|date:"d.m.Y H:i" }} de {{ receipt.confirmed_by }}</dd>
+          {% endif %}
+          {% if receipt.notes %}
+            <dt class="col-sm-3">Observații</dt>
+            <dd class="col-sm-9 mb-0">{{ receipt.notes|linebreaksbr }}</dd>
+          {% endif %}
+        </dl>
+      </div>
+    </div>
+
+    {% if receipt.is_draft %}
+      {# --- Previzualizare: exact ce se va întâmpla la confirmare --------------------------- #}
+      <div class="card shadow-sm">
+        <div class="card-header bg-body fw-semibold">La confirmare</div>
+        <div class="table-responsive">
+          <table class="table align-middle mb-0">
+            <thead class="table-light">
+              <tr>
+                <th>Produs</th>
+                <th class="text-end">Numărat</th>
+                <th class="text-end">Intră în stoc</th>
+                <th class="text-end">Merge în carantină</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for line, accepted, quarantined in preview %}
+                <tr>
+                  <td>{{ line.product }}{% if line.notes %}<div class="small text-body-secondary">{{ line.notes }}</div>{% endif %}</td>
+                  <td class="text-end text-nowrap">{{ line.quantity_received|qty }} {{ line.product.unit }}</td>
+                  <td class="text-end text-nowrap text-success fw-semibold">{{ accepted|qty }}</td>
+                  <td class="text-end text-nowrap{% if quarantined %} text-warning-emphasis fw-semibold{% endif %}">
+                    {{ quarantined|qty }}
+                    {% if quarantined %}<div class="small">{% if line.order_line_id %}peste comandă{% else %}nu e pe comandă{% endif %}</div>{% endif %}
+                  </td>
+                </tr>
+              {% empty %}
+                <tr><td colspan="4" class="text-center text-body-secondary py-4">Recepția nu are încă nicio linie.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    {% else %}
+      {# --- Recepție confirmată: ce s-a întâmplat ------------------------------------------- #}
+      <div class="card shadow-sm">
+        <div class="card-header bg-body fw-semibold">Marfa primită</div>
+        <div class="table-responsive">
+          <table class="table align-middle mb-0">
+            <thead class="table-light">
+              <tr>
+                <th>Produs</th>
+                <th class="text-end">Numărat</th>
+                <th class="text-end">În stoc</th>
+                <th class="text-end">Carantină</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for line in lines %}
+                <tr>
+                  <td>{{ line.product }}{% if line.notes %}<div class="small text-body-secondary">{{ line.notes }}</div>{% endif %}</td>
+                  <td class="text-end text-nowrap">{{ line.quantity_received|qty }} {{ line.product.unit }}</td>
+                  <td class="text-end text-nowrap text-success">{{ line.quantity_accepted|qty }}</td>
+                  <td class="text-end text-nowrap">
+                    {{ line.quantity_quarantined|qty }}
+                    {% if line.discrepancy %}
+                      <div class="small">
+                        {% if line.discrepancy.is_open %}<span class="badge text-bg-warning">așteaptă decizia Achizițiilor</span>{% else %}<span class="badge text-bg-light border">{{ line.discrepancy.get_resolution_display }}</span>{% endif %}
+                      </div>
+                    {% endif %}
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    {% endif %}
+  </div>
+
+  <div class="col-lg-4">
+    {% object_history receipt %}
+  </div>
+</div>
+
+{% if can_edit and receipt.is_draft %}
+  <div class="modal fade" id="confirmModal" tabindex="-1" aria-labelledby="confirmModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <form method="post" action="{% url 'warehouse:receipt_confirm' receipt.pk %}" class="modal-content">
+        {% csrf_token %}
+        <div class="modal-header">
+          <h2 class="modal-title fs-5" id="confirmModalLabel">Confirmi recepția?</h2>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Închide"></button>
+        </div>
+        <div class="modal-body">
+          <p>Marfa acceptată intră în stoc, iar recepția nu se mai poate modifica după confirmare.</p>
+          {% if preview_quarantine %}
+            <div class="alert alert-warning small mb-0"><i class="bi bi-exclamation-triangle me-1"></i>Unele cantități merg în <strong>carantină</strong>: nu vor fi disponibile până când Achizițiile decid ce se întâmplă cu ele.</div>
+          {% endif %}
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Renunță</button>
+          <button type="submit" class="btn btn-primary-dark">Confirmă recepția</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <form method="post" action="{% url 'warehouse:receipt_delete' receipt.pk %}" class="modal-content">
+        {% csrf_token %}
+        <div class="modal-header">
+          <h2 class="modal-title fs-5" id="deleteModalLabel">Ștergi ciorna?</h2>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Închide"></button>
+        </div>
+        <div class="modal-body">Ciorna nu a fost confirmată, deci nu a modificat stocul. Ștergerea rămâne în jurnalul de activitate.</div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Renunță</button>
+          <button type="submit" class="btn btn-danger">Șterge ciorna</button>
+        </div>
+      </form>
+    </div>
+  </div>
+{% endif %}
+{% endwith %}
+{% endblock %}

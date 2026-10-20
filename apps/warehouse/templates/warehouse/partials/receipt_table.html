@@ -1,0 +1,45 @@
+<p class="text-body-secondary small mb-2">{{ page_obj.paginator.count }} recepții</p>
+
+{% if object_list %}
+<div class="card shadow-sm">
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead class="table-light">
+        <tr>
+          <th>Număr</th>
+          <th>Data</th>
+          <th>Furnizor</th>
+          <th>Comandă</th>
+          <th class="d-none d-md-table-cell">Aviz</th>
+          <th>Status</th>
+          <th class="d-none d-lg-table-cell">Confirmată de</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for receipt in object_list %}
+          <tr>
+            <td class="text-nowrap"><a href="{{ receipt.get_absolute_url }}" class="fw-semibold text-decoration-none">{{ receipt.number|default:"(ciornă)" }}</a></td>
+            <td class="text-nowrap">{{ receipt.receipt_date|date:"d.m.Y" }}</td>
+            <td>{{ receipt.supplier }}</td>
+            <td class="text-nowrap">
+              {% if receipt.purchase_order %}<a href="{{ receipt.purchase_order.get_absolute_url }}" class="text-decoration-none">{{ receipt.purchase_order }}</a>{% else %}<span class="badge text-bg-light border">fără comandă</span>{% endif %}
+            </td>
+            <td class="d-none d-md-table-cell small">{{ receipt.delivery_note }}</td>
+            <td class="text-nowrap">
+              <span class="badge text-bg-{% if receipt.is_draft %}secondary{% else %}success{% endif %}">{{ receipt.get_status_display }}</span>
+              {% if receipt.has_quarantine %}<span class="badge text-bg-warning" title="Marfă în carantină, nerezolvată"><i class="bi bi-exclamation-triangle"></i> carantină</span>{% endif %}
+            </td>
+            <td class="d-none d-lg-table-cell small">{{ receipt.confirmed_by|default:"" }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% include "partials/pagination.html" with page=page_obj target="#results" %}
+{% else %}
+  <div class="text-center text-body-secondary py-5">
+    <i class="bi bi-box-seam display-5"></i>
+    <p class="mt-2 mb-0">{% if query or status %}Nicio recepție nu corespunde filtrelor.{% else %}Nu există încă nicio recepție.{% endif %}</p>
+  </div>
+{% endif %}

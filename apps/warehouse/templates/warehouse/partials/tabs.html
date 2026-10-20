@@ -1,0 +1,13 @@
+{# Navigarea în zona de recepții. Folosire: {% include "warehouse/partials/tabs.html" with active="expected" %} #}
+<ul class="nav nav-tabs mb-3">
+  <li class="nav-item">
+    <a class="nav-link{% if active == 'expected' %} active{% endif %}" href="{% url 'warehouse:expected' %}">
+      <i class="bi bi-calendar-check me-1"></i>Livrări așteptate
+    </a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link{% if active == 'receipts' %} active{% endif %}" href="{% url 'warehouse:receipt_list' %}">
+      <i class="bi bi-box-seam me-1"></i>Recepții efectuate
+    </a>
+  </li>
+</ul>
