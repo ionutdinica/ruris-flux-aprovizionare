@@ -255,7 +255,11 @@ def stock_by_product(today):
         kind="bar",
         labels=[f"{p.code}" for p in top],
         datasets=[
-            {"label": "Disponibil", "data": [float(p.stock_available) for p in top], "color": NEUTRAL},
+            {
+                "label": "Disponibil",
+                "data": [float(p.stock_available) for p in top],
+                "color": NEUTRAL,
+            },
             {
                 "label": "Carantină",
                 "data": [float(p.stock_quarantined) for p in top],
