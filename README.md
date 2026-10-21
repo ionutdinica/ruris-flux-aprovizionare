@@ -37,8 +37,6 @@ Oprire: `docker compose down` (datele rămân) sau `docker compose down -v` (șt
 
 Cerințe: Python 3.12+ și Docker (doar pentru PostgreSQL, aceeași versiune ca la livrare).
 Fără Docker: orice PostgreSQL 17+ instalat local, cu adresa lui în `DATABASE_URL` din `.env`.
-Dezvoltarea folosește baza `aprovizionare_dev` (creată automat de Docker la prima pornire),
-separată de baza `aprovizionare` a aplicației din Docker, cea cu date demo.
 
 ```bash
 docker compose up -d db mailpit   # PostgreSQL (portul 5433) + Mailpit (emailuri: http://localhost:8025)
