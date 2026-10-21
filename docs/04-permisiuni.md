@@ -29,6 +29,7 @@ Legendă: **S** = creează / modifică · **C** = doar citește · **—** = fă
 | **Cursuri BNR** – vizualizare | C | — | C | C |
 | **Cursuri BNR** – „Actualizează acum” (altfel automat) | — | — | S | S |
 | **Panou** – „De rezolvat” | ce îl privește | ce îl privește | ce îl privește | toate problemele firmei |
+| **Panou** – starea sistemului (curs BNR, emailuri, utilizatori) | — | — | — | C |
 | **Notificări trimise** | doar ale lui | doar ale lui | doar ale lui | toate + „Trimite acum” |
 | **Jurnal de audit** (global) | — | — | — | C |
 | **Istoric pe document** | pe documentele pe care le vede, fără detaliile plății | idem | idem | toate |

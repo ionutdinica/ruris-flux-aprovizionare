@@ -47,6 +47,7 @@ PERMISSIONS = {
     "rates.refresh": {A, ADMIN},  # „Actualizează acum” (altfel automat, zilnic)
     # Panou: problemele întregii firme (ceilalți văd doar problemele care îi privesc)
     "alerts.view_all": {ADMIN},
+    "system.view": {ADMIN},  # starea sistemului: curs BNR, emailuri, utilizatori
     # Notificări
     "notifications.view_own": ALL,  # fiecare își vede emailurile primite
     "notifications.view_all": {ADMIN},

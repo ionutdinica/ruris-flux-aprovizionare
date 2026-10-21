@@ -2,7 +2,7 @@ from decimal import Decimal
 
 import pytest
 
-from apps.core.text import fold, format_money
+from apps.core.text import fold, format_money, plural
 
 
 @pytest.mark.parametrize(
@@ -59,3 +59,8 @@ def test_date_input_renders_iso_format_for_the_browser():
 )
 def test_format_money(value, expected):
     assert format_money(Decimal(value)) == expected
+
+
+@pytest.mark.parametrize(("n", "expected"), [(0, "0 facturi"), (1, "1 factură"), (3, "3 facturi")])
+def test_plural(n, expected):
+    assert plural(n, "factură", "facturi") == expected

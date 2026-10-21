@@ -33,3 +33,8 @@ def format_money(value):
     rounded = Decimal(str(value)).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
     english = f"{rounded:,.2f}"  # 1,250.50
     return english.replace(",", " ").replace(".", ",").replace(" ", ".")
+
+
+def plural(number, singular, plural_form):
+    """Numărul cu forma potrivită: „1 factură”, „3 facturi”, „0 facturi”."""
+    return f"{number} {singular if number == 1 else plural_form}"

@@ -141,6 +141,7 @@ Legendă: `[ ]` de făcut · `[x]` gata · **(opțional)** = după ce obligatori
 - [x] 9.1 Pagina de start diferită pe rol, cu cardurile „ce necesită atenție” (întârziate, blocate, discrepanțe)
 - [x] 9.2 Indicatori: valoare facturi blocate (RON), comenzi întârziate, rata livrărilor la timp pe furnizor
 - [x] 9.3 Grafice (Chart.js): valoare facturi pe status, livrări la timp pe furnizor, evoluția comenzilor întârziate, stoc pe produs
+- [x] 9.4 **Starea sistemului** (Admin): curs BNR, rezumatul zilnic (semnalează un planificator oprit), emailuri eșuate, echipe fără utilizatori activi
 
 ---
 

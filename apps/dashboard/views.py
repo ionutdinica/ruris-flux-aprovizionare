@@ -5,6 +5,7 @@ from apps.notifications.alerts import Section, collect, for_user, ordered
 from apps.notifications.digest import SECTION_COLORS
 
 from .charts import charts_for
+from .health import system_checks
 from .metrics import kpis_for
 
 # Câte probleme se afișează pe panoul Administratorului (care le vede pe ale tuturor).
@@ -36,6 +37,7 @@ class HomeView(TemplateView):
             hidden_count=len(alerts) - len(shown),
             is_admin=is_admin,
             charts=charts_for(user, today),
+            checks=system_checks(timezone.localtime()) if user.can("system.view") else [],
             today=today,
         )
         return context

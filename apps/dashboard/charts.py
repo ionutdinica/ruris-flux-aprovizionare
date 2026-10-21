@@ -25,7 +25,7 @@ from django.db.models import (
 from django.db.models.functions import Coalesce
 from django.utils import timezone
 
-from apps.core.text import format_money, format_quantity
+from apps.core.text import format_money, format_quantity, plural
 from apps.invoicing.models import Invoice
 from apps.purchasing.models import PurchaseOrder, PurchaseOrderLine
 from apps.warehouse.models import StockMovement
@@ -184,7 +184,7 @@ def late_orders_trend(today):
         counts.append(len(late))
 
     summary = (
-        f"Azi: {_count(counts[-1], 'comandă întârziată', 'comenzi întârziate')}; "
+        f"Azi: {plural(counts[-1], 'comandă întârziată', 'comenzi întârziate')}; "
         f"acum {LATE_TREND_DAYS} de zile: {counts[0]}."
     )
     return Chart(
@@ -220,11 +220,11 @@ def deliveries_ahead(today):
     labels = ["Întârziate"] + [("Azi" if day == today else _short_day(day)) for day in days]
     data = [late] + [per_day.get(day, 0) for day in days]
     busiest = max(days, key=lambda d: per_day.get(d, 0))
-    expected = _count(sum(data[1:]), "livrare așteptată", "livrări așteptate")
+    expected = plural(sum(data[1:]), "livrare așteptată", "livrări așteptate")
     summary = f"{expected} în următoarele {DELIVERY_HORIZON_DAYS} zile"
     if per_day:
         summary += f"; cea mai aglomerată zi: {busiest:%d.%m} ({per_day[busiest]})"
-    summary += f"; {_count(late, 'întârziată', 'întârziate')}."
+    summary += f"; {plural(late, 'întârziată', 'întârziate')}."
     return Chart(
         id="deliveries",
         title=f"Livrări așteptate, următoarele {DELIVERY_HORIZON_DAYS} zile",
@@ -306,7 +306,7 @@ def invoices_by_status(today):
     pending = Invoice.objects.filter(status=Invoice.Status.RATE_PENDING).count()
     summary = f"Total neplătit: {format_money(sum(values))} lei."
     if pending:
-        waiting = _count(pending, "factură", "facturi")
+        waiting = plural(pending, "factură", "facturi")
         summary += f" Plus {waiting} în așteptarea cursului BNR (fără valoare în lei încă)."
     return Chart(
         id="invoices",
@@ -359,11 +359,6 @@ def payments_by_week(today):
 
 # strftime("%a") ar da zilele în engleză (Mon, Tue), indiferent de limba aplicației.
 WEEKDAYS = ("lun", "mar", "mie", "joi", "vin", "sâm", "dum")
-
-
-def _count(number, singular, plural):
-    """„1 comandă întârziată”, „3 comenzi întârziate” (acordul în română)."""
-    return f"{number} {singular if number == 1 else plural}"
 
 
 def _qty(value):

@@ -17,6 +17,7 @@ from django.db.models import Sum
 from django.urls import reverse
 
 from apps.accounts.models import User
+from apps.core.text import plural
 from apps.invoicing.models import Invoice
 from apps.purchasing.models import PurchaseOrder
 from apps.warehouse.models import Discrepancy, GoodsReceipt
@@ -135,14 +136,14 @@ def _accounting(user, counts, today):
             "Valoarea facturilor blocate",
             _total_ron(blocked),
             reverse("invoicing:invoice_list") + "?status=BLOCKED",
-            f"{blocked.count()} facturi",
+            plural(blocked.count(), "factură", "facturi"),
             is_money=True,
         ),
         Kpi(
             f"De plătit în {PAY_SOON_DAYS} zile",
             _total_ron(pay_soon),
             reverse("invoicing:invoice_list") + "?status=APPROVED",
-            f"{pay_soon.count()} facturi aprobate",
+            plural(pay_soon.count(), "factură aprobată", "facturi aprobate"),
             is_money=True,
             warn_if_positive=False,
         ),
