@@ -537,7 +537,8 @@ class DemoSeeder:
                 (radu, "vopsele", [("VOP-R", 100)]),
             ]
         ):
-            soon = self.scenario(f"Livrare așteptată în {offset * 3} zile")
+            when = f"în {offset * 3} zile" if offset else "azi"
+            soon = self.scenario(f"Livrare așteptată {when}")
             self.order(
                 soon,
                 owner,

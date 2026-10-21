@@ -95,7 +95,7 @@ sosește restul mărfii, și ajunge la plată.
 | 5 | **`ion.marin`** | recepționează restul: **20** de curele → *Confirmă recepția* | comanda e **Recepționată** |
 | 6 | **`elena.dobre`** | reîncarcă factura | e **Potrivită**, fără ca Elena să facă ceva; în istoric: *„a devenit automat «Potrivită»”* |
 | 7 | **`elena.dobre`** | *Aprobă la plată* → *Marchează plătită* | factura e **Plătită** |
-| 8 | **`andrei.ionescu`** | pagina comenzii sau a facturii → *Istoricul complet* (sau *Administrare → Jurnal de activitate*) | toată povestea, cu cine și când: trimitere, două recepții, factura blocată, deblocarea automată (declanșată de recepția lui Ion), aprobare, plată |
+| 8 | **`andrei.ionescu`** | *Administrare → Jurnal de activitate*, filtrat pe ziua de azi (fiecare document are și propriul *Istoric*, cu partea lui) | toată povestea, cu cine și când: trimitere, două recepții, factura blocată, deblocarea automată (declanșată de recepția lui Ion), aprobare, plată |
 
 Ciclul e verificat automat, cu exact aceste cifre și mesaje, de testul
 [tests/test_readme_cycle.py](tests/test_readme_cycle.py). Pentru un tur mai larg al aplicației,

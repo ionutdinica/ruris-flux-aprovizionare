@@ -22,7 +22,7 @@ Legendă: `[ ]` de făcut · `[x]` gata · **(opțional)** = după ce obligatori
 | Teste | **pytest + pytest-django + factory_boy** | Standard, ușor de citit |
 | Calitate cod | **ruff** (lint + format), **GitHub Actions** (CI) | |
 | Limbă | Interfață, README, commit-uri: **română** · Cod (nume de variabile, clase): **engleză** | Codul în engleză evită diacriticele în identificatori și e convenția uzuală |
-| Livrare | Repository public pe **github.com/ionutdinica**, rulare locală (cu și fără Docker) + **deploy online** pentru demo | Pot testa fără să instaleze nimic |
+| Livrare | Repository public pe **github.com/ionutdinica**, rulare locală cu o singură comandă (`docker compose up`) sau din Python | Fără găzduire online (11.4): zero costuri, nimic de administrat; evaluatorul pornește aplicația la el, cu date demo |
 
 ---
 
@@ -169,6 +169,16 @@ Legendă: `[ ]` de făcut · `[x]` gata · **(opțional)** = după ce obligatori
 - [x] 11.4 **Fără găzduire online** (decizie: zero costuri, nimic de administrat): evaluatorul vede aplicația în README (capturi de ecran) sau o pornește la el cu **o singură comandă** (`docker compose up`), cu datele demo generate automat la prima pornire
 - [x] 11.5 Secțiunea „Ce aș face mai departe”: integrare e-Factura ANAF, plăți, evaluare stoc (FIFO/CMP), comenzi trimise automat furnizorilor
 - [x] 11.6 Verificare finală: clonare curată pe un folder nou și pornire urmând doar README-ul
+
+---
+
+## După capitolul 11 – testare manuală și adăugiri
+
+- [x] Corecturi găsite la testarea manuală: cardurile panoului duc exact la ce numără (filtrul „Doar ale mele”), emailurile Mailpit păstrate după repornire, rezumatele demo la ora obișnuită
+- [x] Un ciclu complet de încercat, pas cu pas, în README, verificat de un test (`tests/test_readme_cycle.py`)
+- [x] **(opțional)** Bugete anuale pe furnizor: consum la trimiterea comenzii, justificare peste buget, alerte la 90% și la depășire (I-40 – I-42, docs/05 §7)
+- [x] **(opțional)** Tema în portocaliul RURIS, cu contrast verificat pentru lizibilitate
+- [x] Verificare finală pe o clonă curată de pe GitHub, cu ciclul din README parcurs prin pagini
 
 ---
 
