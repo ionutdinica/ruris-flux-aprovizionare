@@ -73,10 +73,31 @@ Parola pentru toate conturile: **`demo-ruris`** (aplicația rulează doar pe cal
 Oprire: `docker compose down` (datele rămân) · de la zero, cu date demo proaspete:
 `docker compose down -v` și din nou `docker compose up --build`.
 
-**Ce să încerci:** ghidul [docs/07-ghid-demonstratie.md](docs/07-ghid-demonstratie.md) parcurge
-aplicația pe roluri în ~10 minute. Momentul cel mai interesant: ca Depozit, recepționează
-filtrele lipsă de la Motoare Industriale, iar factura blocată a Contabilității devine singură
-„Potrivită”.
+## Încearcă un ciclu complet (~10 minute)
+
+Un flux întreg, de la comandă la plată, prin toate cele patru roluri. Pornește de la o comandă
+nouă, deci merge la fel pe orice date demo. Sfat: deschide fiecare cont într-o fereastră privată
+separată, ca să treci de la un om la altul fără deconectare.
+
+**Povestea:** Maria comandă rulmenți și curele. Furnizorul livrează curelele în două tranșe, dar
+le facturează pe toate de la început. Factura se blochează, apoi **se deblochează singură** când
+sosește restul mărfii, și ajunge la plată.
+
+| # | Cine | Ce face | Ce trebuie să vezi |
+|---|---|---|---|
+| 1 | **`maria.pop`** (Achiziții) | *Comenzi → Comandă nouă*: furnizor **Rulmenți Oltenia**, termen peste 7 zile; liniile **RUL-6204 × 100 la 18,90** și **CUR-A42 × 50 la 18,50** → *Salvează* → *Trimite comanda* | comanda e **Trimisă** |
+| 2 | **`ion.marin`** (Depozit) | *Recepții → Livrări așteptate* → comanda → *Recepționează*: **100** rulmenți, **30** de curele → *Salvează ciorna* → *Confirmă recepția* | comanda e **Parțial recepționată**, iar stocul a crescut |
+| 3 | **`elena.dobre`** (Contabilitate) | pe pagina comenzii → *Înregistrează factura*: liniile vin completate cu ce a sosit (100 și 30). Corectează curelele la **50**, cum le-a facturat furnizorul; nr. factură furnizor **TEST-1**, data de azi, scadența peste 30 de zile; totalurile de pe factură **2.815,00 / 591,15 / 3.406,15** → *Salvează și validează* | factura e **Blocată**: *„facturat 50 buc, recepționat doar 30 buc: 20 buc nesosite”* |
+| 4 | **`andrei.ionescu`** (Admin) | *Administrare → Notificări trimise → Trimite acum*, apoi Mailpit (http://localhost:8025) | emailul Mariei conține factura blocată, marcată **NOU** |
+| 5 | **`ion.marin`** | recepționează restul: **20** de curele → *Confirmă recepția* | comanda e **Recepționată** |
+| 6 | **`elena.dobre`** | reîncarcă factura | e **Potrivită**, fără ca Elena să facă ceva; în istoric: *„a devenit automat «Potrivită»”* |
+| 7 | **`elena.dobre`** | *Aprobă la plată* → *Marchează plătită* | factura e **Plătită** |
+| 8 | **`andrei.ionescu`** | pagina comenzii sau a facturii → *Istoricul complet* (sau *Administrare → Jurnal de activitate*) | toată povestea, cu cine și când: trimitere, două recepții, factura blocată, deblocarea automată (declanșată de recepția lui Ion), aprobare, plată |
+
+Ciclul e verificat automat, cu exact aceste cifre și mesaje, de testul
+[tests/test_readme_cycle.py](tests/test_readme_cycle.py). Pentru un tur mai larg al aplicației,
+pe roluri (carantină, cursul BNR pe o factură de sâmbătă, grafice), vezi ghidul
+[docs/07-ghid-demonstratie.md](docs/07-ghid-demonstratie.md).
 
 ## Documentație
 

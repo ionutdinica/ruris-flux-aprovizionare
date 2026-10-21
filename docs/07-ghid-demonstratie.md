@@ -54,6 +54,9 @@ ca să treci de la un om la altul fără deconectare.
    - în fereastra lui **Ion**: *Recepționează* comanda Motoare Industriale, 15 filtre FIL-A20, *Confirmă*;
    - în fereastra **Elenei**: reîncarcă factura, care e acum **Potrivită**. În istoric: *„a devenit automat Potrivită după o modificare pe comanda …”*.
    - *„Contabila nu a făcut nimic: factura s-a deblocat în momentul în care a sosit marfa.”*
+   - Variantă de rezervă, pornită de la zero (dacă situația din datele demo a fost deja
+     folosită): ciclul complet din [README](../README.md#încearcă-un-ciclu-complet-10-minute),
+     cu o comandă nouă, cele patru roluri și aceleași cifre oricând.
 3. **Aprobă la plată** → **Marchează plătită**.
 4. Factura **blocată pentru preț diferit** (Vopsele Industriale Craiova): *„preț 39,50 față de 38,00 în comandă (+3,9%)”*.
 5. Factura **în EUR emisă sâmbăta** (Hydraulik Teile): *„se aplică cursul BNR de vineri, explicat pe factură”*. Arată și **Cursuri BNR** → „Ce curs se aplică unei facturi din data…” cu o sâmbătă.
