@@ -20,6 +20,9 @@ services:
       - "127.0.0.1:5433:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data  # datele rămân după oprirea containerului
+      # La prima pornire creează și baza de dezvoltare (aprovizionare_dev), separată de a
+      # aplicației din Docker. Vezi docker/initdb/01-dev-database.sql.
+      - ./docker/initdb:/docker-entrypoint-initdb.d:ro
     healthcheck:  # „e gata baza de date să primească conexiuni?”
       test: ["CMD-SHELL", "pg_isready -U aprovizionare -d aprovizionare"]
       interval: 3s
