@@ -224,4 +224,26 @@ Pe lângă diagnostic, `RateSync` deosebește „BNR nu a publicat încă” de 
 
 Registru: înregistrările se adaugă, nu se modifică și nu se șterg.
 
-**Jurnal de audit** – gestionat de `django-auditlog` (`LogEntry`): utilizator, acțiune (creare / modificare / ștergere), obiect, diferențe câmp cu câmp, dată-oră, IP. Plus evenimente de business explicite (ex. `invoice.force_approved`), cu mesaj și justificare.
+**DailyDigestRun** – rularea rezumatului zilnic
+| Câmp | Tip | Observații |
+|---|---|---|
+| `date` | dată, unică | ziua rezumatului: se face o singură dată pe zi, chiar dacă job-ul rulează la 10 minute |
+| `started_at` | dată-oră | |
+| `sent`, `failed`, `nothing_to_report` | int | bilanțul: trimise, eșuate, persoane fără nimic de rezolvat |
+
+**DocumentSequence** – numerotarea documentelor
+| Câmp | Tip | Observații |
+|---|---|---|
+| `prefix`, `year` | text, int | unic împreună: `CMD` / `REC` / `FAC` pe fiecare an |
+| `last_value` | int | ultimul număr dat; numere consecutive, fără goluri (rândul e blocat în baza de date la fiecare număr nou) |
+
+**Jurnal de audit**, din două surse afișate împreună, ca o singură cronologie:
+- `LogEntry` (django-auditlog, automat): utilizator, acțiune (creare / modificare / ștergere), obiect, diferențe câmp cu câmp, dată-oră, IP;
+- **BusinessEvent** (explicit): evenimentele de business, cu mesaj și detalii (ex. `invoice.force_approved`, cu justificarea și motivele ignorate). Registru: nu se modifică și nu se șterge.
+
+| Câmp (`BusinessEvent`) | Tip | Observații |
+|---|---|---|
+| `timestamp`, `actor`, `remote_addr` | | când, cine, de unde |
+| `event_type` | enum | ex. `order.sent`, `receipt.confirmed`, `invoice.rechecked`, `invoice.paid` |
+| `message`, `data` | text, JSON | descrierea și detaliile (justificare, motive, referințe) |
+| `content_type`, `object_id`, `object_repr` | | documentul vizat (pentru istoricul lui) |

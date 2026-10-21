@@ -82,7 +82,7 @@ Exemplu real: pentru o factură din 01.01.2026 se aplică cursul din 31.12.2025 
 - Cursul și data efectivă a cursului se salvează pe factură; afișare: „Curs BNR 5,3368 din 16.10.2026 (factura e din 17.10.2026, sâmbătă)”.
 - `total_ron = total_declarat × curs / multiplicator`, rotunjit la 2 zecimale (rotunjire comercială `ROUND_HALF_UP`, ca în contabilitate).
 - **Sursa:** `https://curs.bnr.ro` (setarea `BNR_BASE_URL`): fișierul cu ultimele 10 zile (`nbrfxrates10days.xml`) și arhivele anuale (`files/xml/years/nbrfxratesAAAA.xml`). Un răspuns care nu e exact formatul BNR (ex. o pagină HTML după o mutare a site-ului) e tratat ca eroare, nu ca „niciun curs nou”.
-- **Job-ul `fetch_bnr_rates`** e pornit de planificator (`run_scheduler`) la fiecare 10 minute, dar descarcă doar când lipsește ceva: de regulă o dată pe zi, după 13:00; în weekend deloc. La prima rulare încarcă istoricul anului curent și al celui anterior; după o pauză mai lungă de 10 zile completează golul din arhivele anuale. După fiecare actualizare reușită trimite semnalul `rates_synced`, la care facturile `RATE_PENDING` se reiau (capitolul 7).
+- **Job-ul `fetch_bnr_rates`** e pornit de planificator (`run_scheduler`) la fiecare 10 minute, dar descarcă doar când lipsește ceva: de regulă o dată pe zi, după 13:00; în weekend deloc. La prima rulare încarcă istoricul anului curent și al celui anterior; după o pauză mai lungă de 10 zile completează golul din arhivele anuale. După fiecare actualizare reușită trimite semnalul `rates_synced`, la care facturile `RATE_PENDING` se reiau.
 - Contabilitatea și Adminul pot cere actualizarea imediată din pagina *Cursuri BNR* („Actualizează acum”).
 
 ## 3. Recepție și stoc
