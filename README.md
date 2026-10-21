@@ -51,9 +51,10 @@ cd ruris-flux-aprovizionare
 docker compose up --build
 ```
 
-La prima pornire se generează automat **date demo**: ~4 luni de activitate, 8 furnizori, ~65 de
-comenzi, ~55 de facturi, cu fiecare situație din cerință (durează ~1–2 minute; e nevoie de internet
-pentru cursurile BNR). Apoi:
+Prima pornire durează câteva minute: Docker descarcă imaginile (Python, PostgreSQL), apoi se
+generează automat **date demo**: ~4 luni de activitate, 8 furnizori, ~65 de comenzi, ~55 de
+facturi, cu fiecare situație din cerință (e nevoie de internet, pentru cursurile BNR). Aplicația
+e gata când în terminal apare `Pornesc: gunicorn`. Apoi:
 
 | Ce | Unde |
 |---|---|
@@ -113,7 +114,7 @@ python -m venv .venv
 pip install -r requirements-dev.txt
 copy .env.example .env            # apoi completează SECRET_KEY în .env (Linux/macOS: cp)
 python manage.py migrate
-python manage.py seed_demo --password demo-ruris   # date demo (pe o bază goală)
+python manage.py seed_demo --if-empty --password demo-ruris   # date demo, dacă baza e goală
 python manage.py runserver
 ```
 
