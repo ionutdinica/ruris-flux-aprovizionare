@@ -27,6 +27,7 @@ env = environ.Env(
     PRICE_TOLERANCE_PERCENT=(str, "0"),
     NOTIFICATION_HOUR=(int, 8),
     BNR_BASE_URL=(str, "https://curs.bnr.ro"),
+    DEMO_RESET_ALLOWED=(bool, False),
 )
 # Fișierul .env e opțional: pe serverul online variabilele vin direct din mediu.
 environ.Env.read_env(BASE_DIR / ".env")
@@ -72,6 +73,7 @@ INSTALLED_APPS = [
     "apps.currency",
     "apps.notifications",
     "apps.dashboard",
+    "apps.demo",  # comanda seed_demo (date demo realiste)
 ]
 
 MIDDLEWARE = [
@@ -236,3 +238,8 @@ NOTIFICATION_HOUR = env("NOTIFICATION_HOUR")
 # Adresa de unde se descarcă cursurile BNR (apps/currency/bnr.py). E setare, nu
 # constantă în cod, pentru că BNR a mai mutat fișierele (www.bnr.ro → curs.bnr.ro).
 BNR_BASE_URL = env("BNR_BASE_URL").rstrip("/")
+
+# `seed_demo --reset` șterge TOATĂ baza de date și o regenerează cu date demo. Permis doar
+# unde e setat explicit (calculatorul dezvoltatorului, serverul de demonstrație), ca o
+# rulare din greșeală pe serverul real să nu poată șterge datele firmei.
+DEMO_RESET_ALLOWED = env("DEMO_RESET_ALLOWED")
