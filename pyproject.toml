@@ -31,3 +31,9 @@ filterwarnings = [
 [tool.coverage.run]
 source = ["apps"]
 omit = ["**/migrations/*", "**/tests/*"]
+
+[tool.coverage.report]
+# Pragul minim: dacă se adaugă cod netestat și acoperirea scade sub 95%, testele (și CI-ul)
+# pică. Astăzi: 97%. Ce rămâne neacoperit e mai ales administrarea Django (doar consultare).
+fail_under = 95
+skip_covered = true

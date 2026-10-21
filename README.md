@@ -57,6 +57,22 @@ Job-urile periodice (cursurile BNR, emailurile) rulează într-un al doilea term
 python manage.py run_scheduler        # sau o singură dată: python manage.py fetch_bnr_rates
 ```
 
+## Date demo
+
+O comandă generează ~4 luni de activitate a unei firme (8 furnizori, ~65 de comenzi, ~55 de
+facturi), cu fiecare situație din cerință: livrare în tranșe, factură pe marfă nesosită, preț
+diferit, marfă necomandată, comandă întârziată, factură în EUR emisă sâmbăta etc.
+
+```bash
+python manage.py seed_demo --password ParolaDemo1   # doar pe o bază de date goală
+```
+
+Conturile create (aceeași parolă): `andrei.ionescu` (Admin), `maria.pop` și `radu.vasile`
+(Achiziții), `ion.marin` (Depozit), `elena.dobre` (Contabilitate). Fără `--password`, parola
+se generează și se afișează o singură dată. Cursurile BNR se descarcă de la BNR (e nevoie de
+internet); fără ele, facturile în EUR sunt sărite. `--reset` șterge tot și regenerează, doar
+unde `DEMO_RESET_ALLOWED=True`.
+
 ## Teste și calitatea codului
 
 ```bash

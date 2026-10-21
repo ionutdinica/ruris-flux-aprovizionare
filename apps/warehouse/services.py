@@ -137,9 +137,8 @@ def confirm_receipt(receipt, user):
     receipt.confirmed_by = user
     receipt.confirmed_at = timezone.now()
     receipt.save()
-    if order:
-        refresh_status(order)  # Trimisă → Parțial recepționată → Recepționată
-
+    # Întâi recepția în jurnal, apoi efectele ei (statusul comenzii, facturile reverificate),
+    # ca jurnalul să se citească în ordinea cauzei: „recepție confirmată → factură deblocată”.
     record_event(
         BusinessEvent.Type.RECEIPT_CONFIRMED,
         f"Recepția {receipt.number} a fost confirmată"
@@ -149,6 +148,8 @@ def confirm_receipt(receipt, user):
         actor=user,
         data={"linii": len(lines), "în carantină": discrepancies},
     )
+    if order:
+        refresh_status(order)  # Trimisă → Parțial recepționată → Recepționată
     return receipt
 
 
@@ -229,8 +230,7 @@ def attach_discrepancy(discrepancy, order_line, user, note=""):
         created_by=user,
     )
     _resolve(discrepancy, Discrepancy.Resolution.ATTACHED, user, note, order_line=order_line)
-    refresh_status(order)
-    record_event(
+    record_event(  # întâi decizia, apoi efectele ei (comanda, facturile reverificate)
         BusinessEvent.Type.DISCREPANCY_ATTACHED,
         f"{_qty(discrepancy.quantity)} {order_line.product.unit} {order_line.product.code} din "
         f"carantină au fost acceptate pe comanda {order}.",
@@ -238,6 +238,7 @@ def attach_discrepancy(discrepancy, order_line, user, note=""):
         actor=user,
         data={"comandă": order.number, **({"observații": note} if note else {})},
     )
+    refresh_status(order)
     return discrepancy
 
 

@@ -147,8 +147,8 @@ Legendă: `[ ]` de făcut · `[x]` gata · **(opțional)** = după ce obligatori
 
 ## Capitolul 10 – Testare și date demo
 
-- [ ] 10.1 Teste unitare: potrivire (toate regulile), curs (weekend, sărbători, indisponibil), stări, permisiuni
-- [ ] 10.2 Teste de integrare: flux complet comandă → 2 tranșe recepție → factură → aprobare
+- [x] 10.1 Teste unitare: potrivire (toate regulile), curs (weekend, sărbători, indisponibil), stări, permisiuni
+- [x] 10.2 Teste de integrare: flux complet comandă → 2 tranșe recepție → factură → aprobare
 - [x] 10.3 Comanda `seed_demo`: utilizatori demo pe fiecare rol + scenarii care acoperă **fiecare situație din cerință**:
   - comandă livrată complet și facturată corect (potrivită, aprobată)
   - comandă livrată în 2 tranșe
@@ -157,7 +157,7 @@ Legendă: `[ ]` de făcut · `[x]` gata · **(opțional)** = după ce obligatori
   - marfă necomandată (discrepanță deschisă)
   - comandă întârziată
   - factură în EUR emisă într-o sâmbătă (curs din vineri)
-- [ ] 10.4 Acoperirea testelor raportată în CI
+- [x] 10.4 Acoperirea testelor raportată în CI
 
 ---
 
