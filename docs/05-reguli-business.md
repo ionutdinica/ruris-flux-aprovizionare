@@ -121,6 +121,16 @@ Fiecare problemă are o **cheie stabilă** (ex. `ORDER_LATE:12`), aceeași de la
 |---|---|
 | `DELIVERY_EXPECTED_TODAY` | linii de comandă cu `expected_date` = azi și rest de recepționat > 0 |
 
+### Indicatorii panoului (graficele)
+
+| Indicator | Definiție |
+|---|---|
+| **Livrări la timp, pe furnizor** | liniile de comandă (din comenzi trimise) cu termenul în ultimele 90 de zile, deja trecut; o linie e „la timp” dacă a fost recepționată **integral până la termen, inclusiv**. O livrare parțială la termen, cu restul mai târziu, nu e la timp. |
+| **Comenzi întârziate, ultimele 30 de zile** | pentru fiecare zi D: comenzile trimise până în D cu o linie cu termenul înainte de D, nerecepționată integral până la sfârșitul zilei D. Reconstruit din registrul de stoc (care nu se modifică), fără „poze” zilnice salvate. Simplificare: comenzile închise sau anulate între timp nu sunt numărate. Ultimul punct = comenzile întârziate din lista „De rezolvat”. |
+| **Livrări așteptate, 14 zile** | comenzile cu marfă de primit, pe ziua termenului, plus cele întârziate. Fără valori (Depozit). |
+| **Facturi neplătite, pe status** | suma în lei pe status; facturile în așteptarea cursului nu au încă valoare în lei și apar doar ca număr. |
+| **Plăți pe săptămâni** | facturile aprobate, după scadență, plus scadențele depășite. |
+
 ## 5. Notificări
 
 - Job-ul `send_notifications` rulează în zilele lucrătoare la ora configurată (implicit 08:00).

@@ -139,8 +139,8 @@ Legendă: `[ ]` de făcut · `[x]` gata · **(opțional)** = după ce obligatori
 ## Capitolul 9 – Dashboard pe rol
 
 - [x] 9.1 Pagina de start diferită pe rol, cu cardurile „ce necesită atenție” (întârziate, blocate, discrepanțe)
-- [ ] 9.2 Indicatori: valoare facturi blocate (RON), comenzi întârziate, rata livrărilor la timp pe furnizor
-- [ ] 9.3 Grafice (Chart.js): valoare facturi pe status, livrări la timp pe furnizor, evoluția comenzilor întârziate, stoc pe produs
+- [x] 9.2 Indicatori: valoare facturi blocate (RON), comenzi întârziate, rata livrărilor la timp pe furnizor
+- [x] 9.3 Grafice (Chart.js): valoare facturi pe status, livrări la timp pe furnizor, evoluția comenzilor întârziate, stoc pe produs
 
 ---
 

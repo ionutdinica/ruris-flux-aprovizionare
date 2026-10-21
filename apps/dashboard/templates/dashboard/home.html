@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load formatting %}
+{% load static formatting %}
 
 {% block title %}Panou{% endblock %}
 
@@ -59,4 +59,41 @@
     </div>
   {% endif %}
 </div>
+
+{# --- Grafice ------------------------------------------------------------------------ #}
+{% if charts %}
+<div class="row g-3 mt-1">
+  {% for chart in charts %}
+    <div class="col-lg-6">
+      <div class="card shadow-sm h-100">
+        <div class="card-header bg-body fw-semibold">{{ chart.title }}</div>
+        <div class="card-body">
+          {% if chart.is_empty %}
+            <p class="text-body-secondary small mb-0">{{ chart.empty_message }}</p>
+          {% else %}
+            <p class="small text-body-secondary">{{ chart.summary }}</p>
+            <div style="position: relative; height: 280px">
+              <canvas data-chart="{{ chart.element_id }}" role="img" aria-label="{{ chart.title }}. {{ chart.summary }}"></canvas>
+            </div>
+            {{ chart.as_json|json_script:chart.element_id }}
+            <details class="mt-2 small">
+              <summary class="text-body-secondary">Vezi cifrele</summary>
+              <table class="table table-sm mb-0 mt-1">
+                {% for label, value in chart.rows %}<tr><td>{{ label }}</td><td class="text-end">{{ value }}</td></tr>{% endfor %}
+              </table>
+            </details>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  {% endfor %}
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+{% if charts %}
+  <script src="{% static 'vendor/chartjs/chart.umd.js' %}"></script>
+  <script src="{% static 'js/dashboard.js' %}"></script>
+{% endif %}
 {% endblock %}

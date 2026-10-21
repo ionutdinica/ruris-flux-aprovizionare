@@ -145,3 +145,13 @@ def test_admin_list_is_capped(client, admin_user, procurement_user):
 
     assert response.context["hidden_count"] == 2
     assert "… și încă 2." in response.content.decode()
+
+
+def test_page_title_is_just_the_title(client, admin_user):
+    """Graficele ajunseseră din greșeală în <title> (prinsă la verificarea vizuală)."""
+    client.force_login(admin_user)
+
+    html = client.get(HOME).content.decode()
+
+    assert "<title>Panou · RURIS</title>" in html
+    assert html.index("<main") < html.index('class="row g-3 mt-1"')
