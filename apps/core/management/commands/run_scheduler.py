@@ -38,10 +38,12 @@ class Command(BaseCommand):
             if once:
                 return
             time.sleep(interval)
+            # După o pauză lungă, serverul bazei de date poate închide conexiunea;
+            # o renunțăm pe cea veche, iar Django deschide automat una nouă.
+            close_old_connections()
 
     def run_jobs(self):
         for job in JOBS:
-            close_old_connections()  # conexiunile vechi pot fi închise între timp de server
             try:
                 call_command(job, stdout=self.stdout, stderr=self.stderr)
             except Exception:
