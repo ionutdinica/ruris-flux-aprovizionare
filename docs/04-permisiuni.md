@@ -27,6 +27,7 @@ Legendă: **S** = creează / modifică · **C** = doar citește · **—** = fă
 | **Facturi** – vizualizare | C (status și motive, fără detalii de plată) | — | C | C |
 | **Facturi** – înregistrare, validare, aprobare, forțare, plată, respingere | — | — | S | S |
 | **Cursuri BNR** – vizualizare | C | — | C | C |
+| **Cursuri BNR** – „Actualizează acum” (altfel automat) | — | — | S | S |
 | **Notificări trimise** | doar ale lui | doar ale lui | doar ale lui | toate + „Trimite acum” |
 | **Jurnal de audit** (global) | — | — | — | C |
 | **Istoric pe document** | pe documentele pe care le vede | idem | idem | toate |

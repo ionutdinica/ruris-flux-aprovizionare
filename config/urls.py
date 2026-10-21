@@ -12,6 +12,7 @@ urlpatterns = [
     path("cont/", include("apps.accounts.urls")),
     path("jurnal/", include("apps.audit.urls")),
     path("nomenclatoare/", include("apps.catalog.urls")),
+    path("cursuri-bnr/", include("apps.currency.urls")),
     path("comenzi/", include("apps.purchasing.urls")),
     path("", include("apps.warehouse.urls")),  # receptii/, discrepante/, stoc/
     path("", include("apps.dashboard.urls")),

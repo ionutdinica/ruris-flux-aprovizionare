@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+{% load permissions %}
+
+{% block title %}Cursuri BNR{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-1">
+  <h1 class="h3 mb-0"><i class="bi bi-currency-exchange me-2"></i>Cursuri BNR</h1>
+  {% if user|can:"rates.refresh" %}
+    <form method="post" action="{% url 'currency:rate_refresh' %}">
+      {% csrf_token %}
+      <input type="hidden" name="moneda" value="{{ currency }}">
+      <button type="submit" class="btn btn-outline-secondary"><i class="bi bi-arrow-clockwise me-1"></i>Actualizează acum</button>
+    </form>
+  {% endif %}
+</div>
+<p class="text-body-secondary small mb-3">
+  Cursurile de referință publicate de Banca Națională a României. Se actualizează automat, în fiecare zi lucrătoare, după ora 13:00.
+</p>
+
+{% if last_sync and not last_sync.success %}
+  <div class="alert alert-warning small">
+    <i class="bi bi-wifi-off me-1"></i>
+    Ultima încercare de actualizare ({{ last_sync.started_at|date:"d.m.Y H:i" }}) a eșuat: {{ last_sync.error }}
+    Se reîncearcă automat; facturile care au nevoie de curs așteaptă până atunci.
+  </div>
+{% endif %}
+
+<div class="row g-3 mb-3">
+  <div class="col-md-6 col-xl-3">
+    <div class="card shadow-sm h-100"><div class="card-body">
+      <div class="text-body-secondary small">Curs {{ currency }} pentru azi, {{ today|date:"d.m.Y" }}</div>
+      {% if today_quote %}
+        <div class="fs-3 fw-semibold">{{ today_quote.rate|floatformat:4 }} <span class="fs-6 fw-normal">lei</span></div>
+        {% if today_quote.date != today %}
+          <div class="small text-body-secondary">cursul din {{ today_quote.date|date:"d.m.Y" }} (azi BNR nu publică)</div>
+        {% endif %}
+      {% else %}
+        <div class="fs-5 fw-semibold"><span class="badge text-bg-warning">În așteptare</span></div>
+        <div class="small text-body-secondary mt-1">{{ today_pending }}</div>
+      {% endif %}
+    </div></div>
+  </div>
+  <div class="col-md-6 col-xl-3">
+    <div class="card shadow-sm h-100"><div class="card-body">
+      <div class="text-body-secondary small">Ultima actualizare reușită</div>
+      {% if last_successful_sync %}
+        <div class="fs-5 fw-semibold">{{ last_successful_sync.started_at|date:"d.m.Y H:i" }}</div>
+        <div class="small text-body-secondary">
+          {% if last_successful_sync.triggered_by %}pornită de {{ last_successful_sync.triggered_by }}{% else %}automat{% endif %}
+          · cel mai recent curs: {{ last_successful_sync.latest_date|date:"d.m.Y" }}
+        </div>
+      {% else %}
+        <div class="fs-5 fw-semibold">niciuna încă</div>
+        <div class="small text-body-secondary">Istoricul se încarcă la prima rulare a job-ului.</div>
+      {% endif %}
+    </div></div>
+  </div>
+  <div class="col-xl-6">
+    <div class="card shadow-sm h-100"><div class="card-body">
+      <div class="text-body-secondary small mb-2">Ce curs se aplică unei facturi în {{ currency }} din data…</div>
+      <form method="get" action="{% url 'currency:rate_list' %}" class="d-flex gap-2"
+            hx-get="{% url 'currency:rate_lookup' %}" hx-target="#rate-lookup">
+        <input type="hidden" name="moneda" value="{{ currency }}">
+        <input type="date" name="data" class="form-control" required max="{{ today|date:'Y-m-d' }}"
+               value="{% if lookup_day %}{{ lookup_day|date:'Y-m-d' }}{% endif %}" aria-label="Data facturii">
+        <button type="submit" class="btn btn-primary-dark text-nowrap">Află cursul</button>
+      </form>
+      <div id="rate-lookup" class="mt-2">{% include "currency/_rate_lookup.html" %}</div>
+    </div></div>
+  </div>
+</div>
+
+<div class="card shadow-sm">
+  <div class="card-header bg-body d-flex flex-wrap align-items-center justify-content-between gap-2">
+    <span class="fw-semibold">Istoric {{ currency }}</span>
+    <form method="get" class="d-flex align-items-center gap-2">
+      <label for="moneda" class="small text-body-secondary">Moneda</label>
+      <select id="moneda" name="moneda" class="form-select form-select-sm" onchange="this.form.submit()">
+        {% for code in currencies %}<option value="{{ code }}"{% if code == currency %} selected{% endif %}>{{ code }}</option>{% endfor %}
+      </select>
+      <noscript><button type="submit" class="btn btn-sm btn-outline-secondary">Arată</button></noscript>
+    </form>
+  </div>
+  <div class="table-responsive">
+    <table class="table align-middle mb-0">
+      <thead class="table-light">
+        <tr>
+          <th>Data</th>
+          <th>Ziua</th>
+          <th class="text-end">Curs (lei)</th>
+          <th class="text-end" title="Față de ziua de publicare anterioară. Roșu = leul s-a depreciat (importurile devin mai scumpe).">Variație</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for rate in object_list %}
+          <tr>
+            <td class="text-nowrap">{{ rate.date|date:"d.m.Y" }}</td>
+            <td class="small text-body-secondary">{{ rate.date|date:"l" }}</td>
+            <td class="text-end text-nowrap fw-semibold">
+              {% if rate.multiplier != 1 %}<span class="small fw-normal text-body-secondary">{{ rate.multiplier }} {{ rate.currency }} =</span> {% endif %}{{ rate.rate|floatformat:4 }}
+            </td>
+            <td class="text-end text-nowrap small">
+              {% if rate.change is not None %}
+                {% if rate.change > 0 %}<span class="text-danger"><i class="bi bi-caret-up-fill"></i></span>
+                {% elif rate.change < 0 %}<span class="text-success"><i class="bi bi-caret-down-fill"></i></span>
+                {% else %}<span class="text-body-secondary">=</span>{% endif %}
+                {% if rate.change > 0 %}+{% endif %}{{ rate.change|floatformat:4 }}
+              {% endif %}
+            </td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="4" class="text-center text-body-secondary py-4">Nu există încă niciun curs salvat. Istoricul se încarcă automat la prima rulare a job-ului <code>fetch_bnr_rates</code>.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% include "partials/pagination.html" with page=page_obj %}
+{% endblock %}

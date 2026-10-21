@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Extras din fișierul real BNR (doar EUR, HUF, USD și câteva zile), pentru teste. -->
+<DataSet xmlns="https://www.bnr.ro/xsd" xmlns:xsi="https://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="https://curs.bnr.ro/xsd/nbrfxrates.xsd">
+  <Header>
+    <Publisher>National Bank of Romania</Publisher>
+    <PublishingDate>2026-10-20</PublishingDate>
+    <MessageType>DR</MessageType>
+  </Header>
+  <Body>
+    <Subject>Reference rates</Subject>
+    <OrigCurrency>RON</OrigCurrency>
+    <Cube date="2026-10-20">
+      <Rate currency="EUR">5.3285</Rate>
+      <Rate currency="HUF" multiplier="100">1.4608</Rate>
+      <Rate currency="USD">4.7516</Rate>
+    </Cube>
+    <Cube date="2026-10-19">
+      <Rate currency="EUR">5.3272</Rate>
+      <Rate currency="HUF" multiplier="100">1.4677</Rate>
+      <Rate currency="USD">4.7520</Rate>
+    </Cube>
+    <Cube date="2026-10-16">
+      <Rate currency="EUR">5.3368</Rate>
+      <Rate currency="HUF" multiplier="100">1.4695</Rate>
+      <Rate currency="USD">4.7430</Rate>
+    </Cube>
+    <Cube date="2026-10-15">
+      <Rate currency="EUR">5.3370</Rate>
+      <Rate currency="HUF" multiplier="100">1.4678</Rate>
+      <Rate currency="USD">4.7571</Rate>
+    </Cube>
+    <Cube date="2026-10-14">
+      <Rate currency="EUR">5.3393</Rate>
+      <Rate currency="HUF" multiplier="100">1.4684</Rate>
+      <Rate currency="USD">4.7706</Rate>
+    </Cube>
+    <Cube date="2026-10-13">
+      <Rate currency="EUR">5.3370</Rate>
+      <Rate currency="HUF" multiplier="100">1.4653</Rate>
+      <Rate currency="USD">4.7748</Rate>
+    </Cube>
+    <Cube date="2026-10-12">
+      <Rate currency="EUR">5.3373</Rate>
+      <Rate currency="HUF" multiplier="100">1.4611</Rate>
+      <Rate currency="USD">4.7714</Rate>
+    </Cube>
+  </Body>
+</DataSet>

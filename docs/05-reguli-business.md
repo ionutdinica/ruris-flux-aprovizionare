@@ -43,19 +43,29 @@ Acestea sunt erori de introducere, nu diferențe față de furnizor:
 ## 2. Curs valutar
 
 ```
-get_rate(moneda, data_factura):
+get_rate(moneda, data_factura):                    # apps/currency/services.py
     dacă moneda == RON                                  → 1, data_factura
     dacă data_factura > azi                             → eroare (I-27)
+    dacă nu știm sigur cursul zilei (vezi mai jos):
+        data_factura == azi și ora < 14:00              → ÎN AȘTEPTARE (I-26)
+        altfel (BNR nu a răspuns)                       → ÎN AȘTEPTARE (I-28)
     curs = cel mai recent curs BNR cu data ≤ data_factura
-    dacă data_factura == azi și curs.data < azi
-         și nu a trecut ora de publicare BNR            → ÎN AȘTEPTARE (I-26)
-    dacă nu există curs (BNR indisponibil, istoric gol) → ÎN AȘTEPTARE (I-28)
+    dacă nu există sau e cu peste 7 zile mai vechi      → ÎN AȘTEPTARE (istoric lipsă)
     altfel                                              → curs.valoare, curs.data
 ```
 
-- Cursul și data efectivă a cursului se salvează pe factură; afișare: „Curs BNR 4,9772 din 17.10.2026 (factura e din 18.10.2026 – sâmbătă)”.
-- `total_ron = total_declarat × curs`, rotunjit la 2 zecimale (rotunjire comercială `ROUND_HALF_UP`, ca în contabilitate).
-- Job-ul `fetch_bnr_rates` rulează zilnic după 13:30 și la nevoie; la prima rulare încarcă istoricul anului curent și al celui anterior. După fiecare rulare reîncearcă facturile `RATE_PENDING`.
+**„Știm sigur cursul zilei Z?”** Lipsa cursului pentru Z are două explicații foarte diferite: BNR nu l-a publicat *încă* sau nu îl publică *deloc* (sărbătoare). Răspunsul e „da” dacă:
+1. avem un curs din Z sau de după Z; sau
+2. între ultimul curs salvat și Z sunt doar zile de sâmbătă și duminică; sau
+3. BNR a fost interogat cu succes după ora 14:00 a zilei Z și nu avea curs pentru Z (o zi fără publicare). De aceea fiecare interogare se salvează (`RateSync`).
+
+Exemplu real: pentru o factură din 01.01.2026 se aplică cursul din 31.12.2025 (5,0985), iar pentru 07.01.2026 (Sf. Ioan), cel din 05.01.2026.
+
+- Cursul și data efectivă a cursului se salvează pe factură; afișare: „Curs BNR 5,3368 din 16.10.2026 (factura e din 17.10.2026, sâmbătă)”.
+- `total_ron = total_declarat × curs / multiplicator`, rotunjit la 2 zecimale (rotunjire comercială `ROUND_HALF_UP`, ca în contabilitate).
+- **Sursa:** `https://curs.bnr.ro` (setarea `BNR_BASE_URL`): fișierul cu ultimele 10 zile (`nbrfxrates10days.xml`) și arhivele anuale (`files/xml/years/nbrfxratesAAAA.xml`). Un răspuns care nu e exact formatul BNR (ex. o pagină HTML după o mutare a site-ului) e tratat ca eroare, nu ca „niciun curs nou”.
+- **Job-ul `fetch_bnr_rates`** e pornit de planificator (`run_scheduler`) la fiecare 10 minute, dar descarcă doar când lipsește ceva: de regulă o dată pe zi, după 13:00; în weekend deloc. La prima rulare încarcă istoricul anului curent și al celui anterior; după o pauză mai lungă de 10 zile completează golul din arhivele anuale. După fiecare actualizare reușită trimite semnalul `rates_synced`, la care facturile `RATE_PENDING` se reiau (capitolul 7).
+- Contabilitatea și Adminul pot cere actualizarea imediată din pagina *Cursuri BNR* („Actualizează acum”).
 
 ## 3. Recepție și stoc
 

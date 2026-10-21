@@ -55,9 +55,9 @@ Cerința este intenționat scurtă. Acest document consemnează **ce am presupus
 
 - **I-24** Sursa este **Banca Națională a României** (fluxul XML public). Cursul se salvează pe factură în momentul validării și nu se mai schimbă ulterior.
 - **I-25** Se folosește cursul BNR cu data = data facturii. Dacă BNR nu a publicat curs în acea zi (weekend, sărbătoare legală), se folosește **ultimul curs publicat anterior**. Se rețin atât valoarea cursului, cât și data lui efectivă.
-- **I-26** Dacă data facturii este **azi** și BNR încă nu a publicat cursul zilei (BNR publică în jurul orei 13:00), factura rămâne în *Curs în așteptare* și este finalizată automat după publicare. Altfel s-ar folosi un curs care se schimbă după câteva ore.
+- **I-26** Dacă data facturii este **azi** și BNR încă nu a publicat cursul zilei (BNR publică în jurul orei 13:00), factura rămâne în *Curs în așteptare* și este finalizată automat după publicare. Altfel s-ar folosi un curs care se schimbă după câteva ore. O zi lucrătoare e considerată **fără publicare** (sărbătoare legală) abia dacă BNR, interogat cu succes **după ora 14:00**, tot nu are curs pentru ea; ora de marjă acoperă publicările întârziate. Sâmbăta și duminica sunt zile fără publicare de la sine.
 - **I-27** Nu se acceptă facturi cu dată în viitor.
-- **I-28** Dacă BNR nu răspunde (rețea, mentenanță), factura rămâne în *Curs în așteptare*, iar un job reîncearcă periodic. Nicio factură nu primește un curs inventat sau implicit.
+- **I-28** Dacă BNR nu răspunde (rețea, mentenanță), factura rămâne în *Curs în așteptare*, iar un job reîncearcă periodic. Nicio factură nu primește un curs inventat sau implicit. Nici un curs „prea vechi”: dacă ultimul curs salvat e cu peste 7 zile înaintea datei facturii (cea mai lungă pauză reală a BNR e de ~5 zile, la sărbătorile de iarnă), înseamnă că lipsește istoricul, iar factura așteaptă încărcarea lui.
 
 > Notă: în practica fiscală românească există și interpretarea „cursul comunicat de BNR în ziua anterioară”. Cerința spune explicit **„cursul din ziua facturii”**, așa că am urmat-o. Regula e izolată într-o singură funcție, deci poate fi schimbată ușor.
 

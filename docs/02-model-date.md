@@ -194,7 +194,18 @@ Stocul disponibil al unui produs = Σ `quantity`. În carantină = Σ discrepan�
 | `currency` | text | `EUR` (se salvează toate monedele din flux; folosim EUR) |
 | `rate` | decimal(4) | RON pentru 1 unitate |
 | `multiplier` | int | BNR folosește multiplicator pentru unele monede (ex. 100 HUF) |
-| unic: (`date`, `currency`) | | |
+| unic: (`currency`, `date`) | | registru: cursurile se adaugă, nu se modifică și nu se șterg |
+
+**RateSync** – o interogare a BNR
+| Câmp | Tip | Observații |
+|---|---|---|
+| `started_at` | dată-oră | momentul interogării |
+| `url` | text | fișierul cerut (ultimele 10 zile sau arhiva unui an) |
+| `success`, `error` | | rezultatul; eroarea, pe înțelesul utilizatorului |
+| `rates_created`, `latest_date` | | câte cursuri noi a adus, cel mai recent curs din fișier |
+| `triggered_by` | → User | gol = job-ul automat; altfel, cine a apăsat „Actualizează acum” |
+
+Pe lângă diagnostic, `RateSync` deosebește „BNR nu a publicat încă” de „BNR nu publică azi” (vezi [05-reguli-business.md](05-reguli-business.md), §2).
 
 **NotificationLog** – email trimis
 | Câmp | Tip | Observații |

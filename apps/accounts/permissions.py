@@ -44,6 +44,7 @@ PERMISSIONS = {
     "invoices.edit": {A, ADMIN},  # înregistrare, validare, aprobare, forțare, plată
     # Cursuri BNR
     "rates.view": {P, A, ADMIN},
+    "rates.refresh": {A, ADMIN},  # „Actualizează acum” (altfel automat, zilnic)
     # Notificări
     "notifications.view_all": {ADMIN},
     "notifications.send_now": {ADMIN},

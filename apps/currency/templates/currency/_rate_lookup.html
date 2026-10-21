@@ -1,0 +1,15 @@
+{# Răspunsul la „ce curs se aplică?”; inclus în pagină sau trimis singur prin HTMX. #}
+{% if quote %}
+  <div class="small">
+    Pentru o factură din <strong>{{ lookup_day|date:"d.m.Y" }}</strong> ({{ lookup_day|date:"l"|lower }}) se aplică cursul
+    <strong>{{ quote.rate|floatformat:4 }} lei</strong>{% if quote.multiplier != 1 %} pentru {{ quote.multiplier }} {{ quote.currency }}{% endif %}
+    din <strong>{{ quote.date|date:"d.m.Y" }}</strong>{% if quote.date != lookup_day %} ({{ quote.date|date:"l"|lower }}){% endif %}.
+    {% if quote.date != lookup_day %}
+      <div class="text-body-secondary mt-1"><i class="bi bi-info-circle me-1"></i>BNR nu a publicat curs în ziua facturii, așa că se folosește ultimul curs publicat înainte.</div>
+    {% endif %}
+  </div>
+{% elif lookup_pending %}
+  <div class="small text-warning-emphasis"><i class="bi bi-hourglass-split me-1"></i>În așteptare: {{ lookup_pending }}</div>
+{% elif lookup_error %}
+  <div class="small text-danger"><i class="bi bi-x-circle me-1"></i>{{ lookup_error }}</div>
+{% endif %}

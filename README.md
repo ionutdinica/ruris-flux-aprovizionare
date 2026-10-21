@@ -23,6 +23,7 @@ docker compose up --build
 | Aplicația | http://localhost:8000 | Django + Gunicorn |
 | Mailpit | http://localhost:8025 | căsuța de email de test: aici apar emailurile trimise de aplicație |
 | PostgreSQL | (intern) | baza de date |
+| Planificator | (fără pagină) | job-urile periodice: cursurile BNR, rezumatul zilnic pe email |
 
 Crearea unui cont de administrator:
 
@@ -47,6 +48,12 @@ python manage.py runserver
 ```
 
 Aplicația pornește la http://127.0.0.1:8000.
+
+Job-urile periodice (cursurile BNR, emailurile) rulează într-un al doilea terminal:
+
+```bash
+python manage.py run_scheduler        # sau o singură dată: python manage.py fetch_bnr_rates
+```
 
 ## Teste și calitatea codului
 

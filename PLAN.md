@@ -102,12 +102,12 @@ Legendă: `[ ]` de făcut · `[x]` gata · **(opțional)** = după ce obligatori
 
 ## Capitolul 6 – Curs valutar BNR
 
-- [ ] 6.1 Client BNR: parsare XML zilnic (`nbrfxrates.xml`) și arhive anuale (`nbrfxratesYYYY.xml`), cu `defusedxml`
-- [ ] 6.2 Salvarea cursurilor în baza de date (o singură descărcare pe zi, nu la fiecare factură)
-- [ ] 6.3 `get_rate(currency, date)`: curs exact, sau ultimul curs anterior (weekend / sărbătoare); RON → 1
-- [ ] 6.4 BNR indisponibil: factura intră în `Curs în așteptare`, iar job-ul reîncearcă și o deblochează automat
-- [ ] 6.5 Comanda `fetch_bnr_rates` (zilnic) + popularea istoricului la prima rulare
-- [ ] 6.6 Teste cu XML salvat local (fără apeluri reale de rețea în teste)
+- [x] 6.1 Client BNR: parsare XML (fișierul cu ultimele 10 zile și arhivele anuale) cu `defusedxml`; sursa `https://curs.bnr.ro` (BNR a mutat fișierele de pe www.bnr.ro), configurabilă
+- [x] 6.2 Salvarea cursurilor în baza de date (registru nemodificabil; o descărcare pe zi, nu la fiecare factură) + jurnalul interogărilor (`RateSync`)
+- [x] 6.3 `get_rate(currency, date)`: curs exact, sau ultimul curs anterior (weekend / sărbătoare); RON → 1; fără cursuri „prea vechi” peste golurile din istoric
+- [x] 6.4 BNR indisponibil sau curs nepublicat încă: `RatePending`; job-ul reîncearcă, iar semnalul `rates_synced` va relua facturile în așteptare (capitolul 7)
+- [x] 6.5 Comanda `fetch_bnr_rates` + istoricul la prima rulare + completarea golurilor; planificatorul `run_scheduler` (serviciu separat în Docker); pagina *Cursuri BNR*
+- [x] 6.6 Teste cu fișiere BNR reale salvate local (Crăciun, Anul Nou, Boboteaza); rețeaua e blocată în toate testele
 
 ---
 

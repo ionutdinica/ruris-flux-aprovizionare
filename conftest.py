@@ -27,6 +27,18 @@ def _fast_password_hashing(settings):
     settings.PASSWORD_HASHERS = ["django.contrib.auth.hashers.MD5PasswordHasher"]
 
 
+@pytest.fixture(autouse=True)
+def _no_network(monkeypatch):
+    """Testele nu ies niciodată pe internet: ar fi lente, ar depinde de starea BNR și
+    ar trece sau ar pica la întâmplare. Clientul BNR e înlocuit în teste cu fișiere
+    locale (apps/currency/tests/data); orice scăpare pică imediat, cu mesaj clar."""
+
+    def refuse(*args, **kwargs):
+        raise AssertionError("Testele nu au voie să acceseze rețeaua (BNR).")
+
+    monkeypatch.setattr("apps.currency.bnr.urlopen", refuse)
+
+
 @pytest.fixture
 def procurement_user(db):
     return UserFactory(role=User.Role.PROCUREMENT)

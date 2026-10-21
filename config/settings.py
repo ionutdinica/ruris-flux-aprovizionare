@@ -26,6 +26,7 @@ env = environ.Env(
     DEFAULT_FROM_EMAIL=(str, "Aprovizionare RURIS <aprovizionare@ruris.local>"),
     PRICE_TOLERANCE_PERCENT=(str, "0"),
     NOTIFICATION_HOUR=(int, 8),
+    BNR_BASE_URL=(str, "https://curs.bnr.ro"),
 )
 # Fișierul .env e opțional: pe serverul online variabilele vin direct din mediu.
 environ.Env.read_env(BASE_DIR / ".env")
@@ -219,3 +220,7 @@ PRICE_TOLERANCE_PERCENT = Decimal(env("PRICE_TOLERANCE_PERCENT"))
 
 # Ora la care pleacă rezumatul zilnic pe email (docs/05-reguli-business.md, §5).
 NOTIFICATION_HOUR = env("NOTIFICATION_HOUR")
+
+# Adresa de unde se descarcă cursurile BNR (apps/currency/bnr.py). E setare, nu
+# constantă în cod, pentru că BNR a mai mutat fișierele (www.bnr.ro → curs.bnr.ro).
+BNR_BASE_URL = env("BNR_BASE_URL").rstrip("/")

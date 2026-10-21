@@ -2,6 +2,7 @@
 #
 #   Aplicația   → http://localhost:8000
 #   Mailpit     → http://localhost:8025   (emailurile trimise de aplicație)
+#   scheduler   → job-urile periodice (cursuri BNR, notificări), fără pagină web
 #
 # Setările de aici sunt pentru rulare LOCALĂ / demonstrație, nu pentru producție.
 
@@ -27,9 +28,10 @@ services:
 
   web:
     build: .
+    image: ruris-aprovizionare:local
     ports:
       - "8000:8000"
-    environment:
+    environment: &app-environment  # „&” = definim setările o dată și le refolosim mai jos
       SECRET_KEY: cheie-doar-pentru-docker-local-nu-pentru-productie
       DEBUG: "False"
       USE_HTTPS: "False"  # local rulăm pe http://localhost
@@ -42,6 +44,17 @@ services:
         condition: service_healthy  # pornește abia după ce baza de date e gata
       mailpit:
         condition: service_started
+
+  scheduler:
+    image: ruris-aprovizionare:local  # aceeași imagine ca aplicația, altă comandă
+    build: .
+    entrypoint: []  # migrațiile le aplică serviciul web; planificatorul le așteaptă
+    command: ["python", "manage.py", "run_scheduler"]
+    environment: *app-environment
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped  # dacă se oprește neașteptat, Docker îl repornește
 
 volumes:
   pgdata:
