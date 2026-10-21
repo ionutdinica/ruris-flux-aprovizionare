@@ -33,6 +33,12 @@ services:
       # Serverul SMTP: primește emailurile aplicației (și ale celei pornite din Python,
       # pe calculatorul dezvoltatorului), dar nu le trimite mai departe nimănui.
       - "127.0.0.1:1025:1025"
+    environment:
+      # Emailurile se salvează pe disc (implicit Mailpit le ține doar în memorie și le
+      # pierde la oprire). „docker compose down -v” le șterge, odată cu baza de date.
+      MP_DATABASE: /data/mailpit.db
+    volumes:
+      - mailpit-data:/data
 
   web:
     build: .
@@ -77,3 +83,4 @@ services:
 
 volumes:
   pgdata:
+  mailpit-data:
