@@ -166,3 +166,49 @@ InvoiceLineFormSet = forms.inlineformset_factory(
     extra=0,
     can_delete=True,
 )
+
+
+class PaymentForm(BootstrapFormMixin, forms.Form):
+    """Marcarea ca plătită: data plății și, opțional, referința (ex. numărul ordinului de plată)."""
+
+    paid_at = forms.DateField(label="Data plății", widget=DateInput)
+    reference = forms.CharField(
+        label="Referința plății", max_length=100, required=False, help_text="Ex. OP 1234"
+    )
+
+
+class ReasonForm(forms.Form):
+    """Justificarea forțării / motivul respingerii. Obligativitatea o verifică serviciul
+    (services.py), cu mesajul potrivit fiecărei acțiuni; aici doar se preia textul."""
+
+    reason = forms.CharField(required=False)
+
+
+def lines_formset_for_order(order):
+    """Liniile facturii precompletate din comandă: ce a sosit și nu e încă facturat.
+
+    Pentru butonul „Înregistrează factura” de pe pagina comenzii. Contabilul corectează
+    apoi cantitățile și prețurile după factura reală.
+    """
+    order_lines = invoiceable_order_lines(order.supplier_id)
+    initial = [
+        {
+            "order_line": line,
+            "quantity": format_quantity(line.received_qty - line.invoiced_qty),
+            "unit_price": format_quantity(line.unit_price),
+            "vat_rate": line.vat_rate,
+        }
+        for line in order_lines.filter(order=order)
+        if line.received_qty > line.invoiced_qty
+    ]
+    formset_class = forms.inlineformset_factory(
+        Invoice,
+        InvoiceLine,
+        form=InvoiceLineForm,
+        formset=BaseInvoiceLineFormSet,
+        extra=len(initial),
+        can_delete=True,
+    )
+    return formset_class(
+        instance=Invoice(), initial=initial, supplier_id=order.supplier_id, prefix="lines"
+    )

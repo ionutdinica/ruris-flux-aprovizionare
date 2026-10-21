@@ -54,6 +54,14 @@ class Invoice(SearchableModel, TimeStampedModel):
         Status.REJECTED: "light",
     }
 
+    # Ce nu apare în istoricul facturii pentru cine nu vede detaliile plății (Achizițiile).
+    AUDIT_RESTRICTED = {
+        "invoices.view_payment": {
+            "fields": ("paid_at", "payment_reference"),
+            "details": ("data plății", "referința"),
+        }
+    }
+
     # Facturile care se reverifică automat când se schimbă recepțiile sau comenzile.
     # Cele aprobate și plătite nu: decizia de plată a fost luată și e consemnată.
     RECHECKABLE_STATUSES = (Status.MATCHED, Status.BLOCKED)

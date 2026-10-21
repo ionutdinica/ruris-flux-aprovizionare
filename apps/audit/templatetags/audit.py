@@ -10,7 +10,7 @@ Administrator, un link spre istoricul complet din „Jurnal de activitate”.
 from django import template
 from django.contrib.contenttypes.models import ContentType
 
-from ..timeline import history_for
+from ..timeline import history_for, redact
 
 register = template.Library()
 
@@ -20,6 +20,7 @@ HISTORY_LIMIT = 10
 @register.inclusion_tag("audit/partials/object_history.html", takes_context=True)
 def object_history(context, obj, limit=HISTORY_LIMIT):
     entries = history_for(obj, limit=limit + 1)  # +1: aflăm dacă mai sunt și altele
+    entries = redact(entries, context["user"], type(obj))
     return {
         "entries": entries[:limit],
         "has_more": len(entries) > limit,

@@ -118,7 +118,7 @@ Legendă: `[ ]` de făcut · `[x]` gata · **(opțional)** = după ce obligatori
 - [x] 7.3 **Motorul de potrivire în 3 direcții** (serviciu separat, independent de interfață, testat exhaustiv)
 - [x] 7.4 Ecran de potrivire: tabel comandat / recepționat / facturat pe linie, cu motivele de blocare evidențiate
 - [x] 7.5 Reverificare automată: la confirmarea unei recepții noi, facturile blocate aferente se reverifică
-- [ ] 7.6 Aprobare la plată / marcare plătită; **forțarea** unei facturi blocate doar cu justificare obligatorie (în audit)
+- [x] 7.6 Aprobare la plată / marcare plătită; **forțarea** unei facturi blocate doar cu justificare obligatorie (în audit)
 - [x] 7.7 Facturi duplicat respinse (același furnizor + același număr)
 
 ---

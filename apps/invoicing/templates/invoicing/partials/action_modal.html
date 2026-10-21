@@ -1,0 +1,42 @@
+{# Fereastră de confirmare pentru o decizie pe factură (POST + token CSRF). #}
+{# Opțional: câmp „motiv” (with_reason) sau datele plății (with_payment). #}
+<div class="modal fade" id="{{ modal_id }}" tabindex="-1" aria-labelledby="{{ modal_id }}Label" aria-hidden="true">
+  <div class="modal-dialog">
+    <form method="post" action="{% url action_url invoice.pk %}" class="modal-content">
+      {% csrf_token %}
+      <div class="modal-header">
+        <h2 class="modal-title fs-5" id="{{ modal_id }}Label">{{ title }}</h2>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Închide"></button>
+      </div>
+      <div class="modal-body">
+        <p class="mb-3">{{ text }}</p>
+        {% if show_problems %}
+          <ul class="small text-danger">
+            {% for problem in invoice.problems %}<li>{{ problem.message }}</li>{% endfor %}
+          </ul>
+        {% endif %}
+        {% if with_reason %}
+          <label for="{{ modal_id }}Reason" class="form-label">{{ reason_label }} <span class="text-danger">*</span></label>
+          <textarea name="reason" id="{{ modal_id }}Reason" rows="3" class="form-control" required></textarea>
+        {% endif %}
+        {% if with_payment %}
+          <div class="row g-2">
+            <div class="col-sm-5">
+              <label for="{{ modal_id }}Date" class="form-label">Data plății <span class="text-danger">*</span></label>
+              <input type="date" name="paid_at" id="{{ modal_id }}Date" class="form-control" required
+                     value="{{ today|date:'Y-m-d' }}" min="{{ invoice.invoice_date|date:'Y-m-d' }}" max="{{ today|date:'Y-m-d' }}">
+            </div>
+            <div class="col-sm-7">
+              <label for="{{ modal_id }}Reference" class="form-label">Referința plății</label>
+              <input type="text" name="reference" id="{{ modal_id }}Reference" class="form-control" maxlength="100" placeholder="Ex. OP 1234">
+            </div>
+          </div>
+        {% endif %}
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Renunță</button>
+        <button type="submit" class="btn {{ button_class }}">{{ button }}</button>
+      </div>
+    </form>
+  </div>
+</div>

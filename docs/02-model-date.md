@@ -173,7 +173,8 @@ Stocul disponibil al unui produs = Σ `quantity`. În carantină = Σ discrepan�
 | `match_result` | JSON | lista motivelor de blocare (cod + detalii) de la ultima potrivire |
 | `matched_at` | dată-oră | |
 | `override_reason`, `approved_by`, `approved_at` | | forțare / aprobare |
-| `paid_at`, `payment_reference` | | |
+| `paid_at`, `payment_reference` | | detaliile plății: vizibile doar Contabilității și Adminului, inclusiv în istoric |
+| `rejection_reason` | text | motivul respingerii |
 
 **InvoiceLine** – linie de factură
 | Câmp | Tip | Observații |

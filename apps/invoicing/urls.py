@@ -12,4 +12,8 @@ urlpatterns = [
     path("<int:pk>/editare/", views.InvoiceUpdateView.as_view(), name="invoice_update"),
     path("<int:pk>/valideaza/", views.InvoiceValidateView.as_view(), name="invoice_validate"),
     path("<int:pk>/redeschide/", views.InvoiceReopenView.as_view(), name="invoice_reopen"),
+    path("<int:pk>/aproba/", views.InvoiceApproveView.as_view(), name="invoice_approve"),
+    path("<int:pk>/forteaza/", views.InvoiceForceApproveView.as_view(), name="invoice_force"),
+    path("<int:pk>/plateste/", views.InvoicePayView.as_view(), name="invoice_pay"),
+    path("<int:pk>/respinge/", views.InvoiceRejectView.as_view(), name="invoice_reject"),
 ]

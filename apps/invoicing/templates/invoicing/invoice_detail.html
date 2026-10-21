@@ -33,6 +33,16 @@
         <button type="submit" class="btn btn-outline-secondary" title="Pentru greșeli de introducere: factura revine la „Înregistrată”"><i class="bi bi-pencil-square me-1"></i>Corectează datele</button>
       </form>
     {% endif %}
+    {% if invoice.status == "MATCHED" %}
+      <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#approveModal"><i class="bi bi-check2-all me-1"></i>Aprobă la plată</button>
+    {% elif invoice.status == "BLOCKED" %}
+      <button type="button" class="btn btn-outline-warning" data-bs-toggle="modal" data-bs-target="#forceModal"><i class="bi bi-exclamation-triangle me-1"></i>Forțează la plată</button>
+    {% elif invoice.status == "APPROVED" %}
+      <button type="button" class="btn btn-primary-dark" data-bs-toggle="modal" data-bs-target="#payModal"><i class="bi bi-cash-coin me-1"></i>Marchează plătită</button>
+    {% endif %}
+    {% if invoice.status == "REGISTERED" or invoice.status == "RATE_PENDING" or invoice.status == "BLOCKED" %}
+      <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#rejectModal"><i class="bi bi-x-circle me-1"></i>Respinge</button>
+    {% endif %}
   </div>
   {% endif %}
 </div>
@@ -64,10 +74,27 @@
   </div>
 {% elif invoice.status == "REJECTED" %}
   <div class="alert alert-secondary small"><strong>Respinsă:</strong> {{ invoice.rejection_reason }}</div>
+{% elif invoice.status == "APPROVED" or invoice.status == "PAID" %}
+  <div class="alert alert-{% if invoice.status == 'PAID' %}dark{% else %}primary{% endif %} small">
+    <i class="bi bi-{% if invoice.status == 'PAID' %}cash-coin{% else %}check2-all{% endif %} me-1"></i>
+    {% if invoice.status == "PAID" %}
+      <strong>Plătită</strong>{% if user|can:"invoices.view_payment" %} pe {{ invoice.paid_at|date:"d.m.Y" }}{% if invoice.payment_reference %} ({{ invoice.payment_reference }}){% endif %}{% endif %}.
+    {% else %}
+      <strong>Aprobată la plată</strong>, în așteptarea plății.
+    {% endif %}
+    Aprobată de {{ invoice.approved_by }} la {{ invoice.approved_at|date:"d.m.Y H:i" }}.
+  </div>
+{% endif %}
+{% if invoice.override_reason %}
+  {# Forțarea rămâne vizibilă pentru totdeauna: cine se uită la factură vede că nu a corespuns. #}
+  <div class="alert alert-warning small">
+    <i class="bi bi-exclamation-triangle me-1"></i><strong>Forțată la plată, deși era blocată.</strong>
+    Justificare: {{ invoice.override_reason }}
+  </div>
 {% endif %}
 
 {# Tabelul de potrivire: piesa centrală, pe toată lățimea. #}
-  <div class="card shadow-sm mb-3">
+<div class="card shadow-sm mb-3">
     <div class="card-header bg-body fw-semibold">Comandat · recepționat · facturat</div>
     <div class="table-responsive">
       <table class="table align-middle mb-0">
@@ -168,5 +195,19 @@
     {% object_history invoice %}
   </div>
 </div>
+{% if can_edit %}
+  {% if invoice.status == "MATCHED" %}
+    {% include "invoicing/partials/action_modal.html" with modal_id="approveModal" title="Aprobi factura la plată?" action_url="invoicing:invoice_approve" button="Aprobă" button_class="btn-success" text="Potrivirea se verifică încă o dată, chiar acum. După aprobare, factura nu se mai reverifică automat: decizia de plată e luată." %}
+  {% endif %}
+  {% if invoice.status == "BLOCKED" %}
+    {% include "invoicing/partials/action_modal.html" with modal_id="forceModal" title="Forțezi factura la plată?" action_url="invoicing:invoice_force" button="Forțează la plată" button_class="btn-warning" text="Factura va fi aprobată deși nu corespunde. Motivele ignorate și justificarea ta rămân în jurnal:" show_problems=True with_reason=True reason_label="Justificare (ex. acord cu furnizorul, cine l-a aprobat)" %}
+  {% endif %}
+  {% if invoice.status == "APPROVED" %}
+    {% include "invoicing/partials/action_modal.html" with modal_id="payModal" title="Marchezi factura plătită?" action_url="invoicing:invoice_pay" button="Marchează plătită" button_class="btn-primary-dark" text="Înregistrează plata efectuată (factura nu mai poate fi modificată după aceea)." with_payment=True %}
+  {% endif %}
+  {% if invoice.status == "REGISTERED" or invoice.status == "RATE_PENDING" or invoice.status == "BLOCKED" %}
+    {% include "invoicing/partials/action_modal.html" with modal_id="rejectModal" title="Respingi factura?" action_url="invoicing:invoice_reject" button="Respinge" button_class="btn-danger" text="Factura e contestată la furnizor (ex. se cere stornare). Nu mai contează la cantitățile facturate." with_reason=True reason_label="Motivul respingerii" %}
+  {% endif %}
+{% endif %}
 {% endwith %}
 {% endblock %}

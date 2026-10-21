@@ -288,11 +288,14 @@ def mark_paid(invoice, paid_at, reference=""):
     invoice.paid_at = paid_at
     invoice.payment_reference = (reference or "").strip()
     invoice.save()
+    details = {"data plății": f"{paid_at:%d.%m.%Y}"}
+    if invoice.payment_reference:
+        details["referința"] = invoice.payment_reference
     record_event(
         BusinessEvent.Type.INVOICE_PAID,
-        f"Factura {invoice} a fost plătită pe {paid_at:%d.%m.%Y}.",
+        f"Factura {invoice} a fost marcată plătită.",  # detaliile plății: doar în `data`
         target=invoice,
-        data={"referinta": invoice.payment_reference} if invoice.payment_reference else None,
+        data=details,
     )
     return invoice
 

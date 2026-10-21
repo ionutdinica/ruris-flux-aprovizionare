@@ -20,6 +20,7 @@ from apps.audit.services import record_event
 from apps.catalog.models import Supplier
 from apps.core.excel import xlsx_response
 from apps.core.views import SearchListMixin
+from apps.invoicing.models import Invoice
 from apps.warehouse.models import GoodsReceipt
 
 from . import excel_import, services
@@ -144,6 +145,15 @@ class OrderDetailView(PermissionMixin, VisibleOrdersMixin, DetailView):
         context["can_cancel"] = order.status in (Status.DRAFT, Status.SENT)
         context["receipts"] = order.receipts.select_related("confirmed_by")
         context["can_receive"] = order.status in GoodsReceipt.RECEIVABLE_ORDER_STATUSES
+        if self.request.user.can("invoices.view"):
+            # Subinterogare, nu join: o factură cu mai multe linii pe comandă apare o dată.
+            on_this_order = Invoice.objects.filter(
+                pk__in=PurchaseOrderLine.objects.filter(order=order).values(
+                    "invoice_lines__invoice"
+                )
+            )
+            context["invoices"] = on_this_order.order_by("number")
+        context["can_invoice"] = order.status not in (Status.DRAFT, Status.CANCELLED)
         return context
 
 

@@ -30,7 +30,7 @@ Legendă: **S** = creează / modifică · **C** = doar citește · **—** = fă
 | **Cursuri BNR** – „Actualizează acum” (altfel automat) | — | — | S | S |
 | **Notificări trimise** | doar ale lui | doar ale lui | doar ale lui | toate + „Trimite acum” |
 | **Jurnal de audit** (global) | — | — | — | C |
-| **Istoric pe document** | pe documentele pe care le vede | idem | idem | toate |
+| **Istoric pe document** | pe documentele pe care le vede, fără detaliile plății | idem | idem | toate |
 | **Utilizatori** | — | — | — | S |
 
 ## Justificări
@@ -52,4 +52,5 @@ Legendă: **S** = creează / modifică · **C** = doar citește · **—** = fă
   - șabloane: `{% if user|can:"orders.view_prices" %}` (ex. Depozitul nu vede coloana de prețuri);
   - meniul: fiecare element declară permisiunea necesară.
 - O cheie de permisiune scrisă greșit ridică eroare (nu întoarce în tăcere „fără acces”).
+- **Istoricul respectă aceleași reguli ca pagina.** Un model își declară informațiile sensibile (`AUDIT_RESTRICTED`, ex. pe `Invoice`: data și referința plății, vizibile doar cu `invoices.view_payment`), iar istoricul documentului le ascunde celor fără permisiune. Altfel istoricul ar fi dezvăluit exact ce pagina ascunde (problemă prinsă de teste).
 - Testul [`test_permissions.py`](../apps/accounts/tests/test_permissions.py) conține matricea rescrisă independent și o compară cu codul, pentru fiecare permisiune × fiecare rol.

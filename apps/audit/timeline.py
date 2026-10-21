@@ -42,6 +42,13 @@ EVENT_STYLE = {
     BusinessEvent.Type.RECEIPT_CONFIRMED: ("success", "box-seam"),
     BusinessEvent.Type.DISCREPANCY_ATTACHED: ("success", "link-45deg"),
     BusinessEvent.Type.DISCREPANCY_RETURNED: ("warning", "arrow-return-left"),
+    BusinessEvent.Type.INVOICE_VALIDATED: ("info", "check2-circle"),
+    BusinessEvent.Type.INVOICE_RECHECKED: ("info", "arrow-repeat"),
+    BusinessEvent.Type.INVOICE_REOPENED: ("secondary", "pencil-square"),
+    BusinessEvent.Type.INVOICE_APPROVED: ("success", "check2-all"),
+    BusinessEvent.Type.INVOICE_FORCE_APPROVED: ("warning", "exclamation-triangle"),
+    BusinessEvent.Type.INVOICE_PAID: ("dark", "cash-coin"),
+    BusinessEvent.Type.INVOICE_REJECTED: ("danger", "x-circle"),
 }
 DEFAULT_EVENT_STYLE = ("info", "flag")
 
@@ -219,3 +226,38 @@ def history_for(obj, limit=None):
     )
     rows = timeline_rows(filters)
     return hydrate(rows[:limit] if limit else rows)
+
+
+def redact(entries, user, model):
+    """Ascunde din istoric ce utilizatorul nu are voie să vadă.
+
+    Un model își declară informațiile sensibile și permisiunea care le dezvăluie:
+
+        AUDIT_RESTRICTED = {
+            "invoices.view_payment": {"fields": ("paid_at",), "details": ("referința",)},
+        }
+
+    `fields` = câmpuri ale modelului (din modificările automate), `details` = chei din
+    detaliile evenimentelor de business. Fără această filtrare, istoricul ar dezvălui
+    exact ce pagina ascunde (ex. detaliile plății, docs/04-permisiuni.md).
+    """
+    hidden_fields, hidden_details = set(), set()
+    for permission, restricted in getattr(model, "AUDIT_RESTRICTED", {}).items():
+        if not user.can(permission):
+            hidden_fields |= {
+                str(model._meta.get_field(name).verbose_name).lower()
+                for name in restricted.get("fields", ())
+            }
+            hidden_details |= set(restricted.get("details", ()))
+    if not (hidden_fields or hidden_details):
+        return entries
+
+    visible = []
+    for entry in entries:
+        if entry.changes:
+            entry.changes = [c for c in entry.changes if str(c[0]).lower() not in hidden_fields]
+            if not entry.changes:
+                continue  # o modificare formată doar din câmpuri ascunse nu se mai arată
+        entry.details = {k: v for k, v in (entry.details or {}).items() if k not in hidden_details}
+        visible.append(entry)
+    return visible

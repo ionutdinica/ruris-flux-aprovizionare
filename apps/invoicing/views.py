@@ -15,10 +15,18 @@ from apps.accounts.permissions import PermissionMixin
 from apps.catalog.models import Supplier
 from apps.core.views import SearchListMixin
 from apps.currency.services import RateError, get_rate
-from apps.purchasing.models import PurchaseOrderLine
+from apps.purchasing.models import PurchaseOrder, PurchaseOrderLine
 
 from . import services
-from .forms import InvoiceForm, InvoiceLineForm, InvoiceLineFormSet, invoiceable_order_lines
+from .forms import (
+    InvoiceForm,
+    InvoiceLineForm,
+    InvoiceLineFormSet,
+    PaymentForm,
+    ReasonForm,
+    invoiceable_order_lines,
+    lines_formset_for_order,
+)
 from .matching import TOTAL_TOLERANCE
 from .models import Invoice
 
@@ -162,7 +170,17 @@ class InvoiceFormMixin(PermissionMixin):
         value = self.request.POST.get("supplier") or self.request.GET.get("furnizor") or ""
         if value.isdigit():
             return int(value)
-        return self.object.supplier_id if self.object else None
+        if self.object:
+            return self.object.supplier_id
+        order = self._source_order()
+        return order.supplier_id if order else None
+
+    def _source_order(self):
+        """Comanda de pe care s-a apăsat „Înregistrează factura” (?comanda=ID), dacă există."""
+        value = self.request.GET.get("comanda", "")
+        if self.request.method != "GET" or self.object or not value.isdigit():
+            return None
+        return PurchaseOrder.objects.filter(pk=value).first()
 
     def get_initial(self):
         initial = super().get_initial()
@@ -176,9 +194,13 @@ class InvoiceFormMixin(PermissionMixin):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         if "lines" not in context:
-            context["lines"] = InvoiceLineFormSet(
-                instance=self.object or Invoice(), supplier_id=self._supplier_id()
-            )
+            order = self._source_order()
+            if order:
+                context["lines"] = lines_formset_for_order(order)
+            else:
+                context["lines"] = InvoiceLineFormSet(
+                    instance=self.object or Invoice(), supplier_id=self._supplier_id()
+                )
         return context
 
     def post(self, request, *args, **kwargs):
@@ -300,3 +322,64 @@ class InvoiceReopenView(PermissionMixin, View):
             request, f"Factura {invoice} a fost redeschisă. Corectează datele și validează din nou."
         )
         return redirect("invoicing:invoice_update", pk=invoice.pk)
+
+
+# --- Deciziile Contabilității: aprobare, forțare, plată, respingere -------------------------
+
+
+class InvoiceActionView(PermissionMixin, View):
+    """O acțiune de status pe factură: doar prin POST, cu mesaj de confirmare sau eroare."""
+
+    permission = "invoices.edit"
+    http_method_names = ["post"]
+    form_class = None  # formularul cu date suplimentare (motiv, data plății)
+    success_message = ""
+
+    def post(self, request, pk):
+        invoice = get_object_or_404(Invoice, pk=pk)
+        data = {}
+        if self.form_class:
+            form = self.form_class(request.POST)
+            if not form.is_valid():
+                errors = [e for field_errors in form.errors.values() for e in field_errors]
+                messages.error(request, " ".join(errors))
+                return redirect(invoice)
+            data = form.cleaned_data
+        try:
+            self.act(invoice, data)
+        except services.InvoiceError as error:
+            messages.error(request, " ".join(error.messages))
+        else:
+            messages.success(request, self.success_message % {"number": invoice.number})
+        return redirect(invoice)
+
+
+class InvoiceApproveView(InvoiceActionView):
+    success_message = "Factura %(number)s a fost aprobată la plată."
+
+    def act(self, invoice, data):
+        services.approve_invoice(invoice, self.request.user)
+
+
+class InvoiceForceApproveView(InvoiceActionView):
+    form_class = ReasonForm
+    success_message = "Factura %(number)s a fost forțată la plată; justificarea e în jurnal."
+
+    def act(self, invoice, data):
+        services.force_approve_invoice(invoice, self.request.user, data["reason"])
+
+
+class InvoicePayView(InvoiceActionView):
+    form_class = PaymentForm
+    success_message = "Factura %(number)s a fost marcată plătită."
+
+    def act(self, invoice, data):
+        services.mark_paid(invoice, data["paid_at"], data["reference"])
+
+
+class InvoiceRejectView(InvoiceActionView):
+    form_class = ReasonForm
+    success_message = "Factura %(number)s a fost respinsă."
+
+    def act(self, invoice, data):
+        services.reject_invoice(invoice, data["reason"])
