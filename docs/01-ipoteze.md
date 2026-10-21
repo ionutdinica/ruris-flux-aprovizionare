@@ -66,6 +66,8 @@ Cerința este intenționat scurtă. Acest document consemnează **ce am presupus
 - **I-29** Notificările se trimit ca **un singur rezumat zilnic pe persoană** (zile lucrătoare, ora configurabilă, implicit 08:00), nu câte un email pe problemă. Altfel oamenii încep să le ignore.
 - **I-30** Rezumatul conține **toate problemele încă deschise** care privesc persoana, nu doar pe cele noi: o problemă nerezolvată trebuie reamintită. Problemele apărute de la rezumatul anterior sunt marcate **NOU**.
 - **I-31** Dacă o persoană nu are nimic de rezolvat, nu primește email.
+- **I-32** „Zi lucrătoare” înseamnă luni–vineri. Sărbătorile legale nu sunt considerate (simplificare declarată): în cel mai rău caz o factură e semnalată cu o zi mai devreme, iar rezumatul pleacă și într-o zi de sărbătoare.
+- **I-33** Administratorul nu primește rezumat zilnic: vede toate problemele în panou și în jurnal, iar un email cu problemele tuturor ar fi zgomot.
 
 ## În afara proiectului (consemnate deliberat)
 

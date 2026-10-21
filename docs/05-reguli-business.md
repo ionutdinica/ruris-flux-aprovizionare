@@ -97,7 +97,9 @@ Exemplu real: pentru o factură din 01.01.2026 se aplică cursul din 31.12.2025 
 
 ## 4. Ce înseamnă „întârziat” și „blocat”
 
-Sunt definițiile folosite de dashboard și de notificări.
+Sunt definițiile folosite de dashboard și de notificări, implementate o singură dată, în [`apps/notifications/alerts.py`](../apps/notifications/alerts.py): emailul și panoul nu se pot contrazice.
+
+Fiecare problemă are o **cheie stabilă** (ex. `ORDER_LATE:12`), aceeași de la o zi la alta: comparând cheile cu rezumatul anterior se află ce e **NOU**. O comandă cu mai multe linii întârziate e o singură problemă, cu toate liniile în detalii. „De când” e o factură într-un status se măsoară cu `Invoice.status_changed_at`, actualizat automat doar când statusul chiar se schimbă (o reverificare care nu schimbă nimic nu „resetează ceasul”).
 
 ### Întârziat
 | Cod | Condiție | Cine trebuie să afle |

@@ -108,6 +108,11 @@ class Invoice(SearchableModel, TimeStampedModel):
     # Rezultatul ultimei potriviri: lista motivelor de blocare (cod + mesaj).
     match_result = models.JSONField("motive de blocare", default=list, blank=True, editable=False)
     matched_at = models.DateTimeField("verificată la", null=True, blank=True, editable=False)
+    # De când e factura în statusul curent: „potrivită, dar neaprobată de 3 zile” etc.
+    # (notificări). Se actualizează automat în save(), la orice schimbare de status.
+    status_changed_at = models.DateTimeField(
+        "status schimbat la", default=timezone.now, editable=False
+    )
 
     approved_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -152,11 +157,24 @@ class Invoice(SearchableModel, TimeStampedModel):
     def __str__(self):
         return self.number or "factură nouă"
 
+    @classmethod
+    def from_db(cls, db, field_names, values):
+        invoice = super().from_db(db, field_names, values)
+        invoice._loaded_status = invoice.__dict__.get("status")  # statusul din baza de date
+        return invoice
+
     def save(self, *args, **kwargs):
         if not self.number:
             # Numărul intern urmează ordinea înregistrării (registrul de intrări).
             self.number = DocumentSequence.next_number("FAC", timezone.localdate())
+        loaded = getattr(self, "_loaded_status", None)
+        if not self._state.adding and loaded is not None and loaded != self.status:
+            self.status_changed_at = timezone.now()
+            update_fields = kwargs.get("update_fields")
+            if update_fields is not None:
+                kwargs["update_fields"] = {*update_fields, "status_changed_at"}
         super().save(*args, **kwargs)
+        self._loaded_status = self.status
 
     def get_absolute_url(self):
         return reverse("invoicing:invoice_detail", args=[self.pk])

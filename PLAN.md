@@ -125,7 +125,7 @@ Legendă: `[ ]` de făcut · `[x]` gata · **(opțional)** = după ce obligatori
 
 ## Capitolul 8 – Notificări email
 
-- [ ] 8.1 Regulile pe destinatar:
+- [x] 8.1 Regulile pe destinatar:
   - **Achiziții** (responsabilul comenzii): comenzile lui întârziate, discrepanțele deschise, facturile blocate pe comenzile lui
   - **Depozit**: livrări așteptate azi și întârziate
   - **Contabilitate**: facturi blocate, facturi aprobate cu scadență apropiată, facturi fără curs

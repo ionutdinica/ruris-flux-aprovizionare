@@ -348,3 +348,15 @@ def test_status_changes_are_in_the_invoice_history(order):
     ]
     assert ["REGISTERED", "BLOCKED"] in changes
     assert codes(invoice) == ["NOT_RECEIVED", "OVER_ORDERED"]
+
+
+def test_status_changed_at_moves_only_when_the_status_changes(order, warehouse_user):
+    """„De când e blocată” nu se resetează la fiecare reverificare automată."""
+    invoice = validated(order, "12")
+    blocked_since = refreshed(invoice).status_changed_at
+
+    services.recheck_order(order)  # reverificare: tot blocată
+    assert refreshed(invoice).status_changed_at == blocked_since
+
+    services.reopen_invoice(invoice)  # alt status
+    assert refreshed(invoice).status_changed_at > blocked_since

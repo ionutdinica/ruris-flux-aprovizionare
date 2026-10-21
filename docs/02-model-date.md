@@ -172,6 +172,7 @@ Stocul disponibil al unui produs = Σ `quantity`. În carantină = Σ discrepan�
 | `status` | enum | vezi [03-fluxuri-si-stari.md](03-fluxuri-si-stari.md) |
 | `match_result` | JSON | lista motivelor de blocare (cod + detalii) de la ultima potrivire |
 | `matched_at` | dată-oră | |
+| `status_changed_at` | dată-oră | de când e factura în statusul curent; actualizat automat la schimbarea statusului |
 | `override_reason`, `approved_by`, `approved_at` | | forțare / aprobare |
 | `paid_at`, `payment_reference` | | detaliile plății: vizibile doar Contabilității și Adminului, inclusiv în istoric |
 | `rejection_reason` | text | motivul respingerii |
@@ -212,10 +213,15 @@ Pe lângă diagnostic, `RateSync` deosebește „BNR nu a publicat încă” de 
 | Câmp | Tip | Observații |
 |---|---|---|
 | `recipient` | → User | |
+| `email` | text | adresa folosită la momentul trimiterii |
 | `sent_at` | dată-oră | |
-| `subject` | text | |
-| `items` | JSON | ce probleme au fost incluse (pentru marcajul „NOU” data viitoare) |
+| `kind` | enum | `DAILY` (automat), `MANUAL` („Trimite acum”) |
+| `subject`, `body_text` | text | ce s-a trimis (afișat în „Notificări trimise”) |
+| `items` | JSON | cheile problemelor incluse (pentru marcajul „NOU” data viitoare) |
 | `status` | enum | `SENT`, `FAILED` |
 | `error` | text | |
+| `triggered_by` | → User | cine a apăsat „Trimite acum” (gol la cele automate) |
+
+Registru: înregistrările se adaugă, nu se modifică și nu se șterg.
 
 **Jurnal de audit** – gestionat de `django-auditlog` (`LogEntry`): utilizator, acțiune (creare / modificare / ștergere), obiect, diferențe câmp cu câmp, dată-oră, IP. Plus evenimente de business explicite (ex. `invoice.force_approved`), cu mesaj și justificare.
