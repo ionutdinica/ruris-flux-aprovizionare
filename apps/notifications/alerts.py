@@ -80,8 +80,12 @@ def for_user(alerts, user):
     """Problemele care îl privesc pe `user`, grupate în ordinea secțiunilor."""
     if not user.is_active:
         return []
-    mine = [alert for alert in alerts if alert.concerns(user)]
-    return sorted(mine, key=lambda a: (Section.ORDER.index(a.section), a.code, a.title))
+    return ordered([alert for alert in alerts if alert.concerns(user)])
+
+
+def ordered(alerts):
+    """În ordinea secțiunilor (întârzieri, blocaje, azi), apoi pe tip și document."""
+    return sorted(alerts, key=lambda a: (Section.ORDER.index(a.section), a.code, a.title))
 
 
 def alerts_for(user, today=None):

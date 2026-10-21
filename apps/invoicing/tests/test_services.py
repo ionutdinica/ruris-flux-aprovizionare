@@ -4,6 +4,7 @@ import datetime
 from decimal import Decimal
 
 import pytest
+from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError
 from django.utils import timezone
@@ -61,8 +62,12 @@ def eur_rate(day, rate):
 
 
 def event_types(invoice):
+    """Evenimentele facturii. Filtrat și pe tipul documentului: o recepție poate avea
+    același id ca factura (id-urile sunt numerotate separat pe fiecare tabel)."""
     return list(
-        BusinessEvent.objects.filter(object_id=str(invoice.pk))
+        BusinessEvent.objects.filter(
+            content_type=ContentType.objects.get_for_model(Invoice), object_id=str(invoice.pk)
+        )
         .order_by("id")
         .values_list("event_type", flat=True)
     )

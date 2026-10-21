@@ -1,21 +1,62 @@
 {% extends "base.html" %}
+{% load formatting %}
 
 {% block title %}Panou{% endblock %}
 
 {% block content %}
-<h1 class="h3 mb-1">Bun venit, {{ user.first_name|default:user.username }}!</h1>
-<p class="text-body-secondary mb-4">
-  Ești autentificat cu rolul <strong>{{ user.get_role_display|default:"fără rol" }}</strong>.
-</p>
+<div class="d-flex flex-wrap align-items-baseline justify-content-between gap-2 mb-3">
+  <h1 class="h3 mb-0">Bună ziua, {{ user.first_name|default:user.username }}!</h1>
+  <span class="text-body-secondary small">{{ user.get_role_display|default:"fără rol" }} · {{ today|date:"l, j F Y"|lower|capfirst }}</span>
+</div>
 
+{# --- Cifrele-cheie ---------------------------------------------------------------- #}
+{% if kpis %}
+<div class="row g-3 mb-4">
+  {% for kpi in kpis %}
+    <div class="col-6 col-lg-3">
+      <a href="{{ kpi.url }}" class="card shadow-sm h-100 text-decoration-none{% if kpi.needs_attention %} border-danger{% endif %}">
+        <div class="card-body">
+          <div class="small text-body-secondary">{{ kpi.label }}</div>
+          <div class="fs-3 fw-semibold{% if kpi.needs_attention %} text-danger{% else %} text-body{% endif %}">
+            {% if kpi.is_money %}{{ kpi.value|money }} <span class="fs-6 fw-normal">lei</span>{% else %}{{ kpi.value }}{% endif %}
+          </div>
+          {% if kpi.hint %}<div class="small text-body-secondary">{{ kpi.hint }}</div>{% endif %}
+        </div>
+      </a>
+    </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+{# --- De rezolvat (același detector ca emailul zilnic) --------------------------------- #}
 <div class="card shadow-sm">
-  <div class="card-body">
-    <h2 class="h5"><i class="bi bi-cone-striped me-2 text-warning"></i>Aplicație în construcție</h2>
-    <p class="mb-0">
-      Aici va fi panoul de control al echipei tale: comenzi întârziate, facturi blocate,
-      discrepanțe de rezolvat. Elementele din meniu marcate <span class="badge text-bg-secondary fw-normal">în curând</span>
-      devin active pe măsură ce sunt construite.
-    </p>
+  <div class="card-header bg-body d-flex justify-content-between align-items-center">
+    <span class="fw-semibold"><i class="bi bi-list-check me-1"></i> {% if is_admin %}Probleme deschise în firmă{% else %}De rezolvat{% endif %}</span>
+    {% if alert_count %}<span class="badge text-bg-secondary">{{ alert_count }}</span>{% endif %}
   </div>
+  {% if sections %}
+    {% for section in sections %}
+      <div class="px-3 pt-3 pb-1 small fw-semibold text-uppercase text-body-secondary">{{ section.title }}</div>
+      <ul class="list-group list-group-flush">
+        {% for alert in section.alerts %}
+          <li class="list-group-item d-flex justify-content-between align-items-start gap-3" style="border-left: 4px solid {{ section.color }}">
+            <div>
+              <div class="fw-semibold">{{ alert.title }}</div>
+              <div class="small text-body-secondary">{{ alert.detail }}</div>
+            </div>
+            <a href="{{ alert.url }}" class="btn btn-sm btn-outline-primary text-nowrap">Deschide <i class="bi bi-arrow-right"></i></a>
+          </li>
+        {% endfor %}
+      </ul>
+    {% endfor %}
+    {% if hidden_count %}
+      <div class="card-footer bg-body small text-body-secondary">… și încă {{ hidden_count }}.</div>
+    {% endif %}
+  {% else %}
+    <div class="card-body text-center text-body-secondary py-5">
+      <i class="bi bi-check2-circle display-5 text-success"></i>
+      <p class="mt-2 mb-0">Nimic de rezolvat acum. {% if not is_admin %}Când apare ceva care te privește, îl vezi aici și în rezumatul de pe email.{% endif %}</p>
+    </div>
+  {% endif %}
 </div>
 {% endblock %}
