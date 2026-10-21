@@ -35,6 +35,9 @@ comandă peste buget pleacă doar cu justificare), import / export Excel, panou 
 ![Panoul Contabilității](docs/img/panou-contabilitate.jpg)
 ![Graficele Contabilității](docs/img/grafice-contabilitate.jpg)
 
+**Bugetele pe furnizor**: plafonul anual, cât s-a angajat și cât a rămas
+![Bugetele pe furnizor](docs/img/bugete.jpg)
+
 **Rezumatul zilnic pe email** (în Mailpit, căsuța de test): fiecare primește doar problemele lui
 ![Emailul zilnic](docs/img/email-rezumat.jpg)
 
