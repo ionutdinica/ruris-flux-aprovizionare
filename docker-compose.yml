@@ -37,6 +37,9 @@ services:
       # Emailurile se salvează pe disc (implicit Mailpit le ține doar în memorie și le
       # pierde la oprire). „docker compose down -v” le șterge, odată cu baza de date.
       MP_DATABASE: /data/mailpit.db
+      # Data afișată a unui email = data scrisă în el (nu ora la care l-a primit Mailpit):
+      # rezumatele demo „din trecut” apar în zilele lor.
+      MP_USE_MESSAGE_DATES: "true"
     volumes:
       - mailpit-data:/data
 
@@ -57,6 +60,7 @@ services:
       # publică intenționat: aplicația rulează doar pe calculatorul celui care o pornește.
       DEMO_DATA: "True"
       DEMO_PASSWORD: demo-ruris
+      MAILPIT_API_URL: http://mailpit:8025  # emailurile demo din zilele trecute: citite
     depends_on:
       db:
         condition: service_healthy  # pornește abia după ce baza de date e gata

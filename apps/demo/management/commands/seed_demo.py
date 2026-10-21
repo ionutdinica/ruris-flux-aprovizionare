@@ -17,10 +17,12 @@ from django.conf import settings
 from django.core.management import call_command
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
+from django.utils import timezone
 
 from apps.accounts.models import User
 from apps.catalog.models import Product, Supplier
 from apps.demo.catalog import TEAM
+from apps.demo.mailpit import MailpitError, mark_past_emails_read
 from apps.demo.seed import DemoSeeder
 from apps.purchasing.models import PurchaseOrder
 
@@ -65,6 +67,15 @@ class Command(BaseCommand):
         self.stdout.write(self.style.SUCCESS("Date demo generate:"))
         for line in created:
             self.stdout.write(f"  - {line}")
+        try:
+            marked = mark_past_emails_read(timezone.localdate())
+        except MailpitError as exc:
+            self.stdout.write(self.style.WARNING(f"  - {exc}"))
+        else:
+            if marked is not None:
+                self.stdout.write(
+                    f"  - Mailpit: {marked} emailuri din zilele trecute, marcate citite"
+                )
         self.stdout.write("\nConturi (aceeași parolă pentru toate):")
         for username, first, last, role in TEAM:
             self.stdout.write(f"  {username:<16} {first} {last} · {User.Role(role).label}")

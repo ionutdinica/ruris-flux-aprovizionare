@@ -8,6 +8,8 @@ reține și îl arată la http://localhost:8025). Fiecare încercare rămâne î
 NotificationLog; o eroare la un destinatar nu îi oprește pe ceilalți.
 """
 
+from email.utils import formatdate
+
 from django.conf import settings
 from django.core.mail import EmailMultiAlternatives
 from django.db import IntegrityError, transaction
@@ -54,6 +56,9 @@ def send_digest(user, *, alerts=None, kind=NotificationLog.Kind.DAILY, triggered
         body=digest.text,
         from_email=settings.DEFAULT_FROM_EMAIL,
         to=[user.email],
+        # Data emailului = ceasul aplicației (Django ar pune altfel ora sistemului). Contează
+        # la datele demo: un rezumat „din trecut” poartă data lui din trecut.
+        headers={"Date": formatdate(timezone.now().timestamp(), localtime=True)},
     )
     message.attach_alternative(digest.html, "text/html")
     try:

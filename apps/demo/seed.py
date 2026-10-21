@@ -20,6 +20,7 @@ from dataclasses import dataclass, field
 from decimal import ROUND_HALF_UP, Decimal
 
 from auditlog.context import set_actor
+from django.conf import settings
 from django.utils import timezone
 
 from apps.audit.context import audit_context
@@ -70,9 +71,10 @@ class Story:
 
 
 class DemoSeeder:
-    def __init__(self, password, today=None, fetch_rates=True):
+    def __init__(self, password, today=None, fetch_rates=True, now=None):
         self.password = password
-        self.today = today or timezone.localdate()
+        self.now = now or timezone.localtime()  # momentul generării (testele îl pot fixa)
+        self.today = today or self.now.date()
         self.start = self.today - datetime.timedelta(days=HISTORY_DAYS)
         self.fetch_rates = fetch_rates
         self.random = random.Random(RANDOM_SEED)
@@ -528,21 +530,31 @@ class DemoSeeder:
 
     def plan_daily_digests(self):
         """Rezumatele zilnice din ultimele zile lucrătoare: pagina „Notificări trimise” are
-        istoric, iar marcajul NOU funcționează deja la primul rezumat real."""
-        day, planned = self.today - datetime.timedelta(days=1), 0
-        while planned < DIGEST_DAYS:
+        istoric, iar marcajul NOU funcționează deja la primul rezumat real.
+
+        Dacă generarea are loc azi după ora rezumatului, se simulează și rezumatul de azi
+        (la ora obișnuită, ca în zilele trecute), ca istoria demo să fie uniformă.
+        """
+        days = []
+        today_at = moment(self.today, settings.NOTIFICATION_HOUR, 5)
+        self.digest_today = is_business_day(self.today) and self.now >= today_at
+        if self.digest_today:
+            days.append(self.today)
+        day = self.today - datetime.timedelta(days=1)
+        while len(days) < DIGEST_DAYS + self.digest_today:
             if is_business_day(day):
-                when = moment(day, 8, 5)
-                self.agenda.append(
-                    (
-                        when,
-                        len(self.agenda),
-                        None,
-                        lambda w=when: notifications.send_daily_digests(now=w),
-                    )
-                )
-                planned += 1
+                days.append(day)
             day -= datetime.timedelta(days=1)
+        for day in days:
+            when = moment(day, settings.NOTIFICATION_HOUR, 5)
+            self.agenda.append(
+                (
+                    when,
+                    len(self.agenda),
+                    None,
+                    lambda w=when: notifications.send_daily_digests(now=w),
+                )
+            )
 
     # --- Rezumat -----------------------------------------------------------------------------
 

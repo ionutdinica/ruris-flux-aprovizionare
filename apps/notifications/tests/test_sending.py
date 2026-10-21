@@ -239,3 +239,13 @@ def test_a_failed_email_does_not_count_as_seen(clock, late_order, procurement_us
 
     delivered = next(m for m in mail.outbox if m.to == [procurement_user.email])
     assert "[NOU]" in delivered.body
+
+
+def test_email_date_follows_the_application_clock(clock, late_order, procurement_user):
+    """Datele demo: un rezumat „din trecut” poartă în email data lui din trecut."""
+    from apps.demo.clock import travel_to
+
+    with travel_to(at(WEDNESDAY, 8, 5)):
+        services.send_digest(procurement_user)
+
+    assert "21 Oct 2026 08:05" in mail.outbox[0].extra_headers["Date"]

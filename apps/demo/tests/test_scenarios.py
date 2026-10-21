@@ -151,7 +151,9 @@ def test_audit_trail_is_in_the_past_and_signed(demo):
 
 
 def test_recent_daily_digests_were_sent(demo):
-    assert DailyDigestRun.objects.count() == 3
+    seeder, _ = demo
+    # Ultimele 3 zile lucrătoare, plus azi dacă generarea a avut loc după ora rezumatului.
+    assert DailyDigestRun.objects.count() == 3 + seeder.digest_today
     assert NotificationLog.objects.filter(status=NotificationLog.Status.SENT).exists()
 
 

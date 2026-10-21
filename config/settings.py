@@ -28,6 +28,7 @@ env = environ.Env(
     NOTIFICATION_HOUR=(int, 8),
     BNR_BASE_URL=(str, "https://curs.bnr.ro"),
     DEMO_RESET_ALLOWED=(bool, False),
+    MAILPIT_API_URL=(str, ""),
 )
 # Fișierul .env e opțional: pe serverul online variabilele vin direct din mediu.
 environ.Env.read_env(BASE_DIR / ".env")
@@ -243,3 +244,7 @@ BNR_BASE_URL = env("BNR_BASE_URL").rstrip("/")
 # unde e setat explicit (calculatorul dezvoltatorului, serverul de demonstrație), ca o
 # rulare din greșeală pe serverul real să nu poată șterge datele firmei.
 DEMO_RESET_ALLOWED = env("DEMO_RESET_ALLOWED")
+
+# Doar pentru datele demo: adresa API-ului Mailpit, ca emailurile demo din zilele
+# trecute să apară ca citite (apps/demo/mailpit.py). Gol = nu se folosește.
+MAILPIT_API_URL = env("MAILPIT_API_URL")
