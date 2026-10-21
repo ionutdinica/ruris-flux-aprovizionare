@@ -114,8 +114,8 @@ def test_no_budget_no_status(supplier):
     [("89", "ok", 89), ("90", "warning", 90), ("100", "warning", 100), ("101", "over", 101)],
 )
 def test_levels(supplier, quantity, level, percent):
+    sent_order(quantity, supplier=supplier)  # înainte de buget: fără verificare la trimitere
     budget(supplier, "10000")
-    sent_order(quantity, supplier=supplier)
 
     result = status(supplier)
 
@@ -124,8 +124,8 @@ def test_levels(supplier, quantity, level, percent):
 
 
 def test_overrun(supplier):
-    budget(supplier, "1000")
     sent_order("12", supplier=supplier)
+    budget(supplier, "1000")
 
     assert status(supplier).overrun == D("200.00")
 
@@ -176,8 +176,8 @@ def test_impact_of_a_draft_over_budget(supplier):
 
 
 def test_when_the_budget_is_already_exceeded_the_whole_order_is_excess(supplier):
-    budget(supplier, "1000")
     sent_order("12", supplier=supplier)
+    budget(supplier, "1000")  # stabilit (sau micșorat) după comandă: deja depășit
 
     impact = services.order_impact(draft(supplier, "3"))
 

@@ -51,6 +51,15 @@ def test_other_years_are_separate(client, accounting_user, supplier):
     assert "7.000,00" in client.get(f"{LIST}?an={YEAR + 1}").content.decode()
 
 
+def test_year_is_written_without_thousands_separator(client, accounting_user):
+    """Formatul românesc ar scrie anul „2.026” și ar strica linkurile ?an=…"""
+    client.force_login(accounting_user)
+    html = client.get(LIST).content.decode()
+
+    assert f'<option value="{YEAR}" selected>{YEAR}</option>' in html
+    assert f"?an={YEAR}" in html
+
+
 def test_invalid_year_falls_back_to_the_current_one(client, accounting_user):
     client.force_login(accounting_user)
 

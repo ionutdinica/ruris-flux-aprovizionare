@@ -1,0 +1,23 @@
+{% load formatting l10n %}
+{# Cardul de buget al unui furnizor (pagina furnizorului, pagina comenzii). #}
+<div class="card shadow-sm mb-3">
+  <div class="card-header bg-body fw-semibold d-flex justify-content-between align-items-center">
+    <span><i class="bi bi-piggy-bank me-1"></i> Buget {{ status.budget.year|unlocalize }}</span>
+    <a href="{% url 'budgets:budget_list' %}?an={{ status.budget.year|unlocalize }}" class="small fw-normal">toate bugetele</a>
+  </div>
+  <div class="card-body">
+    {% include "budgets/partials/budget_bar.html" with status=status %}
+    <dl class="row small mb-0 mt-2">
+      <dt class="col-6 fw-normal text-body-secondary">Buget</dt><dd class="col-6 text-end mb-1">{{ status.budget.amount|money }} {{ status.budget.currency }}</dd>
+      <dt class="col-6 fw-normal text-body-secondary">Angajat</dt><dd class="col-6 text-end mb-1">{{ status.committed|money }}</dd>
+      <dt class="col-6 fw-normal text-body-secondary">din care facturat</dt><dd class="col-6 text-end mb-1">{{ status.invoiced|money }}</dd>
+      <dt class="col-6">Disponibil</dt><dd class="col-6 text-end mb-0 fw-semibold{% if status.level == 'over' %} text-danger{% endif %}">{{ status.available|money }}</dd>
+    </dl>
+    {% if impact %}
+      <div class="small mt-2 pt-2 border-top {% if impact.exceeds %}text-danger{% else %}text-body-secondary{% endif %}">
+        Această comandă: {{ impact.amount|money }} {{ status.budget.currency }}.
+        {% if impact.exceeds %}Depășește bugetul cu {{ impact.excess|money }}: la trimitere se cere o justificare.{% else %}După trimitere rămân {{ impact.available_after|money }}.{% endif %}
+      </div>
+    {% endif %}
+  </div>
+</div>

@@ -24,6 +24,7 @@ class BusinessEvent(AppendOnlyModel):
         LOGOUT = "auth.logout", "Ieșire din cont"
         LOGIN_FAILED = "auth.login_failed", "Autentificare eșuată"
         ORDER_SENT = "order.sent", "Comandă trimisă"
+        ORDER_SENT_OVER_BUDGET = "order.sent_over_budget", "Comandă trimisă peste buget"
         ORDER_CANCELLED = "order.cancelled", "Comandă anulată"
         ORDER_CLOSED = "order.closed", "Comandă închisă cu rest"
         ORDERS_IMPORTED = "orders.imported", "Comenzi importate din Excel"

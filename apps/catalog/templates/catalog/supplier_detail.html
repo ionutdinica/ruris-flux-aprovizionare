@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load permissions audit %}
+{% load permissions audit l10n %}
 
 {% block title %}{{ supplier.name }}{% endblock %}
 
@@ -42,6 +42,16 @@
     </div>
   </div>
   <div class="col-lg-5">
+    {% if budget %}
+      {% include "budgets/partials/budget_card.html" with status=budget %}
+    {% elif year and user|can:"budgets.edit" %}
+      <div class="card shadow-sm mb-3">
+        <div class="card-body small d-flex justify-content-between align-items-center gap-2">
+          <span class="text-body-secondary"><i class="bi bi-piggy-bank me-1"></i>Fără buget în {{ year|unlocalize }}: comenzile nu sunt verificate.</span>
+          <a href="{% url 'budgets:budget_create' %}?an={{ year|unlocalize }}&amp;furnizor={{ supplier.pk }}" class="btn btn-sm btn-outline-primary text-nowrap">Stabilește buget</a>
+        </div>
+      </div>
+    {% endif %}
     {% object_history supplier %}
   </div>
 </div>

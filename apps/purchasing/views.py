@@ -17,6 +17,7 @@ from django.views.generic.edit import CreateView, UpdateView
 from apps.accounts.permissions import PermissionMixin
 from apps.audit.models import BusinessEvent
 from apps.audit.services import record_event
+from apps.budgets import services as budgets
 from apps.catalog.models import Supplier
 from apps.core.excel import xlsx_response
 from apps.core.views import SearchListMixin
@@ -157,6 +158,10 @@ class OrderDetailView(PermissionMixin, VisibleOrdersMixin, DetailView):
             )
             context["invoices"] = on_this_order.order_by("number")
         context["can_invoice"] = order.status not in (Status.DRAFT, Status.CANCELLED)
+        if self.request.user.can("budgets.view"):
+            context["budget"] = budgets.status_for(order.supplier, order.order_date.year)
+            if context["budget"] and order.status == Status.DRAFT:
+                context["budget_impact"] = budgets.order_impact(order)
         return context
 
 
@@ -236,6 +241,7 @@ class OrderTransitionView(PermissionMixin, View):
     permission = "orders.edit"
     http_method_names = ["post"]
     needs_reason = False
+    accepts_reason = False  # motiv opțional, cerut doar în anumite situații (ex. peste buget)
     success_message = ""
 
     def post(self, request, pk):
@@ -247,6 +253,8 @@ class OrderTransitionView(PermissionMixin, View):
                 messages.error(request, "Motivul este obligatoriu.")
                 return redirect(order)
             args.append(form.cleaned_data["reason"])
+        elif self.accepts_reason:
+            args.append(request.POST.get("reason", ""))
         try:
             self.transition(order, *args)
         except services.TransitionError as error:
@@ -258,6 +266,7 @@ class OrderTransitionView(PermissionMixin, View):
 
 class OrderSendView(OrderTransitionView):
     transition = staticmethod(services.send_order)
+    accepts_reason = True  # justificarea, dacă depășește bugetul furnizorului
     success_message = (
         "Comanda %(number)s a fost trimisă. De acum Depozitul o vede la livrări așteptate."
     )

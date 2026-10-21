@@ -42,6 +42,12 @@
   </div>
 </div>
 
+{% if order.budget_override_reason and show_prices %}
+  <div class="alert alert-warning small">
+    <i class="bi bi-exclamation-triangle me-1"></i><strong>Trimisă peste bugetul furnizorului.</strong> Justificare: {{ order.budget_override_reason }}
+  </div>
+{% endif %}
+
 {% if order.close_reason %}
   <div class="alert alert-{% if order.status == 'CANCELLED' %}danger{% else %}secondary{% endif %} small">
     <strong>{% if order.status == "CANCELLED" %}Motivul anulării{% else %}Motivul închiderii{% endif %}:</strong> {{ order.close_reason }}
@@ -125,6 +131,9 @@
   </div>
 
   <div class="col-lg-4">
+    {% if budget %}
+      {% include "budgets/partials/budget_card.html" with status=budget impact=budget_impact %}
+    {% endif %}
     {% if receipts %}
       <div class="card shadow-sm mb-3">
         <div class="card-header bg-body fw-semibold"><i class="bi bi-box-seam me-1"></i> Recepții</div>
@@ -165,7 +174,7 @@
 
 {% if can_edit %}
   {# Ferestrele de confirmare pentru acțiunile de status (POST + token CSRF). #}
-  {% include "purchasing/partials/transition_modal.html" with modal_id="sendModal" title="Trimiți comanda?" action_url="purchasing:order_send" button="Trimite" button_class="btn-primary-dark" text="După trimitere, comanda devine angajament față de furnizor: Depozitul o vede la livrările așteptate, iar produsele, prețurile și furnizorul nu se mai pot schimba." %}
+  {% include "purchasing/partials/send_modal.html" %}
   {% include "purchasing/partials/transition_modal.html" with modal_id="cancelModal" title="Anulezi comanda?" action_url="purchasing:order_cancel" button="Anulează comanda" button_class="btn-danger" text="Anularea este definitivă și se înregistrează în jurnal împreună cu motivul." with_reason=True %}
   {% include "purchasing/partials/transition_modal.html" with modal_id="closeModal" title="Închizi comanda cu rest nelivrat?" action_url="purchasing:order_close" button="Închide comanda" button_class="btn-dark" text="Cantitățile nerecepționate nu mai sunt așteptate. Comanda nu va mai apărea ca întârziată." with_reason=True %}
 {% endif %}

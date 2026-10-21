@@ -13,6 +13,9 @@ from django.utils import timezone
 
 from apps.audit.models import BusinessEvent
 from apps.audit.services import record_event
+from apps.budgets.models import SupplierBudget
+from apps.budgets.services import order_impact
+from apps.core.templatetags.formatting import money
 
 from .models import PurchaseOrder, PurchaseOrderLine
 from .signals import order_progress_changed
@@ -42,8 +45,12 @@ def received_quantities(order):
 
 
 @transaction.atomic
-def send_order(order):
-    """Ciornă → Trimisă. Comanda devine angajament față de furnizor."""
+def send_order(order, reason=""):
+    """Ciornă → Trimisă. Comanda devine angajament față de furnizor.
+
+    Dacă depășește bugetul furnizorului pe anul comenzii, se trimite doar cu o
+    justificare (`reason`), care rămâne pe comandă și în jurnal (I-41).
+    """
     order = _lock(order)
     if order.status != Status.DRAFT:
         raise TransitionError("Doar o comandă în ciornă poate fi trimisă.")
@@ -56,14 +63,42 @@ def send_order(order):
     if inactive:
         raise TransitionError(f"Produse inactive pe comandă: {', '.join(inactive)}.")
 
+    # Blocăm bugetul furnizorului: două comenzi trimise simultan nu pot „vedea” amândouă
+    # același disponibil și depăși împreună bugetul fără justificare.
+    list(
+        SupplierBudget.objects.select_for_update().filter(
+            supplier=order.supplier_id, year=order.order_date.year
+        )
+    )
+    impact = order_impact(order)
+    over_budget = impact is not None and impact.exceeds
+    if over_budget:
+        reason = (reason or "").strip()
+        excess = f"{money(impact.excess)} {impact.status.budget.currency}"
+        if not reason:
+            raise TransitionError(
+                f"Comanda depășește bugetul {order.order_date.year} al furnizorului "
+                f"{order.supplier} cu {excess}. Se poate trimite doar cu o justificare."
+            )
+        order.budget_override_reason = reason
+
     order.status = Status.SENT
     order.sent_at = timezone.now()
-    order.save(update_fields=["status", "sent_at", "updated_at"])
-    record_event(
-        BusinessEvent.Type.ORDER_SENT,
-        f"Comanda {order} a fost trimisă către {order.supplier}.",
-        target=order,
-    )
+    order.save(update_fields=["status", "sent_at", "budget_override_reason", "updated_at"])
+    if over_budget:
+        record_event(
+            BusinessEvent.Type.ORDER_SENT_OVER_BUDGET,
+            # Suma și justificarea stau în detalii: Depozitul nu le vede (AUDIT_RESTRICTED).
+            f"Comanda {order} a fost trimisă către {order.supplier} peste bugetul furnizorului.",
+            target=order,
+            data={"depășire": excess, "justificare": reason},
+        )
+    else:
+        record_event(
+            BusinessEvent.Type.ORDER_SENT,
+            f"Comanda {order} a fost trimisă către {order.supplier}.",
+            target=order,
+        )
     return order
 
 

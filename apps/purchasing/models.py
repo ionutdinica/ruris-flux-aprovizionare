@@ -110,6 +110,14 @@ class PurchaseOrder(SearchableModel, TimeStampedModel):
         Status.CANCELLED: "danger",
     }
 
+    # Ce nu apare în istoricul comenzii pentru cine nu vede prețuri (Depozitul).
+    AUDIT_RESTRICTED = {
+        "orders.view_prices": {
+            "fields": ("budget_override_reason",),
+            "details": ("depășire", "justificare"),
+        }
+    }
+
     # Comenzi la care se așteaptă marfă (pot fi întârziate).
     OPEN_STATUSES = (Status.SENT, Status.PARTIALLY_RECEIVED)
     # Comenzi care mai acceptă modificări controlate: termene, linii noi, cantități mai
@@ -143,6 +151,10 @@ class PurchaseOrder(SearchableModel, TimeStampedModel):
     )
     sent_at = models.DateTimeField("trimisă la", null=True, blank=True, editable=False)
     close_reason = models.TextField("motivul închiderii / anulării", blank=True, editable=False)
+    # Completată doar dacă la trimitere comanda a depășit bugetul furnizorului (I-41).
+    budget_override_reason = models.TextField(
+        "justificarea depășirii bugetului", blank=True, editable=False
+    )
     notes = models.TextField("observații", blank=True)
 
     objects = PurchaseOrderQuerySet.as_manager()

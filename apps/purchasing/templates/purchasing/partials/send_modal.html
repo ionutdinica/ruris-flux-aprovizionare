@@ -1,0 +1,39 @@
+{% load formatting l10n %}
+{# Fereastra „Trimiți comanda?”: arată efectul asupra bugetului; peste buget cere justificare. #}
+<div class="modal fade" id="sendModal" tabindex="-1" aria-labelledby="sendModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <form method="post" action="{% url 'purchasing:order_send' order.pk %}" class="modal-content">
+      {% csrf_token %}
+      <div class="modal-header">
+        <h2 class="modal-title fs-5" id="sendModalLabel">Trimiți comanda?</h2>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Închide"></button>
+      </div>
+      <div class="modal-body">
+        <p class="mb-3">După trimitere, comanda devine angajament față de furnizor: Depozitul o vede la livrările așteptate, iar produsele, prețurile și furnizorul nu se mai pot schimba.</p>
+        {% if budget_impact %}
+          {% with status=budget_impact.status currency=budget_impact.status.budget.currency %}
+          {% if budget_impact.exceeds %}
+            <div class="alert alert-warning small">
+              <i class="bi bi-exclamation-triangle me-1"></i>
+              <strong>Depășește bugetul {{ status.budget.year|unlocalize }}</strong> al furnizorului cu {{ budget_impact.excess|money }} {{ currency }}:
+              disponibil {{ status.available|money }} {{ currency }}, comanda are {{ budget_impact.amount|money }} {{ currency }} fără TVA.
+            </div>
+            <label for="sendModalReason" class="form-label">Justificare <span class="text-danger">*</span></label>
+            <textarea name="reason" id="sendModalReason" rows="3" class="form-control" required placeholder="De ce e nevoie de comandă peste buget (ex. urgență de producție, suplimentare aprobată)"></textarea>
+            <div class="form-text">Rămâne vizibilă pe comandă și în jurnalul de activitate.</div>
+          {% else %}
+            <p class="small text-body-secondary mb-0">
+              <i class="bi bi-piggy-bank me-1"></i>Buget {{ status.budget.year|unlocalize }}: disponibil {{ status.available|money }} {{ currency }};
+              după trimitere rămân {{ budget_impact.available_after|money }} {{ currency }}.
+            </p>
+          {% endif %}
+          {% endwith %}
+        {% endif %}
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Renunță</button>
+        <button type="submit" class="btn {% if budget_impact.exceeds %}btn-warning{% else %}btn-primary-dark{% endif %}">{% if budget_impact.exceeds %}Trimite peste buget{% else %}Trimite{% endif %}</button>
+      </div>
+    </form>
+  </div>
+</div>

@@ -35,6 +35,7 @@ EVENT_STYLE = {
     BusinessEvent.Type.LOGOUT: ("secondary", "box-arrow-right"),
     BusinessEvent.Type.LOGIN_FAILED: ("danger", "shield-exclamation"),
     BusinessEvent.Type.ORDER_SENT: ("primary", "send"),
+    BusinessEvent.Type.ORDER_SENT_OVER_BUDGET: ("warning", "send-exclamation"),
     BusinessEvent.Type.ORDER_CANCELLED: ("danger", "x-circle"),
     BusinessEvent.Type.ORDER_CLOSED: ("warning", "slash-circle"),
     BusinessEvent.Type.ORDERS_IMPORTED: ("info", "file-earmark-arrow-up"),

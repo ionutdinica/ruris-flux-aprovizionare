@@ -1,7 +1,7 @@
 {% extends "base.html" %}
-{% load permissions formatting %}
+{% load permissions formatting l10n %}
 
-{% block title %}Bugete {{ year }}{% endblock %}
+{% block title %}Bugete {{ year|unlocalize }}{% endblock %}
 
 {% block content %}
 <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-1">
@@ -9,12 +9,12 @@
   <div class="d-flex gap-2">
     <form method="get" class="d-flex">
       <select name="an" class="form-select" aria-label="Anul" onchange="this.form.submit()">
-        {% for value in years %}<option value="{{ value }}"{% if value == year %} selected{% endif %}>{{ value }}</option>{% endfor %}
+        {% for value in years %}<option value="{{ value|unlocalize }}"{% if value == year %} selected{% endif %}>{{ value|unlocalize }}</option>{% endfor %}
       </select>
       <noscript><button type="submit" class="btn btn-outline-secondary ms-2">Arată</button></noscript>
     </form>
     {% if user|can:"budgets.edit" %}
-      <a href="{% url 'budgets:budget_create' %}?an={{ year }}" class="btn btn-primary-dark text-nowrap"><i class="bi bi-plus-lg me-1"></i>Buget nou</a>
+      <a href="{% url 'budgets:budget_create' %}?an={{ year|unlocalize }}" class="btn btn-primary-dark text-nowrap"><i class="bi bi-plus-lg me-1"></i>Buget nou</a>
     {% endif %}
   </div>
 </div>
@@ -63,16 +63,16 @@
 {% else %}
   <div class="text-center text-body-secondary py-5">
     <i class="bi bi-piggy-bank display-5"></i>
-    <p class="mt-2 mb-0">Niciun buget stabilit pentru {{ year }}.</p>
+    <p class="mt-2 mb-0">Niciun buget stabilit pentru {{ year|unlocalize }}.</p>
   </div>
 {% endif %}
 
 {% if without_budget %}
-  <p class="small text-body-secondary mb-1">Furnizori fără buget în {{ year }} (comenzile lor nu sunt verificate):</p>
+  <p class="small text-body-secondary mb-1">Furnizori fără buget în {{ year|unlocalize }} (comenzile lor nu sunt verificate):</p>
   <div class="d-flex flex-wrap gap-2">
     {% for supplier in without_budget %}
       {% if user|can:"budgets.edit" %}
-        <a href="{% url 'budgets:budget_create' %}?an={{ year }}&amp;furnizor={{ supplier.pk }}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-plus me-1"></i>{{ supplier }}</a>
+        <a href="{% url 'budgets:budget_create' %}?an={{ year|unlocalize }}&amp;furnizor={{ supplier.pk }}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-plus me-1"></i>{{ supplier }}</a>
       {% else %}
         <span class="badge text-bg-light border">{{ supplier }}</span>
       {% endif %}
