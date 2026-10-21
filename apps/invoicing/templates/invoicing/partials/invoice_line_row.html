@@ -1,0 +1,27 @@
+{# Un rând din liniile facturii. Folosit și ca model (<template>) pentru rândurile noi. #}
+{% load formatting %}
+<tr data-line>
+  <td style="min-width: 22rem">
+    {% for hidden in form.hidden_fields %}{{ hidden }}{% endfor %}
+    {{ form.order_line }}
+    {% for error in form.order_line.errors %}<div class="invalid-feedback">{{ error }}</div>{% endfor %}
+    {% for error in form.non_field_errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+  </td>
+  <td style="min-width: 7rem">
+    {{ form.quantity }}
+    {% for error in form.quantity.errors %}<div class="invalid-feedback">{{ error }}</div>{% endfor %}
+  </td>
+  <td style="min-width: 8rem">
+    {{ form.unit_price }}
+    {% for error in form.unit_price.errors %}<div class="invalid-feedback">{{ error }}</div>{% endfor %}
+  </td>
+  <td style="min-width: 9rem">
+    {{ form.vat_rate }}
+    {% for error in form.vat_rate.errors %}<div class="invalid-feedback">{{ error }}</div>{% endfor %}
+  </td>
+  <td class="text-end text-nowrap align-middle" data-line-total>{% if form.instance.pk %}{{ form.instance.net_amount|money }}{% else %}0,00{% endif %}</td>
+  <td class="text-end align-middle">
+    {% if form.DELETE %}<span class="d-none">{{ form.DELETE }}</span>{% endif %}
+    <button type="button" class="btn btn-sm btn-outline-danger" data-formset-remove title="Șterge linia"><i class="bi bi-trash"></i></button>
+  </td>
+</tr>

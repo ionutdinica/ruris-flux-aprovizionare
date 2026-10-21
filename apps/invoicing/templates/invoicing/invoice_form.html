@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb small">
+    <li class="breadcrumb-item"><a href="{% url 'invoicing:invoice_list' %}">Facturi</a></li>
+    {% if object.pk %}<li class="breadcrumb-item"><a href="{{ object.get_absolute_url }}">{{ object }}</a></li>{% endif %}
+    <li class="breadcrumb-item active" aria-current="page">{% if object.pk %}Editare{% else %}Factură nouă{% endif %}</li>
+  </ol>
+</nav>
+
+<h1 class="h3 mb-3">{{ page_title }}{% if object.pk %} {{ object.number }}{% endif %}</h1>
+
+<form method="post" novalidate data-invoice-form data-options-url="{% url 'invoicing:order_line_options' %}">
+  {% csrf_token %}
+  {% if form.non_field_errors %}<div class="alert alert-danger">{{ form.non_field_errors }}</div>{% endif %}
+
+  <div class="card shadow-sm mb-3">
+    <div class="card-header bg-body fw-semibold">Datele de pe factură</div>
+    <div class="card-body">
+      <div class="row">
+        <div class="col-md-6">{% include "partials/form_field.html" with field=form.supplier %}</div>
+        <div class="col-md-4">{% include "partials/form_field.html" with field=form.supplier_invoice_number %}</div>
+        <div class="col-md-2">{% include "partials/form_field.html" with field=form.currency %}</div>
+        <div class="col-md-3">{% include "partials/form_field.html" with field=form.invoice_date %}</div>
+        <div class="col-md-3">{% include "partials/form_field.html" with field=form.due_date %}</div>
+        <div class="col-12">{% include "partials/form_field.html" with field=form.notes %}</div>
+      </div>
+    </div>
+  </div>
+
+  {# data-formset: liniile dinamice și totalurile calculate (static/js/formset.js). #}
+  <div class="card shadow-sm mb-3" data-formset="{{ lines.prefix }}">
+    <div class="card-header bg-body fw-semibold d-flex justify-content-between align-items-center">
+      Linii (legate de comenzile furnizorului)
+      <button type="button" class="btn btn-sm btn-outline-primary" data-formset-add><i class="bi bi-plus-lg me-1"></i>Adaugă linie</button>
+    </div>
+    {{ lines.management_form }}
+    {% if lines.non_form_errors %}<div class="alert alert-danger m-3 mb-0">{{ lines.non_form_errors }}</div>{% endif %}
+    <div class="alert alert-light small m-3 mb-0" data-no-supplier{% if form.supplier.value %} hidden{% endif %}>
+      <i class="bi bi-arrow-up me-1"></i>Alege întâi furnizorul: apoi poți alege liniile din comenzile lui.
+    </div>
+    <div class="table-responsive">
+      <table class="table align-top mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>Linie de comandă</th>
+            <th>Cantitate</th>
+            <th>Preț unitar</th>
+            <th>TVA</th>
+            <th class="text-end">Valoare</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody data-formset-body>
+          {% for line_form in lines %}
+            {% include "invoicing/partials/invoice_line_row.html" with form=line_form %}
+          {% endfor %}
+        </tbody>
+        <tfoot class="table-group-divider">
+          <tr><td colspan="4" class="text-end">Total fără TVA, calculat din linii</td><td class="text-end fw-semibold text-nowrap" data-total="net">0,00</td><td></td></tr>
+          <tr><td colspan="4" class="text-end">TVA, calculat</td><td class="text-end text-nowrap" data-total="vat">0,00</td><td></td></tr>
+          <tr><td colspan="4" class="text-end fw-semibold">Total, calculat</td><td class="text-end fw-bold text-nowrap" data-total="gross">0,00</td><td></td></tr>
+        </tfoot>
+      </table>
+    </div>
+    <template>{% include "invoicing/partials/invoice_line_row.html" with form=lines.empty_form %}</template>
+  </div>
+
+  <div class="card shadow-sm mb-3">
+    <div class="card-header bg-body fw-semibold">Totalurile de pe factura primită</div>
+    <div class="card-body">
+      <p class="small text-body-secondary">
+        Copiază-le exact de pe document. La validare se compară cu totalurile calculate din linii
+        (diferență acceptată: 0,05), ca să se prindă greșelile de pe factură sau de tastare.
+      </p>
+      <div class="row">
+        <div class="col-md-4">{% include "partials/form_field.html" with field=form.declared_net %}</div>
+        <div class="col-md-4">{% include "partials/form_field.html" with field=form.declared_vat %}</div>
+        <div class="col-md-4">{% include "partials/form_field.html" with field=form.declared_total %}</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="d-flex flex-wrap gap-2">
+    <button type="submit" name="validate" class="btn btn-primary-dark"><i class="bi bi-check2-circle me-1"></i>Salvează și validează</button>
+    <button type="submit" class="btn btn-outline-primary"><i class="bi bi-save me-1"></i>Salvează (validez mai târziu)</button>
+    <a href="{% if object.pk %}{{ object.get_absolute_url }}{% else %}{% url 'invoicing:invoice_list' %}{% endif %}" class="btn btn-outline-secondary">Renunță</a>
+  </div>
+</form>
+{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'js/formset.js' %}"></script>
+<script src="{% static 'js/invoice_form.js' %}"></script>
+{% endblock %}

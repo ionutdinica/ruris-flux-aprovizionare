@@ -197,7 +197,9 @@ AUDITLOG_INCLUDE_TRACKING_MODELS = (
     {"model": "warehouse.GoodsReceiptLine", "exclude_fields": _TIMESTAMPS},
     {"model": "warehouse.Discrepancy", "exclude_fields": _TIMESTAMPS},
     {"model": "warehouse.StockMovement", "exclude_fields": _TIMESTAMPS},
-    {"model": "invoicing.Invoice", "exclude_fields": _TIMESTAMPS},
+    # Rezultatul potrivirii (JSON) nu intră în jurnalul automat: motivele apar, lizibil,
+    # în evenimentele de business ale facturii (validare, reverificare).
+    {"model": "invoicing.Invoice", "exclude_fields": [*_TIMESTAMPS, "match_result", "matched_at"]},
     {"model": "invoicing.InvoiceLine", "exclude_fields": _TIMESTAMPS},
 )
 AUDITLOG_MASK_CALLABLE = "apps.audit.utils.mask_completely"

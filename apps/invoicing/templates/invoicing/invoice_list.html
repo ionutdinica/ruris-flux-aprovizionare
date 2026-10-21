@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% load permissions %}
+
+{% block title %}Facturi{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+  <h1 class="h3 mb-0"><i class="bi bi-receipt me-2"></i>Facturi</h1>
+  {% if user|can:"invoices.edit" %}
+    <a href="{% url 'invoicing:invoice_create' %}" class="btn btn-primary-dark"><i class="bi bi-plus-lg me-1"></i>Factură nouă</a>
+  {% endif %}
+</div>
+
+<form method="get" class="card card-body shadow-sm mb-3" role="search"
+      hx-get="{{ request.path }}" hx-target="#results" hx-push-url="true"
+      hx-trigger="input delay:300ms, change, submit">
+  <div class="row g-2">
+    <div class="col-12 col-md-5">
+      <div class="input-group">
+        <span class="input-group-text"><i class="bi bi-search"></i></span>
+        <input type="search" name="q" value="{{ query }}" class="form-control" placeholder="Caută după număr, furnizor, număr factură…" aria-label="Caută" autofocus>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <select name="supplier" class="form-select" aria-label="Furnizor">
+        <option value="">Toți furnizorii</option>
+        {% for supplier in suppliers %}
+          <option value="{{ supplier.pk }}"{% if supplier_filter == supplier.pk|stringformat:"s" %} selected{% endif %}>{{ supplier }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-6 col-md-4">
+      <select name="status" class="form-select" aria-label="Status">
+        {% for value, label in status_choices %}
+          <option value="{{ value }}"{% if value == status %} selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+  </div>
+</form>
+
+<div id="results">
+  {% include "invoicing/partials/invoice_table.html" %}
+</div>
+{% endblock %}

@@ -38,6 +38,18 @@ class Code:
     OVER_ORDERED = "OVER_ORDERED"
     PRICE_MISMATCH = "PRICE_MISMATCH"
 
+    # Etichete scurte, pentru jurnal, filtre și rapoarte.
+    LABELS = {
+        SUPPLIER_MISMATCH: "alt furnizor",
+        CURRENCY_MISMATCH: "altă monedă",
+        ORDER_NOT_OPEN: "comandă anulată / ciornă",
+        TOTAL_MISMATCH: "totaluri diferite",
+        DUPLICATE_LINE: "linie dublată",
+        NOT_RECEIVED: "marfă nesosită",
+        OVER_ORDERED: "peste cantitatea comandată",
+        PRICE_MISMATCH: "preț diferit",
+    }
+
 
 @dataclass(frozen=True)
 class Problem:

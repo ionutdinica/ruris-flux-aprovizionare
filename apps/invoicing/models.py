@@ -239,7 +239,8 @@ class InvoiceLine(TimeStampedModel):
         ]
 
     def __str__(self):
-        return f"{self.invoice} · {self.order_line} → {format_quantity(self.quantity)}"
+        product = self.order_line.product.code if self.order_line_id else "?"
+        return f"{self.invoice} · {product} × {format_quantity(self.quantity)}"
 
     def get_additional_data(self):
         """Modificările liniilor apar în istoricul facturii (apps/audit/timeline.py)."""

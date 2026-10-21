@@ -1,0 +1,172 @@
+{% extends "base.html" %}
+{% load permissions audit formatting %}
+
+{% block title %}{{ invoice.number }}{% endblock %}
+
+{% block content %}
+{% with can_edit=user|can:"invoices.edit" %}
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb small">
+    <li class="breadcrumb-item"><a href="{% url 'invoicing:invoice_list' %}">Facturi</a></li>
+    <li class="breadcrumb-item active" aria-current="page">{{ invoice.number }}</li>
+  </ol>
+</nav>
+
+<div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+  <h1 class="h3 mb-0">
+    Factura {{ invoice.number }}
+    <span class="fs-6 align-middle badge text-bg-{{ invoice.status_color }}{% if invoice.status == 'REJECTED' %} border{% endif %}">{{ invoice.get_status_display }}</span>
+  </h1>
+
+  {% if can_edit %}
+  <div class="d-flex flex-wrap gap-2">
+    {% if invoice.is_editable %}
+      <a href="{% url 'invoicing:invoice_update' invoice.pk %}" class="btn btn-outline-primary"><i class="bi bi-pencil me-1"></i>Editează</a>
+      <form method="post" action="{% url 'invoicing:invoice_validate' invoice.pk %}">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-primary-dark"><i class="bi bi-check2-circle me-1"></i>Validează</button>
+      </form>
+    {% endif %}
+    {% if invoice.status == "BLOCKED" or invoice.status == "RATE_PENDING" %}
+      <form method="post" action="{% url 'invoicing:invoice_reopen' invoice.pk %}">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-outline-secondary" title="Pentru greșeli de introducere: factura revine la „Înregistrată”"><i class="bi bi-pencil-square me-1"></i>Corectează datele</button>
+      </form>
+    {% endif %}
+  </div>
+  {% endif %}
+</div>
+
+{# --- Verdictul potrivirii ------------------------------------------------------------ #}
+{% if invoice.status == "REGISTERED" %}
+  <div class="alert alert-secondary small">
+    <i class="bi bi-info-circle me-1"></i>Factura e înregistrată, dar nevalidată. Verifică datele, apoi apasă „Validează”:
+    se preia cursul BNR și se compară cu comanda și recepția.
+  </div>
+{% elif invoice.status == "RATE_PENDING" %}
+  <div class="alert alert-warning small">
+    <i class="bi bi-hourglass-split me-1"></i><strong>Curs în așteptare.</strong> {{ rate_pending_reason }}
+  </div>
+{% elif invoice.status == "MATCHED" %}
+  <div class="alert alert-success small">
+    <i class="bi bi-check-circle me-1"></i><strong>Potrivită:</strong> comanda, recepția și factura corespund
+    (verificat la {{ invoice.matched_at|date:"d.m.Y H:i" }}).
+  </div>
+{% elif invoice.status == "BLOCKED" %}
+  <div class="alert alert-danger">
+    <div class="fw-semibold mb-1"><i class="bi bi-exclamation-octagon me-1"></i>Blocată: {{ invoice.problems|length }} {% if invoice.problems|length == 1 %}motiv{% else %}motive{% endif %} de lămurit</div>
+    <ul class="mb-1 small">
+      {% for problem in invoice.problems %}<li>{{ problem.message }}</li>{% endfor %}
+    </ul>
+    <div class="small text-body-secondary">
+      Se deblochează singură când situația se schimbă (ex. sosește marfa). Verificată ultima dată la {{ invoice.matched_at|date:"d.m.Y H:i" }}.
+    </div>
+  </div>
+{% elif invoice.status == "REJECTED" %}
+  <div class="alert alert-secondary small"><strong>Respinsă:</strong> {{ invoice.rejection_reason }}</div>
+{% endif %}
+
+{# Tabelul de potrivire: piesa centrală, pe toată lățimea. #}
+  <div class="card shadow-sm mb-3">
+    <div class="card-header bg-body fw-semibold">Comandat · recepționat · facturat</div>
+    <div class="table-responsive">
+      <table class="table align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>Comandă / produs</th>
+            <th class="text-end">Comandat</th>
+            <th class="text-end">Recepționat</th>
+            <th class="text-end" title="Pe toate facturile validate, inclusiv aceasta">Facturat total</th>
+            <th class="text-end">Pe această factură</th>
+            <th class="text-end">Preț comandă</th>
+            <th class="text-end">Preț factură</th>
+            <th class="text-end">Valoare</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for line in lines %}
+            <tr{% if line.flagged %} class="table-danger"{% endif %}>
+              <td>
+                <a href="{{ line.order_line.order.get_absolute_url }}" class="small text-decoration-none">{{ line.order_line.order }}</a>
+                <div>{{ line.order_line.product }}</div>
+                {% for problem in line.line_problems %}<div class="small text-danger"><i class="bi bi-exclamation-circle me-1"></i>{{ problem.message }}</div>{% endfor %}
+              </td>
+              <td class="text-end text-nowrap">{{ line.progress.quantity|qty }} {{ line.order_line.product.unit }}</td>
+              <td class="text-end text-nowrap">{{ line.progress.received_qty|qty }}</td>
+              <td class="text-end text-nowrap">{{ line.progress.invoiced_qty|qty }}</td>
+              <td class="text-end text-nowrap fw-semibold">{{ line.quantity|qty }}</td>
+              <td class="text-end text-nowrap">{{ line.order_line.unit_price|money }}</td>
+              <td class="text-end text-nowrap{% if line.price_differs %} fw-semibold text-danger{% endif %}">{{ line.unit_price|money }}</td>
+              <td class="text-end text-nowrap">{{ line.net_amount|money }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+
+<div class="row g-3">
+  <div class="col-lg-8">
+    <div class="card shadow-sm mb-3">
+      <div class="card-body">
+        <dl class="row mb-0">
+          <dt class="col-sm-4">Furnizor</dt>
+          <dd class="col-sm-8"><a href="{{ invoice.supplier.get_absolute_url }}">{{ invoice.supplier }}</a></dd>
+          <dt class="col-sm-4">Număr factură furnizor</dt>
+          <dd class="col-sm-8">{{ invoice.supplier_invoice_number }}</dd>
+          <dt class="col-sm-4">Data / scadența</dt>
+          <dd class="col-sm-8">
+            {{ invoice.invoice_date|date:"d.m.Y" }} / {{ invoice.due_date|date:"d.m.Y" }}
+            {% if invoice.due_date < today and invoice.status != "PAID" and invoice.status != "REJECTED" %}<span class="badge text-bg-danger ms-1"><i class="bi bi-alarm"></i> scadență depășită</span>{% endif %}
+          </dd>
+          <dt class="col-sm-4">Comenzi</dt>
+          <dd class="col-sm-8">{% for order in orders %}<a href="{{ order.get_absolute_url }}">{{ order }}</a>{% if not forloop.last %}, {% endif %}{% empty %}—{% endfor %}</dd>
+          <dt class="col-sm-4">Monedă și curs</dt>
+          <dd class="col-sm-8">
+            {{ invoice.currency }}
+            {% if invoice.exchange_rate is not None and invoice.currency != "RON" %}
+              · curs BNR <strong>{{ invoice.exchange_rate|floatformat:4 }}</strong> din {{ invoice.exchange_rate_date|date:"d.m.Y" }}
+              {% if invoice.exchange_rate_date != invoice.invoice_date %}
+                <div class="small text-body-secondary">Factura e din {{ invoice.invoice_date|date:"d.m.Y" }} ({{ invoice.invoice_date|date:"l"|lower }}), zi fără curs publicat: se aplică ultimul curs anterior.</div>
+              {% endif %}
+            {% endif %}
+          </dd>
+          <dt class="col-sm-4">Total în lei</dt>
+          <dd class="col-sm-8">{% if invoice.total_ron is not None %}<strong>{{ invoice.total_ron|money }} lei</strong>{% else %}<span class="text-body-secondary">se calculează la validare</span>{% endif %}</dd>
+          {% if invoice.notes %}
+            <dt class="col-sm-4">Observații</dt>
+            <dd class="col-sm-8 mb-0">{{ invoice.notes|linebreaksbr }}</dd>
+          {% endif %}
+        </dl>
+      </div>
+    </div>
+
+    <div class="card shadow-sm mb-3">
+      <div class="card-header bg-body fw-semibold">Totaluri: de pe factură față de calculat din linii</div>
+      <div class="table-responsive">
+        <table class="table align-middle mb-0">
+          <thead class="table-light">
+            <tr><th></th><th class="text-end">De pe factură</th><th class="text-end">Calculat</th><th class="text-center">Corespunde</th></tr>
+          </thead>
+          <tbody>
+            {% for row in totals %}
+              <tr{% if not row.ok %} class="table-danger"{% endif %}>
+                <td>{{ row.label }}</td>
+                <td class="text-end text-nowrap">{{ row.declared|money }} {{ invoice.currency }}</td>
+                <td class="text-end text-nowrap">{{ row.computed|money }} {{ invoice.currency }}</td>
+                <td class="text-center">{% if row.ok %}<i class="bi bi-check-lg text-success" aria-label="da"></i>{% else %}<i class="bi bi-x-lg text-danger" aria-label="nu"></i>{% endif %}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-4">
+    {% object_history invoice %}
+  </div>
+</div>
+{% endwith %}
+{% endblock %}

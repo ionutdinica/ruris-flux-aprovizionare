@@ -17,7 +17,7 @@ from apps.audit.services import record_event
 from apps.currency.services import InvalidRateDate, RatePending, get_rate
 from apps.purchasing.models import PurchaseOrderLine
 
-from .matching import find_problems
+from .matching import Code, find_problems
 from .models import Invoice, InvoiceLine
 
 Status = Invoice.Status
@@ -81,7 +81,9 @@ def _set_rate(invoice, quote):
 
 
 def _codes(invoice):
-    return [problem["code"] for problem in invoice.problems]
+    """Motivele de blocare, pe scurt și lizibil, pentru jurnal: „marfă nesosită, preț diferit”."""
+    labels = dict.fromkeys(Code.LABELS[problem["code"]] for problem in invoice.problems)
+    return ", ".join(labels) or "niciunul"
 
 
 # --- Validare ------------------------------------------------------------------------------
