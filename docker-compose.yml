@@ -30,6 +30,9 @@ services:
     image: axllent/mailpit:v1.27
     ports:
       - "8025:8025"  # interfața web pentru citirea emailurilor
+      # Serverul SMTP: primește emailurile aplicației (și ale celei pornite din Python,
+      # pe calculatorul dezvoltatorului), dar nu le trimite mai departe nimănui.
+      - "127.0.0.1:1025:1025"
 
   web:
     build: .

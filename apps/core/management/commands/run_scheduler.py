@@ -21,6 +21,7 @@ logger = logging.getLogger(__name__)
 
 JOBS = [
     "fetch_bnr_rates",  # cursurile BNR (capitolul 6)
+    "send_notifications",  # rezumatul zilnic pe email (capitolul 8)
 ]
 
 

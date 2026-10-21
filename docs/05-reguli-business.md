@@ -127,7 +127,11 @@ Fiecare problemă are o **cheie stabilă** (ex. `ORDER_LATE:12`), aceeași de la
 - Pentru fiecare utilizator activ se adună toate elementele din secțiunea 4 care îl privesc; dacă lista e goală, nu se trimite nimic (I-31).
 - Email = un rezumat pe secțiuni (*Întârzieri*, *Blocaje*, *Azi*), fiecare element cu link direct în aplicație; elementele care nu apăreau în rezumatul anterior sunt marcate **NOU** (I-30).
 - Același utilizator nu primește două rezumate automate în aceeași zi; „Trimite acum” (Admin) ignoră această limită și e consemnat în audit.
-- Erorile de trimitere se înregistrează în `NotificationLog` cu statusul `FAILED`, fără să oprească trimiterea către ceilalți.
+- Erorile de trimitere se înregistrează în `NotificationLog` cu statusul `FAILED`, fără să oprească trimiterea către ceilalți. Un email eșuat se reîncearcă la rulările următoare ale job-ului, de cel mult 3 ori pe zi; până nu ajunge, problemele lui rămân „NOU”.
+
+**Implementare.** Job-ul `send_notifications` e pornit de planificator (`run_scheduler`) la fiecare 10 minute, dar rezumatul zilei se face **o singură dată**: `DailyDigestRun` reține ziua și bilanțul (trimise, eșuate, fără probleme). Dacă serverul era oprit la ora rezumatului, rezumatul pleacă la prima rulare de după; o problemă apărută în cursul zilei așteaptă rezumatul de a doua zi. Compunerea (`digest.py`: subiect, HTML + text, „NOU”) e separată de trimitere (`services.py`), ca să poată fi testată fără server de email.
+
+**Unde ajung emailurile.** Aplicația predă emailurile serverului SMTP din `EMAIL_URL`, de la adresa din `DEFAULT_FROM_EMAIL`, către adresa din contul fiecărui utilizator. Local și în Docker, serverul e **Mailpit**: reține toate emailurile (nu le trimite nimănui) și le arată la http://localhost:8025. În producție, `EMAIL_URL` ar indica serverul de email al firmei, cu un expeditor pe domeniul ei (și SPF/DKIM, ca emailurile să nu ajungă în Spam).
 
 ## 6. Numerotare și rotunjiri
 

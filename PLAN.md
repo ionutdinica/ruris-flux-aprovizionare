@@ -129,9 +129,9 @@ Legendă: `[ ]` de făcut · `[x]` gata · **(opțional)** = după ce obligatori
   - **Achiziții** (responsabilul comenzii): comenzile lui întârziate, discrepanțele deschise, facturile blocate pe comenzile lui
   - **Depozit**: livrări așteptate azi și întârziate
   - **Contabilitate**: facturi blocate, facturi aprobate cu scadență apropiată, facturi fără curs
-- [ ] 8.2 Un **rezumat** per persoană (un singur email, pe secțiuni), în format HTML + text, cu link-uri în aplicație
-- [ ] 8.3 Comanda `send_notifications` + scheduler (ora configurabilă; implicit zilnic la 08:00)
-- [ ] 8.4 `NotificationLog`: ce s-a trimis, cui, când; fără emailuri goale, fără dubluri în aceeași zi
+- [x] 8.2 Un **rezumat** per persoană (un singur email, pe secțiuni), în format HTML + text, cu link-uri în aplicație
+- [x] 8.3 Comanda `send_notifications` + scheduler (ora configurabilă; implicit zilnic la 08:00)
+- [x] 8.4 `NotificationLog`: ce s-a trimis, cui, când; fără emailuri goale, fără dubluri în aceeași zi
 - [ ] 8.5 Pagina **Notificări trimise** + butonul „Trimite acum” (Admin, util la demo)
 
 ---

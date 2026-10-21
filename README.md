@@ -39,7 +39,7 @@ Cerințe: Python 3.12+ și Docker (doar pentru PostgreSQL, aceeași versiune ca 
 Fără Docker: orice PostgreSQL 17+ instalat local, cu adresa lui în `DATABASE_URL` din `.env`.
 
 ```bash
-docker compose up -d db           # pornește doar PostgreSQL (portul 5433 al calculatorului)
+docker compose up -d db mailpit   # PostgreSQL (portul 5433) + Mailpit (emailuri: http://localhost:8025)
 python -m venv .venv
 .venv\Scripts\activate            # Windows  (Linux/macOS: source .venv/bin/activate)
 pip install -r requirements-dev.txt

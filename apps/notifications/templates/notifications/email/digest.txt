@@ -1,0 +1,15 @@
+{% autoescape off %}Bună ziua, {{ name }}!
+
+Ai {{ total }} {% if total == 1 %}lucru{% else %}lucruri{% endif %} de rezolvat în aplicația de aprovizionare{% if new_count %}, din care {{ new_count }} {% if new_count == 1 %}nou{% else %}noi{% endif %} față de rezumatul anterior{% endif %}.
+{% for section in sections %}
+== {{ section.title|upper }} ==
+{% for item in section.items %}
+{% if item.is_new %}[NOU] {% endif %}{{ item.alert.title }}
+  {{ item.alert.detail }}
+  {{ item.link }}
+{% endfor %}{% endfor %}
+--
+Rezumat trimis automat de aplicația Aprovizionare RURIS ({{ site_url }}),
+în zilele lucrătoare, la ora {{ notification_hour }}:00. Primești doar problemele care te privesc;
+o problemă apare aici până când e rezolvată.
+{% endautoescape %}

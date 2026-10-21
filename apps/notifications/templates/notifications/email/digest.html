@@ -1,0 +1,50 @@
+{# Emailul HTML. Stilurile sunt pe fiecare element (inline): programele de email ignoră CSS-ul extern. #}
+<!doctype html>
+<html lang="ro">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"></head>
+<body style="margin:0; padding:0; background:#f3f5f8; font-family:Segoe UI, Arial, sans-serif; color:#1f2937;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f3f5f8; padding:24px 12px;">
+    <tr><td align="center">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:640px; background:#ffffff; border-radius:8px; overflow:hidden;">
+        <tr>
+          <td style="background:#1f3a5f; color:#ffffff; padding:18px 24px; font-size:18px; font-weight:600;">
+            Aprovizionare RURIS
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:24px;">
+            <p style="margin:0 0 8px; font-size:16px;">Bună ziua, {{ name }}!</p>
+            <p style="margin:0 0 20px; font-size:14px; color:#4b5563;">
+              Ai <strong>{{ total }} {% if total == 1 %}lucru{% else %}lucruri{% endif %} de rezolvat</strong>{% if new_count %},
+              din care <strong>{{ new_count }} {% if new_count == 1 %}nou{% else %}noi{% endif %}</strong> față de rezumatul anterior{% endif %}.
+            </p>
+
+            {% for section in sections %}
+              <h2 style="margin:20px 0 8px; font-size:13px; letter-spacing:.04em; text-transform:uppercase; color:#6b7280;">{{ section.title }}</h2>
+              {% for item in section.items %}
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:10px; border:1px solid #e5e7eb; border-left:4px solid {{ section.color }}; border-radius:6px;">
+                  <tr>
+                    <td style="padding:10px 14px; font-size:14px;">
+                      {% if item.is_new %}<span style="display:inline-block; background:#16a34a; color:#ffffff; font-size:11px; font-weight:700; padding:1px 6px; border-radius:4px; margin-right:6px;">NOU</span>{% endif %}
+                      <strong>{{ item.alert.title }}</strong>
+                      <div style="margin-top:4px; color:#374151;">{{ item.alert.detail }}</div>
+                      <div style="margin-top:6px;"><a href="{{ item.link }}" style="color:#1f3a5f; font-weight:600;">Deschide în aplicație &rarr;</a></div>
+                    </td>
+                  </tr>
+                </table>
+              {% endfor %}
+            {% endfor %}
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:16px 24px; background:#f9fafb; font-size:12px; color:#6b7280;">
+            Rezumat trimis automat de <a href="{{ site_url }}" style="color:#6b7280;">aplicația Aprovizionare RURIS</a>,
+            în zilele lucrătoare, la ora {{ notification_hour }}:00. Primești doar problemele care te privesc;
+            o problemă apare aici până când e rezolvată.
+          </td>
+        </tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>

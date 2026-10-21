@@ -52,3 +52,26 @@ class NotificationLog(AppendOnlyModel):
 
     def __str__(self):
         return f"{self.subject} → {self.email} ({self.get_status_display().lower()})"
+
+
+class DailyDigestRun(models.Model):
+    """„Rezumatul zilei X a fost făcut”, cu bilanțul lui.
+
+    Job-ul rulează la fiecare 10 minute; fără această evidență, cine nu avea nimic de
+    rezolvat la 08:00 ar primi un „rezumat zilnic” la prima problemă apărută în cursul
+    zilei. După rularea zilei, job-ul doar reîncearcă emailurile eșuate.
+    """
+
+    date = models.DateField("ziua", unique=True)
+    started_at = models.DateTimeField("pornit la", auto_now_add=True)
+    sent = models.PositiveIntegerField("trimise", default=0)
+    failed = models.PositiveIntegerField("eșuate", default=0)
+    nothing_to_report = models.PositiveIntegerField("fără probleme", default=0)
+
+    class Meta:
+        verbose_name = "rulare a rezumatului zilnic"
+        verbose_name_plural = "rulări ale rezumatului zilnic"
+        ordering = ["-date"]
+
+    def __str__(self):
+        return f"Rezumatul din {self.date:%d.%m.%Y}: {self.sent} trimise, {self.failed} eșuate"
