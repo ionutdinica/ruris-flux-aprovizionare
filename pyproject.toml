@@ -19,6 +19,9 @@ select = [
 DJANGO_SETTINGS_MODULE = "config.settings"
 python_files = ["test_*.py"]
 addopts = "--strict-markers -q"
+markers = [
+    "allow_full_seed: testul rulează generatorul demo complet (nu doar datele de bază)",
+]
 filterwarnings = [
     "error::RuntimeWarning",
     # WhiteNoise: folderul staticfiles/ există doar după `collectstatic` (Docker / online).

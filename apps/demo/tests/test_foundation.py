@@ -81,7 +81,7 @@ def test_acting_as_signs_both_audit_logs(procurement_user):
 def test_base_data(settings):
     seeder = DemoSeeder("parola-demo-123", today=datetime.date(2026, 10, 21))
 
-    seeder.run()
+    seeder.create_base_data()
 
     assert User.objects.count() == len(TEAM)
     assert {u.role for u in User.objects.all()} == set(User.Role)
@@ -92,7 +92,7 @@ def test_base_data(settings):
 
 
 def test_romanian_tax_ids_are_valid():
-    DemoSeeder("x" * 12).run()
+    DemoSeeder("x" * 12).create_base_data()
 
     for supplier in Supplier.objects.filter(country="RO"):
         validate_cui(supplier.tax_id)  # ar ridica ValidationError
@@ -100,7 +100,7 @@ def test_romanian_tax_ids_are_valid():
 
 def test_base_data_is_dated_before_the_activity():
     today = datetime.date(2026, 10, 21)
-    DemoSeeder("x" * 12, today=today).run()
+    DemoSeeder("x" * 12, today=today).create_base_data()
 
     supplier = Supplier.objects.first()
     assert supplier.created_at.date() < today - datetime.timedelta(days=100)
@@ -113,6 +113,19 @@ def test_moment_is_local_time():
 
 
 # --- Comanda și protecțiile --------------------------------------------------------------------
+
+
+@pytest.fixture(autouse=True)
+def base_data_only(request, monkeypatch):
+    """Testele comenzii verifică protecțiile și parola, nu povestea (testată separat, în
+    test_scenarios.py): generatorul creează aici doar echipa și catalogul."""
+    if "allow_full_seed" not in request.keywords:
+
+        def run(self):
+            self.create_base_data()
+            return ["doar datele de bază"]
+
+        monkeypatch.setattr(DemoSeeder, "run", run)
 
 
 def run(*args):
@@ -156,3 +169,15 @@ def test_reset_when_allowed(settings, procurement_user):
 
     assert not User.objects.filter(pk=procurement_user.pk).exists()
     assert User.objects.filter(username="maria.pop").exists()
+
+
+@pytest.mark.allow_full_seed
+def test_bnr_unavailable_skips_eur_invoices_instead_of_inventing_rates(monkeypatch):
+    """Fără internet / BNR: facturile în EUR nu primesc un curs inventat (I-28)."""
+    monkeypatch.setattr("apps.demo.seed.currency.sync_rates", lambda force: [])
+
+    log = DemoSeeder("parola-demo-123").run()
+
+    assert "BNR indisponibil" in log[0]
+    assert not Invoice.objects.filter(currency="EUR").exists()
+    assert Invoice.objects.filter(currency="RON").exists()  # restul demo-ului e complet

@@ -149,7 +149,7 @@ Legendă: `[ ]` de făcut · `[x]` gata · **(opțional)** = după ce obligatori
 
 - [ ] 10.1 Teste unitare: potrivire (toate regulile), curs (weekend, sărbători, indisponibil), stări, permisiuni
 - [ ] 10.2 Teste de integrare: flux complet comandă → 2 tranșe recepție → factură → aprobare
-- [ ] 10.3 Comanda `seed_demo`: utilizatori demo pe fiecare rol + scenarii care acoperă **fiecare situație din cerință**:
+- [x] 10.3 Comanda `seed_demo`: utilizatori demo pe fiecare rol + scenarii care acoperă **fiecare situație din cerință**:
   - comandă livrată complet și facturată corect (potrivită, aprobată)
   - comandă livrată în 2 tranșe
   - livrare parțială + factură pe tot (blocată: *facturat dar nerecepționat*)
