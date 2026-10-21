@@ -22,7 +22,7 @@ Rezultatul este o **listă de motive**: dacă e goală, factura devine `MATCHED`
 Notații, pentru o linie de comandă `L`:
 - `comandat(L)` = cantitatea comandată;
 - `recepționat(L)` = cantitatea recepționată netă (recepții acceptate + discrepanțe atașate − retururi);
-- `facturat(L)` = Σ cantități pe **toate** facturile nerespinse care conțin `L`, **inclusiv** factura curentă.
+- `facturat(L)` = cantitatea de pe factura curentă **+** cantitățile de pe facturile care au deja întâietate: cele **aprobate sau plătite** (decizia de plată e luată) și cele **potrivite, înregistrate înaintea** facturii curente (vezi „Primul venit, primul servit” mai jos).
 
 | Cod | Regulă | Mesaj afișat |
 |---|---|---|
@@ -32,6 +32,24 @@ Notații, pentru o linie de comandă `L`:
 | `DUPLICATE_LINE` | O linie de comandă apare o singură dată pe aceeași factură | „Linia de comandă X apare de 2 ori” |
 
 Faptul că `facturat(L)` include facturile anterioare este esențial: altfel aceeași marfă ar putea fi facturată (și plătită) de două ori pe facturi diferite, fiecare părând corectă separat.
+
+### Primul venit, primul servit
+
+Varianta naivă, „toate facturile nerespinse”, dă rezultate absurde la reverificare. Exemplu: 10 bucăți recepționate, facturile A (5) și B (5), ambele potrivite; un retur de 1 bucată. Fiecare factură ar număra-o pe cealaltă, deci s-ar bloca amândouă. La trecerea următoare niciuna n-ar mai număra-o pe cealaltă (blocată), deci s-ar debloca amândouă: statusurile ar oscila.
+
+De aceea întâietatea o are **ordinea înregistrării** (numărul intern `FAC-…`):
+- reverificarea facturilor unei comenzi se face în ordinea înregistrării, într-o singură trecere, cu rezultat determinist. În exemplu, A rămâne potrivită, B se blochează;
+- două facturi nu pot fi niciodată potrivite simultan pe aceeași marfă, indiferent de ordinea în care sunt validate. Dacă o factură mai veche e validată mai târziu, cea nouă se reverifică imediat;
+- o factură aprobată sau plătită contează mereu, pentru că decizia de plată a fost luată.
+
+### Când se rulează (implementare)
+
+- la **validare** (`services.validate_invoice`), apoi se reverifică celelalte facturi pe aceeași marfă;
+- automat, prin semnalul `order_progress_changed`, trimis de comenzi după orice schimbare a recepțiilor sau a comenzii: recepție confirmată, marfă acceptată din carantină, retur, cantitate mărită, anulare;
+- automat, prin semnalul `rates_synced`, pentru facturile în *Curs în așteptare*;
+- încă o dată, chiar în momentul **aprobării**: o aprobare nu trece pe un rezultat vechi.
+
+Pe durata potrivirii, liniile de comandă implicate sunt **blocate în baza de date** (mereu în aceeași ordine), ca două facturi validate în aceeași secundă să fie verificate una după alta.
 
 ### Validări care împiedică salvarea (nu blochează, ci resping)
 

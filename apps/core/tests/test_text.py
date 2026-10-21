@@ -1,6 +1,8 @@
+from decimal import Decimal
+
 import pytest
 
-from apps.core.text import fold
+from apps.core.text import fold, format_money
 
 
 @pytest.mark.parametrize(
@@ -49,3 +51,11 @@ def test_date_input_renders_iso_format_for_the_browser():
 
     assert 'type="date"' in html
     assert 'value="2026-10-21"' in html
+
+
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [("1250.5", "1.250,50"), ("0.005", "0,01"), ("-60", "-60,00"), ("1234567.891", "1.234.567,89")],
+)
+def test_format_money(value, expected):
+    assert format_money(Decimal(value)) == expected

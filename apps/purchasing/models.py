@@ -230,9 +230,11 @@ class PurchaseOrderLineQuerySet(models.QuerySet):
         Calculate din documente, nu stocate (docs/02-model-date.md): nu se pot
         desincroniza. Recepționat = suma mișcărilor de stoc ale liniei din registrul
         depozitului (recepții + marfă acceptată din carantină − retururi).
-        Facturat: capitolul 7; până atunci zero.
+        Facturat = suma cantităților de pe facturile validate și nerespinse.
         """
-        from apps.warehouse.models import StockMovement  # import aici: evită importul circular
+        # Importuri aici: modulele de depozit și facturi depind la rândul lor de comenzi.
+        from apps.invoicing.models import Invoice, InvoiceLine
+        from apps.warehouse.models import StockMovement
 
         decimal = DecimalField(max_digits=15, decimal_places=3)
         received = (
@@ -242,11 +244,22 @@ class PurchaseOrderLineQuerySet(models.QuerySet):
             .annotate(total=Sum("quantity"))
             .values("total")
         )
+        invoiced = (
+            InvoiceLine.objects.filter(
+                order_line=OuterRef("pk"), invoice__status__in=Invoice.INVOICED_STATUSES
+            )
+            .order_by()
+            .values("order_line")
+            .annotate(total=Sum("quantity"))
+            .values("total")
+        )
         return self.annotate(
             received_qty=Coalesce(
                 Subquery(received, output_field=decimal), Value(ZERO), output_field=decimal
             ),
-            invoiced_qty=Value(ZERO, output_field=decimal),
+            invoiced_qty=Coalesce(
+                Subquery(invoiced, output_field=decimal), Value(ZERO), output_field=decimal
+            ),
         )
 
 

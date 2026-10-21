@@ -15,6 +15,7 @@ from apps.audit.models import BusinessEvent
 from apps.audit.services import record_event
 
 from .models import PurchaseOrder, PurchaseOrderLine
+from .signals import order_progress_changed
 
 Status = PurchaseOrder.Status
 
@@ -89,6 +90,7 @@ def cancel_order(order, reason):
         target=order,
         data={"motiv": reason},
     )
+    order_progress_changed.send(sender=PurchaseOrder, order=order)  # facturile se reverifică
     return order
 
 
@@ -117,22 +119,25 @@ def refresh_status(order):
     """Recalculează statusul din cantitățile recepționate (tranzițiile automate).
 
     Apelată după fiecare eveniment care schimbă recepțiile: confirmare de
-    recepție, rezolvare de discrepanță, retur, linie nouă (capitolul 5).
+    recepție, rezolvare de discrepanță, retur, linie nouă (capitolul 5). La final
+    anunță facturile, care se reverifică (semnalul order_progress_changed).
     """
     order = _lock(order)
-    if order.status not in (Status.SENT, Status.PARTIALLY_RECEIVED, Status.RECEIVED):
-        return order  # ciornele, comenzile închise și anulate nu se recalculează
+    # Ciornele, comenzile închise și anulate nu își recalculează statusul.
+    if order.status in (Status.SENT, Status.PARTIALLY_RECEIVED, Status.RECEIVED):
+        lines = list(order.lines.all())
+        received = received_quantities(order)
+        if lines and all(received[line.pk] >= line.quantity for line in lines):
+            new_status = Status.RECEIVED
+        elif any(received[line.pk] > 0 for line in lines):
+            new_status = Status.PARTIALLY_RECEIVED
+        else:
+            new_status = Status.SENT
+        if new_status != order.status:
+            order.status = new_status
+            order.save(update_fields=["status", "updated_at"])  # intră în jurnal automat
 
-    lines = list(order.lines.all())
-    received = received_quantities(order)
-    if lines and all(received[line.pk] >= line.quantity for line in lines):
-        new_status = Status.RECEIVED
-    elif any(received[line.pk] > 0 for line in lines):
-        new_status = Status.PARTIALLY_RECEIVED
-    else:
-        new_status = Status.SENT
-
-    if new_status != order.status:
-        order.status = new_status
-        order.save(update_fields=["status", "updated_at"])  # schimbarea intră în jurnal automat
+    # Și pe o comandă închisă un retur schimbă ce s-a recepționat: facturile legate de
+    # comandă se reverifică oricum (capitolul 7), în aceeași tranzacție.
+    order_progress_changed.send(sender=PurchaseOrder, order=order)
     return order

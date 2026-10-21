@@ -102,6 +102,8 @@ stateDiagram-v2
     MATCHED --> BLOCKED: reverificare cu diferențe (ex. retur)
     APPROVED --> PAID: Marchează plătită
     REGISTERED --> REJECTED: Respinge
+    RATE_PENDING --> REJECTED: Respinge
+    RATE_PENDING --> REGISTERED: Corectează datele introduse
     BLOCKED --> REJECTED: Respinge (contestată)
     PAID --> [*]
     REJECTED --> [*]

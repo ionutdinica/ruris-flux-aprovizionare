@@ -1,5 +1,5 @@
 import unicodedata
-from decimal import Decimal
+from decimal import ROUND_HALF_UP, Decimal
 
 
 def fold(text):
@@ -21,3 +21,15 @@ def format_quantity(value, sign=False):
     """
     number = Decimal(str(value)).normalize()
     return f"{number:+f}" if sign else f"{number:f}"
+
+
+def format_money(value):
+    """Sumă în format românesc, cu 2 zecimale: 1250.5 → „1.250,50”, -60 → „-60,00”.
+
+    Pentru textele salvate (ex. motivele de blocare ale unei facturi), care trebuie să
+    arate la fel oriunde sunt afișate: pagină, email, export.
+    """
+    # Rotunjire comercială întâi: formatarea Python ar rotunji „bancherește” (0,005 → 0,00).
+    rounded = Decimal(str(value)).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+    english = f"{rounded:,.2f}"  # 1,250.50
+    return english.replace(",", " ").replace(".", ",").replace(" ", ".")
