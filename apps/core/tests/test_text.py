@@ -64,3 +64,12 @@ def test_format_money(value, expected):
 @pytest.mark.parametrize(("n", "expected"), [(0, "0 facturi"), (1, "1 factură"), (3, "3 facturi")])
 def test_plural(n, expected):
     assert plural(n, "factură", "facturi") == expected
+
+
+@pytest.mark.parametrize(("n", "expected"), [(1, "1 comandă"), (3, "3 comenzi"), (0, "0 comenzi")])
+def test_plural_template_filter(n, expected):
+    from django.template import Context, Template
+
+    template = Template('{% load formatting %}{{ n|plural:"comandă,comenzi" }}')
+
+    assert template.render(Context({"n": n})) == expected

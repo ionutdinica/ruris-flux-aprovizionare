@@ -3,7 +3,6 @@
 
 from django.contrib import messages
 from django.db import transaction
-from django.db.models import Q
 from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
@@ -48,6 +47,7 @@ class InvoiceListView(PermissionMixin, SearchListMixin, ListView):
         ("", "Toate"),
         ("attention", "De rezolvat (înregistrate, în așteptare, blocate)"),
         ("overdue", "Scadență depășită, neplătite"),
+        ("pay_soon", "Aprobate, de plătit în 7 zile"),
         *Status.choices,
     ]
 
@@ -64,10 +64,15 @@ class InvoiceListView(PermissionMixin, SearchListMixin, ListView):
         if status == "attention":
             return queryset.filter(status__in=NEEDS_ATTENTION)
         if status == "overdue":
-            return queryset.filter(_overdue_condition())
+            return queryset.overdue()
+        if status == "pay_soon":
+            return queryset.to_pay_within(PAY_SOON_DAYS)
         if status in Status.values:
             return queryset.filter(status=status)
         return queryset
+
+    def filter_mine(self, queryset, user):
+        return queryset.on_orders_of(user)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -77,9 +82,7 @@ class InvoiceListView(PermissionMixin, SearchListMixin, ListView):
         return context
 
 
-def _overdue_condition():
-    """Scadența a trecut și factura nu e plătită (nici respinsă)."""
-    return Q(due_date__lt=timezone.localdate()) & ~Q(status__in=[Status.PAID, Status.REJECTED])
+PAY_SOON_DAYS = 7  # „de plătit în curând”: același prag ca pe panoul Contabilității
 
 
 # --- Ecranul de potrivire ----------------------------------------------------------------

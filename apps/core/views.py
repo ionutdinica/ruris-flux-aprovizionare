@@ -18,7 +18,7 @@ class SearchListMixin:
     altfel câmpurile din `search_fields` ale view-ului. Un câmp din `search_fields` care
     se termină în „search_text” (ex. "receipt_line__product__search_text") e căutat tot
     fără diacritice: așa se caută și prin documentele legate.
-    Parametri din adresă: ?q=text&status=active|inactive&page=2
+    Parametri din adresă: ?q=text&status=active|inactive&ale_mele=1&page=2
     Cererile HTMX primesc doar tabelul (`partial_template_name`), nu toată pagina.
 
     O listă care are nevoie de calcule suplimentare (totaluri, marcaje) le declară în
@@ -55,7 +55,18 @@ class SearchListMixin:
             queryset = queryset.filter(reduce(or_, conditions))
 
         status = self.request.GET.get("status", "")
-        return self.filter_status(queryset, status) if status else queryset
+        if status:
+            queryset = self.filter_status(queryset, status)
+        if self.request.GET.get("ale_mele") and self.offers_mine():
+            queryset = self.filter_mine(queryset, self.request.user)
+        return queryset
+
+    # „Doar ale mele”: listele în care are sens (comenzi, discrepanțe, facturi) definesc
+    # filter_mine(). Opțiunea apare doar celor care au comenzi în grijă (Achiziții, Admin).
+    filter_mine = None
+
+    def offers_mine(self):
+        return self.filter_mine is not None and self.request.user.can("orders.edit")
 
     def filter_status(self, queryset, status):
         if status == "active":
@@ -75,5 +86,7 @@ class SearchListMixin:
             query=self.request.GET.get("q", ""),
             status=self.request.GET.get("status", ""),
             status_choices=self.status_choices,
+            offers_mine=self.offers_mine(),
+            mine=bool(self.request.GET.get("ale_mele")),
         )
         return context

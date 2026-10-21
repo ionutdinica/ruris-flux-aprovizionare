@@ -1,5 +1,5 @@
 {% load formatting %}
-<p class="text-body-secondary small mb-2">{{ page_obj.paginator.count }} produse</p>
+<p class="text-body-secondary small mb-2">{{ page_obj.paginator.count|plural:"produs,produse" }}</p>
 
 {% if object_list %}
 <div class="card shadow-sm">

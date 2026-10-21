@@ -1,5 +1,5 @@
-{% load permissions %}
-<p class="text-body-secondary small mb-2">{{ page_obj.paginator.count }} furnizori</p>
+{% load permissions formatting %}
+<p class="text-body-secondary small mb-2">{{ page_obj.paginator.count|plural:"furnizor,furnizori" }}</p>
 
 {% if object_list %}
 <div class="card shadow-sm">

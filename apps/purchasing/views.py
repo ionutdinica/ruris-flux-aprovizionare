@@ -67,6 +67,9 @@ class OrderListView(PermissionMixin, VisibleOrdersMixin, SearchListMixin, ListVi
             queryset = queryset.filter(supplier_id=supplier)
         return queryset
 
+    def filter_mine(self, queryset, user):
+        return queryset.filter(owner=user)
+
     def filter_status(self, queryset, status):
         if status == "open":
             return queryset.open()

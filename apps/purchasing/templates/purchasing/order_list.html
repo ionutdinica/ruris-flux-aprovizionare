@@ -41,6 +41,14 @@
         {% endfor %}
       </select>
     </div>
+    {% if offers_mine %}
+      <div class="col-12">
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" name="ale_mele" value="1" id="ale_mele"{% if mine %} checked{% endif %}>
+          <label class="form-check-label" for="ale_mele">Doar ale mele (comenzile la care sunt responsabil)</label>
+        </div>
+      </div>
+    {% endif %}
   </div>
 </form>
 

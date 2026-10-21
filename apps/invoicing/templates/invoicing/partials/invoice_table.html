@@ -1,6 +1,6 @@
 {% load permissions formatting %}
 <div class="d-flex justify-content-between align-items-center mb-2">
-  <span class="text-body-secondary small">{{ page_obj.paginator.count }} facturi</span>
+  <span class="text-body-secondary small">{{ page_obj.paginator.count|plural:"factură,facturi" }}</span>
 </div>
 
 {% if object_list %}

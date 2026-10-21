@@ -1,4 +1,5 @@
-<p class="text-body-secondary small mb-2">{{ page_obj.paginator.count }} recepții</p>
+{% load formatting %}
+<p class="text-body-secondary small mb-2">{{ page_obj.paginator.count|plural:"recepție,recepții" }}</p>
 
 {% if object_list %}
 <div class="card shadow-sm">

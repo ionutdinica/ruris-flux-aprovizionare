@@ -8,7 +8,7 @@ from decimal import Decimal
 from django.contrib import messages
 from django.core.paginator import Paginator
 from django.db import transaction
-from django.db.models import Exists, OuterRef
+from django.db.models import Exists, F, OuterRef, Q
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views import View
@@ -66,7 +66,11 @@ class ExpectedDeliveriesView(PermissionMixin, SearchListMixin, ListView):
         if status == "late":
             return queryset.filter(next_expected__lt=today)
         if status == "today":
-            return queryset.filter(next_expected=today)
+            # O comandă poate avea o linie întârziată ȘI alta așteptată azi: contează și ea.
+            due_today = PurchaseOrderLine.objects.with_progress().filter(
+                order=OuterRef("pk"), expected_date=today, received_qty__lt=F("quantity")
+            )
+            return queryset.filter(Exists(due_today))
         if status == "week":
             return queryset.filter(next_expected__lte=today + timedelta(days=7))
         return queryset
@@ -312,6 +316,16 @@ class DiscrepancyListView(PermissionMixin, SearchListMixin, ListView):
         if status in Discrepancy.Type.values:
             return queryset.filter(type=status)
         return queryset
+
+    def filter_mine(self, queryset, user):
+        """Ca la email: marfa de pe comenzile mele, plus marfa venită fără comandă (care
+        privește toate Achizițiile, neavând un responsabil)."""
+        line, receipt = "receipt_line__order_line", "receipt_line__receipt__purchase_order"
+        return queryset.filter(
+            Q(**{f"{line}__order__owner": user})
+            | Q(**{f"{line}__isnull": True, f"{receipt}__owner": user})
+            | Q(**{f"{line}__isnull": True, f"{receipt}__isnull": True})
+        )
 
 
 class DiscrepancyDetailView(PermissionMixin, DetailView):

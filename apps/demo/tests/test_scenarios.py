@@ -5,7 +5,6 @@ Generarea durează câteva secunde, așa că se face o singură dată pentru tot
 """
 
 import datetime
-from decimal import Decimal
 
 import pytest
 from auditlog.models import LogEntry
@@ -13,10 +12,9 @@ from django.db import transaction
 from django.utils import timezone
 
 from apps.audit.models import BusinessEvent
-from apps.currency.bnr import PublishedRate
-from apps.currency.services import store_rates
 from apps.dashboard.charts import late_orders_trend, on_time_by_supplier
-from apps.demo.seed import HISTORY_DAYS, DemoSeeder
+from apps.demo.seed import HISTORY_DAYS
+from apps.demo.testing import seed_demo_for_tests
 from apps.invoicing.models import Invoice
 from apps.notifications.alerts import collect
 from apps.notifications.models import DailyDigestRun, NotificationLog
@@ -30,18 +28,7 @@ S = Invoice.Status
 @pytest.fixture(scope="module")
 def demo(django_db_setup, django_db_blocker):
     with django_db_blocker.unblock(), transaction.atomic():
-        # Cursuri EUR de test pentru fiecare zi lucrătoare (în teste nu există internet).
-        day = TODAY - datetime.timedelta(days=HISTORY_DAYS + 30)
-        rates = []
-        while day < TODAY:
-            if day.weekday() < 5:
-                rates.append(PublishedRate(day, "EUR", Decimal("5.0") + Decimal(day.day) / 1000, 1))
-            day += datetime.timedelta(days=1)
-        store_rates(rates)
-
-        seeder = DemoSeeder("parola-demo-123", fetch_rates=False)
-        log = seeder.run()
-        yield seeder, log
+        yield seed_demo_for_tests()
         transaction.set_rollback(True)
 
 

@@ -1,5 +1,5 @@
 {% load formatting %}
-<p class="text-body-secondary small mb-2">{{ page_obj.paginator.count }} discrepanțe</p>
+<p class="text-body-secondary small mb-2">{{ page_obj.paginator.count|plural:"discrepanță,discrepanțe" }}</p>
 
 {% if object_list %}
 <div class="card shadow-sm">

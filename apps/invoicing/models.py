@@ -8,6 +8,7 @@ Statusurile sunt în docs/03-fluxuri-si-stari.md; ele se schimbă DOAR prin func
 din services.py. Verificarea comandă–recepție–factură e în matching.py.
 """
 
+import datetime
 from decimal import Decimal
 
 from django.conf import settings
@@ -32,6 +33,28 @@ from apps.purchasing.models import PurchaseOrderLine, money
 
 ZERO = Decimal("0")
 AMOUNT = {"max_digits": 14, "decimal_places": 2}
+
+
+class InvoiceQuerySet(models.QuerySet):
+    def overdue(self, today=None):
+        """Scadența a trecut și factura nu e plătită (nici respinsă). Listă și panou."""
+        today = today or timezone.localdate()
+        return self.filter(due_date__lt=today).exclude(
+            status__in=[Invoice.Status.PAID, Invoice.Status.REJECTED]
+        )
+
+    def to_pay_within(self, days, today=None):
+        """Aprobate la plată, cu scadența în cel mult `days` zile (inclusiv cele depășite)."""
+        today = today or timezone.localdate()
+        return self.filter(
+            status=Invoice.Status.APPROVED, due_date__lte=today + datetime.timedelta(days=days)
+        )
+
+    def on_orders_of(self, user):
+        """Facturile care conțin linii de pe comenzile la care `user` e responsabil."""
+        return self.filter(
+            pk__in=InvoiceLine.objects.filter(order_line__order__owner=user).values("invoice")
+        )
 
 
 class Invoice(SearchableModel, TimeStampedModel):
@@ -131,6 +154,8 @@ class Invoice(SearchableModel, TimeStampedModel):
     )
     rejection_reason = models.TextField("motivul respingerii", blank=True, editable=False)
     notes = models.TextField("observații", blank=True)
+
+    objects = InvoiceQuerySet.as_manager()
 
     class Meta:
         verbose_name = "factură"

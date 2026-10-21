@@ -130,7 +130,7 @@ def test_kpi_cards_link_to_filtered_lists(client, procurement_user, situation):
 
     html = client.get(HOME).content.decode()
 
-    assert f'href="{reverse("purchasing:order_list")}?status=late"' in html
+    assert f'href="{reverse("purchasing:order_list")}?status=late&amp;ale_mele=1"' in html
 
 
 def test_admin_list_is_capped(client, admin_user, procurement_user):
