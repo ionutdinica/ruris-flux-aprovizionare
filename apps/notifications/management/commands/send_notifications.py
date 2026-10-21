@@ -23,11 +23,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, now, **options):
         if now:
-            logs = [
-                log
-                for user in services.digest_recipients()
-                if (log := services.send_digest(user, kind=NotificationLog.Kind.MANUAL))
-            ]
+            logs, _ = services.send_now()
         else:
             logs = services.send_daily_digests()
         if not logs:

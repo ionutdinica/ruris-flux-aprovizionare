@@ -49,6 +49,7 @@ EVENT_STYLE = {
     BusinessEvent.Type.INVOICE_FORCE_APPROVED: ("warning", "exclamation-triangle"),
     BusinessEvent.Type.INVOICE_PAID: ("dark", "cash-coin"),
     BusinessEvent.Type.INVOICE_REJECTED: ("danger", "x-circle"),
+    BusinessEvent.Type.NOTIFICATIONS_SENT_NOW: ("info", "envelope"),
 }
 DEFAULT_EVENT_STYLE = ("info", "flag")
 

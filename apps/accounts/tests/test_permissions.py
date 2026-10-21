@@ -37,6 +37,7 @@ EXPECTED_MATRIX = {
     "invoices.edit":           (0, 0, 1, 1),
     "rates.view":              (1, 0, 1, 1),
     "rates.refresh":           (0, 0, 1, 1),
+    "notifications.view_own":  (1, 1, 1, 1),
     "notifications.view_all":  (0, 0, 0, 1),
     "notifications.send_now":  (0, 0, 0, 1),
     "audit.view":              (0, 0, 0, 1),

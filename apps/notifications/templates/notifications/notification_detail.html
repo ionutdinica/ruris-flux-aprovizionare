@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block title %}Notificare{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb small">
+    <li class="breadcrumb-item"><a href="{% url 'notifications:log' %}">Notificări</a></li>
+    <li class="breadcrumb-item active" aria-current="page">{{ notification.sent_at|date:"d.m.Y H:i" }}</li>
+  </ol>
+</nav>
+
+<h1 class="h4 mb-3">{{ notification.subject }}</h1>
+
+{% if notification.status == "FAILED" %}
+  <div class="alert alert-danger small">
+    <strong>Emailul nu a putut fi trimis:</strong> {{ notification.error }}
+    {% if notification.kind == "DAILY" %}Se reîncearcă automat (de cel mult 3 ori pe zi).{% endif %}
+  </div>
+{% endif %}
+
+<div class="card shadow-sm mb-3">
+  <div class="card-body">
+    <dl class="row mb-0 small">
+      <dt class="col-sm-3">Către</dt>
+      <dd class="col-sm-9">{{ notification.recipient }} &lt;{{ notification.email }}&gt;</dd>
+      <dt class="col-sm-3">Trimis la</dt>
+      <dd class="col-sm-9">{{ notification.sent_at|date:"d.m.Y H:i" }}</dd>
+      <dt class="col-sm-3">Tip</dt>
+      <dd class="col-sm-9">{{ notification.get_kind_display }}{% if notification.triggered_by %}, de {{ notification.triggered_by }}{% endif %}</dd>
+      <dt class="col-sm-3">Rezultat</dt>
+      <dd class="col-sm-9 mb-0">{{ notification.get_status_display }}</dd>
+    </dl>
+  </div>
+</div>
+
+<div class="card shadow-sm">
+  <div class="card-header bg-body fw-semibold">Conținut (varianta text)</div>
+  <div class="card-body">
+    {# urlize: adresele din text devin link-uri, ca în email. #}
+    <pre class="mb-0 small" style="white-space: pre-wrap; font-family: inherit;">{{ notification.body_text|urlize }}</pre>
+  </div>
+</div>
+{% endblock %}

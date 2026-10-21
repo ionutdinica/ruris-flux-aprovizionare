@@ -46,6 +46,7 @@ PERMISSIONS = {
     "rates.view": {P, A, ADMIN},
     "rates.refresh": {A, ADMIN},  # „Actualizează acum” (altfel automat, zilnic)
     # Notificări
+    "notifications.view_own": ALL,  # fiecare își vede emailurile primite
     "notifications.view_all": {ADMIN},
     "notifications.send_now": {ADMIN},
     # Administrare

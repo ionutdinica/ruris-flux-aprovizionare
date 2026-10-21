@@ -52,6 +52,7 @@
           <ul class="dropdown-menu dropdown-menu-end">
             <li><span class="dropdown-item-text small text-body-secondary">{{ user.email }}</span></li>
             <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item" href="{% url 'notifications:log' %}"><i class="bi bi-envelope me-2"></i>Notificările mele</a></li>
             <li><a class="dropdown-item" href="{% url 'accounts:password_change' %}"><i class="bi bi-key me-2"></i>Schimbă parola</a></li>
             <li>
               {# Ieșirea se face prin POST (nu printr-un simplu link), ca să nu poată fi declanșată de alt site. #}

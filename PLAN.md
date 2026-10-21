@@ -132,7 +132,7 @@ Legendă: `[ ]` de făcut · `[x]` gata · **(opțional)** = după ce obligatori
 - [x] 8.2 Un **rezumat** per persoană (un singur email, pe secțiuni), în format HTML + text, cu link-uri în aplicație
 - [x] 8.3 Comanda `send_notifications` + scheduler (ora configurabilă; implicit zilnic la 08:00)
 - [x] 8.4 `NotificationLog`: ce s-a trimis, cui, când; fără emailuri goale, fără dubluri în aceeași zi
-- [ ] 8.5 Pagina **Notificări trimise** + butonul „Trimite acum” (Admin, util la demo)
+- [x] 8.5 Pagina **Notificări trimise** + butonul „Trimite acum” (Admin, util la demo)
 
 ---
 

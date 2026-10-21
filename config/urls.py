@@ -15,6 +15,7 @@ urlpatterns = [
     path("cursuri-bnr/", include("apps.currency.urls")),
     path("comenzi/", include("apps.purchasing.urls")),
     path("facturi/", include("apps.invoicing.urls")),
+    path("notificari/", include("apps.notifications.urls")),
     path("", include("apps.warehouse.urls")),  # receptii/, discrepante/, stoc/
     path("", include("apps.dashboard.urls")),
 ]

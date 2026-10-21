@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+
+{% block title %}Notificări{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-1">
+  <h1 class="h3 mb-0"><i class="bi bi-envelope me-2"></i>{% if sees_all %}Notificări trimise{% else %}Notificările mele{% endif %}</h1>
+  {% if recipients is not None %}
+    <form method="post" action="{% url 'notifications:send_now' %}" class="d-flex gap-2">
+      {% csrf_token %}
+      <select name="recipient" class="form-select" aria-label="Destinatar">
+        <option value="">Tuturor</option>
+        {% for person in recipients %}<option value="{{ person.pk }}">{{ person }} ({{ person.get_role_display }})</option>{% endfor %}
+      </select>
+      <button type="submit" class="btn btn-primary-dark text-nowrap"><i class="bi bi-send me-1"></i>Trimite acum</button>
+    </form>
+  {% endif %}
+</div>
+<p class="text-body-secondary small mb-3">
+  Rezumatul zilnic pleacă automat în zilele lucrătoare, după ora {{ notification_hour }}:00, doar celor care au ceva de rezolvat.
+  {% if recipients is not None %}„Trimite acum” trimite rezumatul curent imediat (util la demonstrații) și rămâne în jurnal.{% endif %}
+</p>
+
+{% if sees_all and runs %}
+  <div class="card shadow-sm mb-3">
+    <div class="card-header bg-body fw-semibold">Rezumatele zilnice</div>
+    <div class="table-responsive">
+      <table class="table table-sm align-middle mb-0">
+        <thead class="table-light">
+          <tr><th>Ziua</th><th>Pornit la</th><th class="text-end">Trimise</th><th class="text-end">Eșuate</th><th class="text-end">Fără probleme</th></tr>
+        </thead>
+        <tbody>
+          {% for run in runs %}
+            <tr>
+              <td>{{ run.date|date:"d.m.Y" }} <span class="small text-body-secondary">{{ run.date|date:"l"|lower }}</span></td>
+              <td class="small">{{ run.started_at|date:"H:i" }}</td>
+              <td class="text-end">{{ run.sent }}</td>
+              <td class="text-end{% if run.failed %} text-danger fw-semibold{% endif %}">{{ run.failed }}</td>
+              <td class="text-end text-body-secondary">{{ run.nothing_to_report }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+{% endif %}
+
+<form method="get" class="mb-2 d-flex gap-2 align-items-center">
+  <label for="status" class="small text-body-secondary">Rezultat</label>
+  <select id="status" name="status" class="form-select form-select-sm w-auto" onchange="this.form.submit()">
+    <option value="">Toate</option>
+    {% for value, label in statuses %}<option value="{{ value }}"{% if value == status %} selected{% endif %}>{{ label }}</option>{% endfor %}
+  </select>
+  <noscript><button type="submit" class="btn btn-sm btn-outline-secondary">Arată</button></noscript>
+</form>
+
+{% if object_list %}
+<div class="card shadow-sm">
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead class="table-light">
+        <tr>
+          <th>Trimis la</th>
+          {% if sees_all %}<th>Destinatar</th>{% endif %}
+          <th>Subiect</th>
+          <th>Tip</th>
+          <th>Rezultat</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for notification in object_list %}
+          <tr>
+            <td class="text-nowrap small">{{ notification.sent_at|date:"d.m.Y H:i" }}</td>
+            {% if sees_all %}<td>{{ notification.recipient }}<div class="small text-body-secondary">{{ notification.email }}</div></td>{% endif %}
+            <td><a href="{% url 'notifications:detail' notification.pk %}" class="text-decoration-none">{{ notification.subject }}</a></td>
+            <td class="small">{% if notification.kind == "MANUAL" %}manual{% if notification.triggered_by %} ({{ notification.triggered_by }}){% endif %}{% else %}zilnic{% endif %}</td>
+            <td>
+              {% if notification.status == "SENT" %}<span class="badge text-bg-success">Trimis</span>
+              {% else %}<span class="badge text-bg-danger" title="{{ notification.error }}">Eșuat</span>{% endif %}
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% include "partials/pagination.html" with page=page_obj %}
+{% else %}
+  <div class="text-center text-body-secondary py-5">
+    <i class="bi bi-envelope display-5"></i>
+    <p class="mt-2 mb-0">{% if status %}Nicio notificare cu acest rezultat.{% else %}Nicio notificare trimisă încă: când apare ceva de rezolvat, rezumatul vine pe email dimineața.{% endif %}</p>
+  </div>
+{% endif %}
+{% endblock %}

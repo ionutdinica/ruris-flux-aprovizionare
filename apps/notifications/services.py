@@ -15,6 +15,8 @@ from django.db.models import F
 from django.utils import timezone
 
 from apps.accounts.models import User
+from apps.audit.models import BusinessEvent
+from apps.audit.services import record_event
 from apps.core.dates import is_business_day
 
 from .alerts import alerts_for, collect, for_user
@@ -145,3 +147,35 @@ def _retry_failed(today):
                     sent=F("sent") + 1, failed=F("failed") - 1
                 )
     return logs
+
+
+def send_now(*, triggered_by=None, recipients=None):
+    """„Trimite acum”: rezumatul curent, imediat, indiferent de oră și de ce s-a trimis azi.
+
+    Util la demonstrații sau după rezolvarea unei probleme de configurare. Nu înlocuiește
+    rezumatul zilnic (care rămâne o dată pe zi) și rămâne consemnat în jurnalul de audit.
+    Întoarce (încercările făcute, numărul celor fără probleme).
+    """
+    recipients = digest_recipients() if recipients is None else recipients
+    alerts = collect(local_now().date())
+    logs, nothing = [], 0
+    for user in recipients:
+        log = send_digest(
+            user,
+            alerts=for_user(alerts, user),
+            kind=NotificationLog.Kind.MANUAL,
+            triggered_by=triggered_by,
+        )
+        if log is None:
+            nothing += 1
+        else:
+            logs.append(log)
+
+    sent = sum(1 for log in logs if log.status == NotificationLog.Status.SENT)
+    record_event(
+        BusinessEvent.Type.NOTIFICATIONS_SENT_NOW,
+        f"Rezumate trimise manual: {sent} trimise, {len(logs) - sent} eșuate.",
+        data={"trimise": sent, "eșuate": len(logs) - sent, "fără probleme": nothing},
+        actor=triggered_by,
+    )
+    return logs, nothing

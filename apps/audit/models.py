@@ -38,6 +38,7 @@ class BusinessEvent(AppendOnlyModel):
         INVOICE_FORCE_APPROVED = "invoice.force_approved", "Factură forțată la plată"
         INVOICE_PAID = "invoice.paid", "Factură plătită"
         INVOICE_REJECTED = "invoice.rejected", "Factură respinsă"
+        NOTIFICATIONS_SENT_NOW = "notifications.sent_now", "Rezumate trimise manual"
 
     timestamp = models.DateTimeField("data și ora", auto_now_add=True, db_index=True)
     # PROTECT: un utilizator cu istoric nu poate fi șters (doar dezactivat),
