@@ -37,11 +37,12 @@ DELIVERY_HORIZON_DAYS = 14
 STOCK_TOP_PRODUCTS = 10
 PAYMENT_WEEKS = 6
 
-# Culorile graficelor (paleta Bootstrap, aceeași ca în restul aplicației).
-GREEN, RED, BLUE, ORANGE, GREY, DARK = (
+# Culorile graficelor. Barele obișnuite sunt gri-ardezie, nu portocaliul aplicației:
+# portocaliul are aici un sens (avertisment), iar verdele și roșul la fel.
+GREEN, RED, NEUTRAL, ORANGE, GREY, DARK = (
     "#198754",
     "#dc3545",
-    "#1f3a5f",
+    "#5b6b7c",
     "#fd7e14",
     "#adb5bd",
     "#212529",
@@ -231,7 +232,7 @@ def deliveries_ahead(today):
         kind="bar",
         labels=labels,
         datasets=[
-            {"label": "Comenzi", "data": data, "color": [RED] + [BLUE] * DELIVERY_HORIZON_DAYS}
+            {"label": "Comenzi", "data": data, "color": [RED] + [NEUTRAL] * DELIVERY_HORIZON_DAYS}
         ],
         summary=summary,
         empty_message="Nicio livrare așteptată.",
@@ -254,7 +255,7 @@ def stock_by_product(today):
         kind="bar",
         labels=[f"{p.code}" for p in top],
         datasets=[
-            {"label": "Disponibil", "data": [float(p.stock_available) for p in top], "color": BLUE},
+            {"label": "Disponibil", "data": [float(p.stock_available) for p in top], "color": NEUTRAL},
             {
                 "label": "Carantină",
                 "data": [float(p.stock_quarantined) for p in top],
@@ -298,7 +299,7 @@ def invoices_by_status(today):
     )
     colors = {
         Invoice.Status.MATCHED: GREEN,
-        Invoice.Status.APPROVED: BLUE,
+        Invoice.Status.APPROVED: NEUTRAL,
         Invoice.Status.BLOCKED: RED,
         Invoice.Status.REGISTERED: GREY,
     }
@@ -346,7 +347,7 @@ def payments_by_week(today):
         title="Plăți de făcut, pe săptămâni (lei)",
         kind="bar",
         labels=labels,
-        datasets=[{"label": "lei", "data": data, "color": [RED] + [BLUE] * PAYMENT_WEEKS}],
+        datasets=[{"label": "lei", "data": data, "color": [RED] + [NEUTRAL] * PAYMENT_WEEKS}],
         summary=f"De plătit în următoarele {PAYMENT_WEEKS} săptămâni: "
         f"{format_money(sum(data[1:]))} lei; scadențe depășite: {format_money(data[0])} lei.",
         unit="lei",

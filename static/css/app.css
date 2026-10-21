@@ -1,25 +1,91 @@
 /* Stiluri proprii, peste Bootstrap. Păstrate puține, intenționat:
-   aspectul vine din Bootstrap, aici sunt doar culorile aplicației. */
+   aspectul vine din Bootstrap, aici sunt doar culorile aplicației.
+
+   Paleta pornește de la portocaliul RURIS (#F5811E). Pe el, textul alb nu e lizibil
+   (contrast 2,6, minimul recomandat e 4,5), așa că suprafețele cu text alb (meniul,
+   butoanele) folosesc o nuanță arsă a lui (#B9530B, contrast 4,9); portocaliul RURIS
+   rămâne accentul (linia de sub meniu, conturul câmpului activ). */
 
 :root {
-  --app-primary-dark: #1f3a5f; /* albastru închis, sobru, pentru o aplicație internă */
-  --app-primary-dark-hover: #16304f;
+  --app-accent: #f5811e; /* portocaliul RURIS */
+  --app-primary-dark: #b9530b;
+  --app-primary-dark-hover: #9a4409;
+
+  /* Culoarea „primary” a Bootstrap (linkuri, insigne, butoane contur) devine portocalie. */
+  --bs-primary: #b9530b;
+  --bs-primary-rgb: 185, 83, 11;
+  --bs-primary-text-emphasis: #4a2104;
+  --bs-primary-bg-subtle: #fdebdc;
+  --bs-primary-border-subtle: #f8c9a2;
+  --bs-link-color: #a84a0a;
+  --bs-link-color-rgb: 168, 74, 10;
+  --bs-link-hover-color: #7f3807;
+  --bs-link-hover-color-rgb: 127, 56, 7;
+  --bs-focus-ring-color: rgba(245, 129, 30, 0.3);
 }
 
 .bg-primary-dark { background-color: var(--app-primary-dark) !important; }
 .text-primary-dark { color: var(--app-primary-dark) !important; }
 
-.btn-primary-dark {
+/* Meniul: portocaliu ars, cu linia portocalie RURIS dedesubt. */
+.navbar.bg-primary-dark { border-bottom: 3px solid var(--app-accent); }
+
+.btn-primary-dark,
+.btn-primary {
   --bs-btn-color: #fff;
   --bs-btn-bg: var(--app-primary-dark);
   --bs-btn-border-color: var(--app-primary-dark);
   --bs-btn-hover-color: #fff;
   --bs-btn-hover-bg: var(--app-primary-dark-hover);
   --bs-btn-hover-border-color: var(--app-primary-dark-hover);
+  --bs-btn-active-color: #fff;
   --bs-btn-active-bg: var(--app-primary-dark-hover);
+  --bs-btn-active-border-color: var(--app-primary-dark-hover);
+  --bs-btn-disabled-bg: var(--app-primary-dark);
+  --bs-btn-disabled-border-color: var(--app-primary-dark);
+  --bs-btn-focus-shadow-rgb: 245, 129, 30;
 }
 
-body { background-color: #f5f7fa; }
+.btn-outline-primary {
+  --bs-btn-color: var(--app-primary-dark);
+  --bs-btn-border-color: var(--app-primary-dark);
+  --bs-btn-hover-color: #fff;
+  --bs-btn-hover-bg: var(--app-primary-dark);
+  --bs-btn-hover-border-color: var(--app-primary-dark);
+  --bs-btn-active-color: #fff;
+  --bs-btn-active-bg: var(--app-primary-dark-hover);
+  --bs-btn-active-border-color: var(--app-primary-dark-hover);
+  --bs-btn-disabled-color: var(--app-primary-dark);
+  --bs-btn-disabled-border-color: var(--app-primary-dark);
+  --bs-btn-focus-shadow-rgb: 245, 129, 30;
+}
+
+/* Câmpurile active și bifele: Bootstrap le are cu albastrul scris direct, nu prin variabile. */
+.form-control:focus,
+.form-select:focus,
+.form-check-input:focus {
+  border-color: #f9b47a;
+  box-shadow: 0 0 0 0.25rem var(--bs-focus-ring-color);
+}
+.form-check-input:checked {
+  background-color: var(--app-primary-dark);
+  border-color: var(--app-primary-dark);
+}
+
+.pagination {
+  --bs-pagination-color: var(--bs-link-color);
+  --bs-pagination-hover-color: var(--bs-link-hover-color);
+  --bs-pagination-focus-color: var(--bs-link-hover-color);
+  --bs-pagination-focus-box-shadow: 0 0 0 0.25rem var(--bs-focus-ring-color);
+  --bs-pagination-active-bg: var(--app-primary-dark);
+  --bs-pagination-active-border-color: var(--app-primary-dark);
+}
+
+.dropdown-menu {
+  --bs-dropdown-link-active-bg: var(--app-primary-dark);
+}
+
+body { background-color: #f6f5f3; }
 
 /* Pagina de login: card centrat pe ecran */
 .login-wrapper { min-height: 100vh; }
