@@ -13,7 +13,7 @@ Legendă: `[ ]` de făcut · `[x]` gata · **(opțional)** = după ce obligatori
 |---|---|---|
 | Limbaj / framework | **Python 3 + Django 5.2 LTS** | Autentificare, permisiuni, ORM, migrații, formulare și admin incluse, deci timpul merge pe logica de business |
 | Interfață | Șabloane Django + **HTMX** + **Bootstrap 5** | Fără pas de build pentru frontend; interfață dinamică fără SPA separat |
-| Bază de date | **PostgreSQL** (producție / Docker), **SQLite** (rulare locală rapidă) | Pornire locală fără nicio instalare în plus |
+| Bază de date | **PostgreSQL 17** peste tot (dezvoltare, teste, Docker, online) | Lucrăm pe exact ce se livrează; SQLite, folosit la început local, a fost renunțat după o diferență prinsă de CI |
 | Audit | **django-auditlog** + evenimente de business explicite | Diff automat al câmpurilor (cine/ce/când) și acțiuni importante cu justificare |
 | Excel | **openpyxl** | Import și export comenzi (.xlsx) |
 | Curs valutar | **BNR** – XML zilnic + arhive anuale | Sursa oficială pentru cursul leului |

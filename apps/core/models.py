@@ -57,7 +57,8 @@ class SearchableModel(models.Model):
 
     La fiecare salvare, câmpurile din SEARCH_FIELDS sunt copiate în `search_text`
     fără diacritice și cu litere mici. Căutarea „otel” găsește astfel „Oțelăria”,
-    identic pe SQLite și PostgreSQL. (Notă: `.update()` în masă ocolește save().)
+    fără extensii speciale ale bazei de date (ex. `unaccent`).
+    (Notă: `.update()` în masă ocolește save().)
     """
 
     SEARCH_FIELDS = ()

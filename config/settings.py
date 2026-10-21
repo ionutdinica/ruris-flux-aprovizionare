@@ -115,11 +115,13 @@ TEMPLATES = [
 
 
 # --- Baza de date ---------------------------------------------------------------
-# Implicit SQLite (un fișier local, zero instalare). În Docker și online se
-# setează DATABASE_URL=postgres://utilizator:parola@server:5432/nume_baza
+# Peste tot PostgreSQL: pe calculatorul dezvoltatorului, în teste, în Docker și online.
+# Aceeași bază de date peste tot = nicio surpriză de tipul „la mine merge”.
+# Obligatorie: DATABASE_URL=postgres://utilizator:parola@server:5432/nume_baza
+# (fără ea, aplicația se oprește cu un mesaj clar, în loc să folosească altă bază).
 
 DATABASES = {
-    "default": env.db("DATABASE_URL", default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}"),
+    "default": env.db("DATABASE_URL"),
 }
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
@@ -198,6 +200,9 @@ AUDITLOG_INCLUDE_TRACKING_MODELS = (
 )
 AUDITLOG_MASK_CALLABLE = "apps.audit.utils.mask_completely"
 AUDITLOG_STORE_JSON_CHANGES = True  # modificările se salvează structurat (JSON)
+# Datele încărcate din fișiere (`loaddata`) nu sunt acțiuni ale cuiva: fără această setare,
+# fiecare obiect importat ar apărea în jurnal ca „creat acum”, fără autor.
+AUDITLOG_DISABLE_ON_RAW_SAVE = True
 
 
 # --- Email ------------------------------------------------------------------------

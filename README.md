@@ -33,11 +33,13 @@ docker compose exec web python manage.py createsuperuser
 
 Oprire: `docker compose down` (datele rămân) sau `docker compose down -v` (șterge și baza de date).
 
-## Pornire locală (fără Docker)
+## Pornire pentru dezvoltare (aplicația din Python, baza de date din Docker)
 
-Cerințe: Python 3.12+.
+Cerințe: Python 3.12+ și Docker (doar pentru PostgreSQL, aceeași versiune ca la livrare).
+Fără Docker: orice PostgreSQL 17+ instalat local, cu adresa lui în `DATABASE_URL` din `.env`.
 
 ```bash
+docker compose up -d db           # pornește doar PostgreSQL (portul 5433 al calculatorului)
 python -m venv .venv
 .venv\Scripts\activate            # Windows  (Linux/macOS: source .venv/bin/activate)
 pip install -r requirements-dev.txt

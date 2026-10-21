@@ -13,6 +13,11 @@ services:
       POSTGRES_DB: aprovizionare
       POSTGRES_USER: aprovizionare
       POSTGRES_PASSWORD: aprovizionare
+    ports:
+      # Baza e accesibilă și din afara Docker (pentru `runserver` și `pytest` pe calculatorul
+      # dezvoltatorului), dar doar de pe calculatorul local (127.0.0.1), nu din rețea.
+      # 5433, nu 5432: portul standard poate fi ocupat de un PostgreSQL instalat separat.
+      - "127.0.0.1:5433:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data  # datele rămân după oprirea containerului
     healthcheck:  # „e gata baza de date să primească conexiuni?”

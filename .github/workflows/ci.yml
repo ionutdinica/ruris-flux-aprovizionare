@@ -29,7 +29,7 @@ jobs:
     name: Teste (PostgreSQL)
     runs-on: ubuntu-latest
 
-    # Testele rulează pe PostgreSQL, ca în producție, nu pe SQLite.
+    # Testele rulează pe PostgreSQL, ca pe calculatorul dezvoltatorului și în producție.
     services:
       postgres:
         image: postgres:17-alpine
