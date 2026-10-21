@@ -59,6 +59,12 @@ jobs:
       - name: Verificările Django
         run: python manage.py check
 
+      - name: Fișierele statice, ca în producție
+        # DEBUG=False: WhiteNoise comprimă fișierele și verifică orice referință lipsă
+        # (ex. o „hartă” .map menționată de o bibliotecă). Altfel eroarea s-ar vedea abia
+        # la pornirea în Docker, la evaluator.
+        run: python manage.py collectstatic --noinput --verbosity 0
+
       - name: Nicio migrație uitată
         # Pică dacă cineva a modificat un model fără să genereze migrația.
         run: python manage.py makemigrations --check --dry-run

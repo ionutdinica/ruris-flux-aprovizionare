@@ -166,7 +166,7 @@ Legendă: `[ ]` de făcut · `[x]` gata · **(opțional)** = după ce obligatori
 - [ ] 11.1 `README.md`: ce face aplicația, cum se pornește (local, Docker), conturi demo, scenariu de demo pas cu pas
 - [ ] 11.2 `docs/`: ipoteze, arhitectură, diagrama de flux, diagrama ER, reguli de potrivire, matricea de permisiuni
 - [ ] 11.3 Capturi de ecran în README
-- [ ] 11.4 **Deploy online** (platformă de ales la momentul respectiv) + job-urile periodice programate online
+- [ ] 11.4 **Fără găzduire online** (decizie: zero costuri, nimic de administrat): evaluatorul vede aplicația în README (capturi de ecran) sau o pornește la el cu **o singură comandă** (`docker compose up`), cu datele demo generate automat la prima pornire
 - [ ] 11.5 Secțiunea „Ce aș face mai departe”: integrare e-Factura ANAF, plăți, evaluare stoc (FIFO/CMP), comenzi trimise automat furnizorilor
 - [ ] 11.6 Verificare finală: clonare curată pe un folder nou și pornire urmând doar README-ul
 

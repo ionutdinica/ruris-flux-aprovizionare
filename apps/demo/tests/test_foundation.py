@@ -181,3 +181,17 @@ def test_bnr_unavailable_skips_eur_invoices_instead_of_inventing_rates(monkeypat
     assert "BNR indisponibil" in log[0]
     assert not Invoice.objects.filter(currency="EUR").exists()
     assert Invoice.objects.filter(currency="RON").exists()  # restul demo-ului e complet
+
+
+def test_if_empty_does_nothing_on_a_database_with_data(procurement_user):
+    """La a doua pornire în Docker, datele existente rămân neatinse (fără eroare)."""
+    output = run("--if-empty", "--password", "parola-demo-123")
+
+    assert "nu generez" in output
+    assert not User.objects.filter(username="maria.pop").exists()
+
+
+def test_if_empty_generates_on_an_empty_database():
+    run("--if-empty", "--password", "parola-demo-123")
+
+    assert User.objects.filter(username="maria.pop").exists()

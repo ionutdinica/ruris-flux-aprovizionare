@@ -47,11 +47,20 @@ services:
       DATABASE_URL: postgres://aprovizionare:aprovizionare@db:5432/aprovizionare
       EMAIL_URL: smtp://mailpit:1025
       SITE_URL: http://localhost:8000
+      # Date demo generate automat la prima pornire (docker/entrypoint.sh). Parola e
+      # publică intenționat: aplicația rulează doar pe calculatorul celui care o pornește.
+      DEMO_DATA: "True"
+      DEMO_PASSWORD: demo-ruris
     depends_on:
       db:
         condition: service_healthy  # pornește abia după ce baza de date e gata
       mailpit:
         condition: service_started
+    healthcheck:  # „e gata aplicația?”: răspunde pagina de autentificare
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/cont/login/')"]
+      interval: 5s
+      timeout: 5s
+      retries: 60
 
   scheduler:
     image: ruris-aprovizionare:local  # aceeași imagine ca aplicația, altă comandă
@@ -60,7 +69,9 @@ services:
     command: ["python", "manage.py", "run_scheduler"]
     environment: *app-environment
     depends_on:
-      db:
+      # După aplicație, nu doar după baza de date: aplicația generează întâi datele demo,
+      # iar rezumatul zilnic nu trebuie făcut pe o bază încă goală.
+      web:
         condition: service_healthy
     restart: unless-stopped  # dacă se oprește neașteptat, Docker îl repornește
 

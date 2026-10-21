@@ -4,6 +4,8 @@
     python manage.py seed_demo --password Parola1   # parola conturilor demo
     python manage.py seed_demo --reset              # ȘTERGE tot și regenerează
                                                     # (doar cu DEMO_RESET_ALLOWED=True)
+    python manage.py seed_demo --if-empty           # doar pe o bază goală, altfel nimic
+                                                    # (la fiecare pornire în Docker)
 
 Fără --password, se generează o parolă aleatorie, afișată o singură dată. Parola nu
 apare în cod și nici în Git.
@@ -31,8 +33,16 @@ class Command(BaseCommand):
         parser.add_argument(
             "--reset", action="store_true", help="șterge TOATE datele înainte (cu permisiune)"
         )
+        parser.add_argument(
+            "--if-empty",
+            action="store_true",
+            help="doar dacă baza de date e goală; altfel nu face nimic (pornirea în Docker)",
+        )
 
-    def handle(self, *args, password, reset, **options):
+    def handle(self, *args, password, reset, if_empty, **options):
+        if if_empty and _has_data():
+            self.stdout.write("Baza de date are deja date; nu generez date demo.")
+            return
         if reset:
             if not settings.DEMO_RESET_ALLOWED:
                 raise CommandError(
