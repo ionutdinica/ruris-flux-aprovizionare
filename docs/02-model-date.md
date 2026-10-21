@@ -19,6 +19,7 @@ erDiagram
     Supplier ||--o{ PurchaseOrder : "primește"
     Supplier ||--o{ GoodsReceipt : "livrează"
     Supplier ||--o{ Invoice : "emite"
+    Supplier ||--o{ SupplierBudget : "plafon anual"
 
     PurchaseOrder ||--|{ PurchaseOrderLine : "conține"
     Product ||--o{ PurchaseOrderLine : ""
@@ -86,6 +87,7 @@ erDiagram
 | `expected_date` | dată | implicit pentru linii |
 | `status` | enum | vezi [03-fluxuri-si-stari.md](03-fluxuri-si-stari.md) |
 | `close_reason` | text | obligatoriu la închidere cu rest nelivrat |
+| `budget_override_reason` | text | justificarea, dacă la trimitere comanda a depășit bugetul furnizorului (I-41) |
 | `notes` | text | |
 
 **PurchaseOrderLine** – linie de comandă
@@ -103,6 +105,17 @@ Valori **calculate** (nu se stochează, ca să nu se poată desincroniza; se cal
 - `invoiced_qty` = Σ cantități pe facturi nerespinse
 - `remaining_qty` = `quantity` − `received_qty`
 - `is_late` = `expected_date` < azi și `remaining_qty` > 0 și comanda e deschisă
+
+**SupplierBudget** – bugetul anual al unui furnizor (I-40)
+| Câmp | Tip | Observații |
+|---|---|---|
+| `supplier` | → Supplier | |
+| `year` | an | unic împreună cu furnizorul: un buget pe furnizor și an |
+| `amount` | decimal(2) | fără TVA, > 0 |
+| `currency` | enum | moneda furnizorului la crearea bugetului; nu se mai schimbă |
+| `notes` | text | contractul, aprobarea |
+
+Valori **calculate** (`apps/budgets/services.py`): *angajat* = Σ valorile fără TVA ale comenzilor trimise în acel an (cele închise cu rest: doar ce a sosit), *din care facturat*, *disponibil* = buget − angajat, procentul consumat.
 
 ### Depozit
 

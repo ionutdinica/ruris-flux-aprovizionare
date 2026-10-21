@@ -35,7 +35,7 @@ Linia punctată de la recepție la potrivire este esențială: o factură blocat
 ```mermaid
 stateDiagram-v2
     [*] --> DRAFT
-    DRAFT --> SENT: Trimite
+    DRAFT --> SENT: Trimite (peste buget: cu justificare)
     DRAFT --> CANCELLED: Anulează
     SENT --> PARTIALLY_RECEIVED: recepție parțială (automat)
     SENT --> RECEIVED: recepție completă (automat)

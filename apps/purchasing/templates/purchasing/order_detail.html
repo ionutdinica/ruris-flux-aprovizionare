@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load permissions audit formatting %}
+{% load permissions audit formatting budgets %}
 
 {% block title %}{{ order.number }}{% endblock %}
 
@@ -131,9 +131,7 @@
   </div>
 
   <div class="col-lg-4">
-    {% if budget %}
-      {% include "budgets/partials/budget_card.html" with status=budget impact=budget_impact %}
-    {% endif %}
+    {% supplier_budget order.supplier order=order %}
     {% if receipts %}
       <div class="card shadow-sm mb-3">
         <div class="card-header bg-body fw-semibold"><i class="bi bi-box-seam me-1"></i> Recepții</div>
@@ -174,6 +172,7 @@
 
 {% if can_edit %}
   {# Ferestrele de confirmare pentru acțiunile de status (POST + token CSRF). #}
+  {% order_budget_impact order as budget_impact %}
   {% include "purchasing/partials/send_modal.html" %}
   {% include "purchasing/partials/transition_modal.html" with modal_id="cancelModal" title="Anulezi comanda?" action_url="purchasing:order_cancel" button="Anulează comanda" button_class="btn-danger" text="Anularea este definitivă și se înregistrează în jurnal împreună cu motivul." with_reason=True %}
   {% include "purchasing/partials/transition_modal.html" with modal_id="closeModal" title="Închizi comanda cu rest nelivrat?" action_url="purchasing:order_close" button="Închide comanda" button_class="btn-dark" text="Cantitățile nerecepționate nu mai sunt așteptate. Comanda nu va mai apărea ca întârziată." with_reason=True %}

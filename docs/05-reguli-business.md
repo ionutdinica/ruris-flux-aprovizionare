@@ -116,6 +116,14 @@ Fiecare problemă are o **cheie stabilă** (ex. `ORDER_LATE:12`), aceeași de la
 | `DISCREPANCY_OPEN` | discrepanță `OPEN` (marfă în carantină) | responsabilul comenzii; dacă nu există comandă, toți utilizatorii Achiziții |
 | `INVOICE_MATCHED_WAITING` | factură `MATCHED` neaprobată de > 3 zile lucrătoare | Contabilitatea |
 
+### Bugete
+| Cod | Condiție | Cine trebuie să afle |
+|---|---|---|
+| `BUDGET_ALMOST_USED` | bugetul furnizorului pe anul curent e consumat ≥ 90% | Achizițiile + Contabilitatea |
+| `BUDGET_EXCEEDED` | angajatul depășește bugetul | Achizițiile + Contabilitatea |
+
+Cheia conține nivelul (`BUDGET_EXCEEDED:7`), așa că trecerea de la „aproape consumat” la „depășit” apare ca **NOU**.
+
 ### Informativ (doar Depozit)
 | Cod | Condiție |
 |---|---|
@@ -135,7 +143,7 @@ Fiecare problemă are o **cheie stabilă** (ex. `ORDER_LATE:12`), aceeași de la
 
 - Job-ul `send_notifications` rulează în zilele lucrătoare la ora configurată (implicit 08:00).
 - Pentru fiecare utilizator activ se adună toate elementele din secțiunea 4 care îl privesc; dacă lista e goală, nu se trimite nimic (I-31).
-- Email = un rezumat pe secțiuni (*Întârzieri*, *Blocaje*, *Azi*), fiecare element cu link direct în aplicație; elementele care nu apăreau în rezumatul anterior sunt marcate **NOU** (I-30).
+- Email = un rezumat pe secțiuni (*Întârzieri*, *Blocaje*, *Azi*, *Bugete*), fiecare element cu link direct în aplicație; elementele care nu apăreau în rezumatul anterior sunt marcate **NOU** (I-30).
 - Același utilizator nu primește două rezumate automate în aceeași zi; „Trimite acum” (Admin) ignoră această limită și e consemnat în audit.
 - Erorile de trimitere se înregistrează în `NotificationLog` cu statusul `FAILED`, fără să oprească trimiterea către ceilalți. Un email eșuat se reîncearcă la rulările următoare ale job-ului, de cel mult 3 ori pe zi; până nu ajunge, problemele lui rămân „NOU”.
 
@@ -147,3 +155,18 @@ Fiecare problemă are o **cheie stabilă** (ex. `ORDER_LATE:12`), aceeași de la
 
 - Numere interne pe an, fără goluri, generate în tranzacție: `CMD-2026-0001`, `REC-2026-0001`, `FAC-2026-0001`.
 - Valoare linie = `round(cantitate × preț, 2)`; TVA linie = `round(valoare × cotă, 2)`; totalul = suma liniilor rotunjite (așa calculează și programele de facturare).
+
+## 7. Bugete pe furnizor
+
+Ipotezele I-40 – I-42; implementarea în [`apps/budgets`](../apps/budgets/services.py).
+
+| Cifra | Calcul (fără TVA, în moneda bugetului) |
+|---|---|
+| **Buget** | stabilit de Contabilitate, pe furnizor și an |
+| **Angajat** | Σ valoarea comenzilor cu data în acel an, cu statusul `SENT`, `PARTIALLY_RECEIVED`, `RECEIVED` (cantitatea comandată) sau `CLOSED` (doar cantitatea recepționată) |
+| **din care facturat** | Σ liniile facturilor nerespinse pe acele comenzi (informativ) |
+| **Disponibil** | buget − angajat (negativ = depășit) |
+
+- **La trimitere** (`budgets.services.send_order`): dacă *valoarea comenzii > disponibil*, trimiterea cere o justificare. Fără ea, comanda rămâne ciornă, cu mesajul *„depășește bugetul cu X”*. Cu ea, comanda e trimisă, justificarea se salvează pe comandă, iar jurnalul primește evenimentul **Comandă trimisă peste buget** (cu depășirea și justificarea, ascunse pentru Depozit).
+- Bugetul furnizorului e blocat în baza de date pe durata trimiterii: două comenzi trimise simultan nu pot depăși împreună bugetul fără justificare.
+- Niveluri: **ok** (sub 90%), **aproape consumat** (de la 90%), **depășit** (peste 100%); ultimele două generează alertele din §4.

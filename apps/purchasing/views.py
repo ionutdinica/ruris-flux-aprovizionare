@@ -158,10 +158,6 @@ class OrderDetailView(PermissionMixin, VisibleOrdersMixin, DetailView):
             )
             context["invoices"] = on_this_order.order_by("number")
         context["can_invoice"] = order.status not in (Status.DRAFT, Status.CANCELLED)
-        if self.request.user.can("budgets.view"):
-            context["budget"] = budgets.status_for(order.supplier, order.order_date.year)
-            if context["budget"] and order.status == Status.DRAFT:
-                context["budget_impact"] = budgets.order_impact(order)
         return context
 
 
@@ -265,7 +261,7 @@ class OrderTransitionView(PermissionMixin, View):
 
 
 class OrderSendView(OrderTransitionView):
-    transition = staticmethod(services.send_order)
+    transition = staticmethod(budgets.send_order)  # comenzile + verificarea bugetului
     accepts_reason = True  # justificarea, dacă depășește bugetul furnizorului
     success_message = (
         "Comanda %(number)s a fost trimisă. De acum Depozitul o vede la livrări așteptate."

@@ -40,6 +40,7 @@ ca să treci de la un om la altul fără deconectare.
 2. Graficul **Livrări la timp, pe furnizor**: Motoare Industriale e cel mai puțin punctual. *„Un argument concret la următoarea negociere.”*
 3. **Comenzi**: căutare fără diacritice, comenzile întârziate evidențiate, **Export Excel** cu filtrele curente (și **Import Excel**, cu previzualizare și validare completă).
 4. **Discrepanțe** → marfa necomandată (mânere de la Plastic Injecție Dolj): Maria decide, o atașează la o comandă sau o returnează. *„Depozitul nu decide asta: el doar numără.”*
+5. **Bugete**: plafonul anual pe furnizor. Plastic Injecție Dolj e consumat ~94% (alertă), Componente Electrice Banat e **depășit**: ultima comandă a plecat peste buget, cu justificarea vizibilă pe comandă. Creează o ciornă la Plastic Injecție Dolj (de ex. 20 × PLA-C1): pe pagina comenzii se vede efectul asupra bugetului, iar la *Trimite comanda* se cere justificarea. *„Nu blocăm producția, dar nicio depășire nu trece neobservată.”*
 
 ### Ion, Depozit (~2 min)
 

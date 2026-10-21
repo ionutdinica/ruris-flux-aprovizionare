@@ -3,6 +3,7 @@
     statuses(year)          # toate bugetele anului, cu cele patru cifre
     status_for(supplier, y) # bugetul unui furnizor (sau None)
     order_impact(order)     # efectul unei comenzi în ciornă asupra bugetului (sau None)
+    send_order(order, r)    # trimiterea comenzii, cu verificarea bugetului
 
 Bugetul se consumă la COMANDĂ, nu la factură: o comandă trimisă e deja un angajament
 față de furnizor (I-40). Valorile sunt fără TVA, în moneda bugetului.
@@ -11,9 +12,13 @@ față de furnizor (I-40). Valorile sunt fără TVA, în moneda bugetului.
 from dataclasses import dataclass, field
 from decimal import Decimal
 
+from django.db import transaction
+
 from apps.core.models import Currency
+from apps.core.text import format_money
 from apps.currency.models import ExchangeRate
 from apps.invoicing.models import Invoice, InvoiceLine
+from apps.purchasing import services as purchasing
 from apps.purchasing.models import PurchaseOrder, PurchaseOrderLine, money
 
 from .models import SupplierBudget
@@ -190,3 +195,32 @@ def order_impact(order):
     except NoRate:
         return None  # fără niciun curs nu putem estima; trimiterea nu se blochează
     return OrderImpact(status, amount)
+
+
+@transaction.atomic
+def send_order(order, reason=""):
+    """Trimite comanda furnizorului, cu verificarea bugetului (I-41).
+
+    În buget (sau furnizor fără buget): se trimite ca de obicei, `reason` e ignorat.
+    Peste buget: doar cu justificare; altfel TransitionError, iar comanda rămâne ciornă.
+    """
+    if order.status != Status.DRAFT:
+        return purchasing.send_order(order)  # refuzul vine, cu motivul lui, din comenzi
+    # Blocăm bugetul furnizorului: două comenzi trimise simultan nu pot „vedea” amândouă
+    # același disponibil și depăși împreună bugetul fără justificare.
+    list(
+        SupplierBudget.objects.select_for_update().filter(
+            supplier=order.supplier_id, year=order.order_date.year
+        )
+    )
+    impact = order_impact(order)
+    if impact is None or not impact.exceeds:
+        return purchasing.send_order(order)
+
+    excess = f"{format_money(impact.excess)} {impact.status.budget.currency}"
+    if not (reason or "").strip():
+        raise purchasing.TransitionError(
+            f"Comanda depășește bugetul {order.order_date.year} al furnizorului "
+            f"{order.supplier} cu {excess}. Se poate trimite doar cu o justificare."
+        )
+    return purchasing.send_order(order, budget_excess=excess, budget_reason=reason)

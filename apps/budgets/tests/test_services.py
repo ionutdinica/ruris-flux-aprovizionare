@@ -210,3 +210,10 @@ def test_budget_takes_the_supplier_currency():
     supplier = SupplierFactory(default_currency="EUR")
 
     assert budget(supplier, "10").currency == "EUR"
+
+
+def test_without_any_rate_a_draft_in_another_currency_is_not_checked(supplier):
+    """Fără niciun curs nu putem estima: trimiterea nu se blochează."""
+    budget(supplier, "1")
+
+    assert services.order_impact(draft(supplier, "5", currency="EUR")) is None

@@ -6,7 +6,6 @@ Nu există pagini de ștergere: furnizorii și produsele se dezactivează.
 
 from django.contrib.messages.views import SuccessMessageMixin
 from django.urls import reverse_lazy
-from django.utils import timezone
 from django.views.generic import CreateView, DetailView, ListView, UpdateView
 
 from apps.accounts.permissions import PermissionMixin
@@ -42,15 +41,6 @@ class SupplierListView(PermissionMixin, SearchListMixin, ListView):
 class SupplierDetailView(PermissionMixin, DetailView):
     permission = "catalog.view"
     model = Supplier
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        if self.request.user.can("budgets.view"):
-            from apps.budgets.services import status_for  # bugetele depind de catalog
-
-            context["year"] = timezone.localdate().year
-            context["budget"] = status_for(self.object, context["year"])
-        return context
 
 
 class SupplierFormMixin(CatalogFormMixin):

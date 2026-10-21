@@ -20,8 +20,8 @@ factură ajunge la plată doar dacă se potrivește cu ce s-a comandat **și** c
 | **Livrare într-un repository Git** | acest repository: cod, ~1.000 de teste, CI pe GitHub, documentație, pornire cu o singură comandă |
 
 Plus: potrivirea comandă–recepție–factură (o factură blocată **se deblochează singură** când sosește
-marfa), registru de stoc, carantină pentru marfa necomandată, import / export Excel, panou pe rol
-cu grafice.
+marfa), registru de stoc, carantină pentru marfa necomandată, **bugete anuale pe furnizor** (o
+comandă peste buget pleacă doar cu justificare), import / export Excel, panou pe rol cu grafice.
 
 ## Capturi de ecran
 

@@ -69,6 +69,12 @@ Cerința este intenționat scurtă. Acest document consemnează **ce am presupus
 - **I-32** „Zi lucrătoare” înseamnă luni–vineri. Sărbătorile legale nu sunt considerate (simplificare declarată): în cel mai rău caz o factură e semnalată cu o zi mai devreme, iar rezumatul pleacă și într-o zi de sărbătoare.
 - **I-33** Administratorul nu primește rezumat zilnic: vede toate problemele în panou și în jurnal, iar un email cu problemele tuturor ar fi zgomot.
 
+## Bugete
+
+- **I-40** Un buget e **plafonul anual al unui furnizor** (ca un contract-cadru), fără TVA, în moneda furnizorului. Se consumă la **trimiterea comenzii**, nu la factură: comanda trimisă e deja un angajament față de furnizor, iar la factură ar fi prea târziu pentru a mai opri ceva. Ciornele și comenzile anulate nu consumă, cele închise cu rest consumă doar ce a sosit. Facturile nu se adună separat peste comenzi (s-ar număra de două ori): „din care facturat” e informativ.
+- **I-41** Depășirea bugetului **nu blochează**: comanda se poate trimite cu o justificare obligatorie, vizibilă pe comandă și în jurnal. Un furnizor fără buget pe anul comenzii nu e verificat.
+- **I-42** Se verifică doar trimiterea. Modificările controlate de după trimitere (I-07: cantități mai mari, linii noi) cresc angajatul fără o nouă justificare, dar depășirea apare imediat în alerte. O comandă în altă monedă decât bugetul se convertește la cursul BNR din ziua comenzii (sau ultimul anterior): pentru buget, o estimare e suficientă.
+
 ## În afara proiectului (consemnate deliberat)
 
 - Integrarea cu **e-Factura (ANAF SPV)** pentru preluarea automată a facturilor.

@@ -1,5 +1,6 @@
 {% load formatting l10n %}
-{# Cardul de buget al unui furnizor (pagina furnizorului, pagina comenzii). #}
+{# Cardul de buget al unui furnizor: vezi templatetags/budgets.py (supplier_budget). #}
+{% if status %}
 <div class="card shadow-sm mb-3">
   <div class="card-header bg-body fw-semibold d-flex justify-content-between align-items-center">
     <span><i class="bi bi-piggy-bank me-1"></i> Buget {{ status.budget.year|unlocalize }}</span>
@@ -21,3 +22,11 @@
     {% endif %}
   </div>
 </div>
+{% elif offer_new %}
+<div class="card shadow-sm mb-3">
+  <div class="card-body small d-flex justify-content-between align-items-center gap-2">
+    <span class="text-body-secondary"><i class="bi bi-piggy-bank me-1"></i>Fără buget în {{ year|unlocalize }}: comenzile nu sunt verificate.</span>
+    <a href="{% url 'budgets:budget_create' %}?an={{ year|unlocalize }}&amp;furnizor={{ supplier.pk }}" class="btn btn-sm btn-outline-primary text-nowrap">Stabilește buget</a>
+  </div>
+</div>
+{% endif %}

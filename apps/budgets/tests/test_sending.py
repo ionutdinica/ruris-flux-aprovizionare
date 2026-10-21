@@ -8,6 +8,7 @@ from django.urls import reverse
 from django.utils import timezone
 
 from apps.audit.models import BusinessEvent
+from apps.budgets import services as budgets
 from apps.budgets.models import SupplierBudget
 from apps.catalog.tests.factories import SupplierFactory
 from apps.purchasing import services as purchasing
@@ -47,7 +48,7 @@ def last_event():
 
 
 def test_within_budget_is_sent_as_usual(supplier):
-    order = purchasing.send_order(draft(supplier, "10"))  # exact cât e disponibil
+    order = budgets.send_order(draft(supplier, "10"))  # exact cât e disponibil
 
     assert order.status == SENT and order.budget_override_reason == ""
     assert last_event().event_type == BusinessEvent.Type.ORDER_SENT
@@ -57,14 +58,14 @@ def test_over_budget_without_a_reason_is_refused(supplier):
     order = draft(supplier, "15")
 
     with pytest.raises(purchasing.TransitionError, match="depășește bugetul .* cu 500,00 RON"):
-        purchasing.send_order(order, reason="   ")
+        budgets.send_order(order, reason="   ")
 
     order.refresh_from_db()
     assert order.status == DRAFT
 
 
 def test_over_budget_with_a_reason_is_sent_and_recorded(supplier):
-    order = purchasing.send_order(draft(supplier, "15"), reason="Linia 2 oprită, urgent.")
+    order = budgets.send_order(draft(supplier, "15"), reason="Linia 2 oprită, urgent.")
 
     assert order.status == SENT
     assert order.budget_override_reason == "Linia 2 oprită, urgent."
@@ -75,13 +76,13 @@ def test_over_budget_with_a_reason_is_sent_and_recorded(supplier):
 
 
 def test_supplier_without_budget_is_not_checked():
-    order = purchasing.send_order(draft(SupplierFactory(), "1000"))
+    order = budgets.send_order(draft(SupplierFactory(), "1000"))
 
     assert order.status == SENT
 
 
 def test_a_reason_given_when_not_needed_is_ignored(supplier):
-    order = purchasing.send_order(draft(supplier, "1"), reason="nu e cazul")
+    order = budgets.send_order(draft(supplier, "1"), reason="nu e cazul")
 
     assert order.budget_override_reason == ""
 
@@ -128,7 +129,7 @@ def test_sending_over_budget_through_the_page(client, procurement_user, supplier
 
 
 def test_warehouse_sees_neither_budget_nor_reason(client, warehouse_user, supplier):
-    order = purchasing.send_order(draft(supplier, "15"), reason="Urgent.")
+    order = budgets.send_order(draft(supplier, "15"), reason="Urgent.")
     client.force_login(warehouse_user)
 
     html = client.get(order.get_absolute_url()).content.decode()
@@ -150,3 +151,16 @@ def test_supplier_without_budget_offers_to_set_one(client, accounting_user, proc
     assert "Stabilește buget" in client.get(supplier.get_absolute_url()).content.decode()
     client.force_login(procurement_user)
     assert "Stabilește buget" not in client.get(supplier.get_absolute_url()).content.decode()
+
+
+def test_an_order_already_sent_is_refused_by_the_orders_rule(supplier):
+    order = budgets.send_order(draft(supplier, "1"))
+
+    with pytest.raises(purchasing.TransitionError, match="Doar o comandă în ciornă"):
+        budgets.send_order(order)
+
+
+def test_orders_never_record_an_overrun_without_a_reason(supplier):
+    """Plasa de siguranță din comenzi, chiar dacă cineva ocolește modulul de bugete."""
+    with pytest.raises(purchasing.TransitionError, match="Motivul este obligatoriu"):
+        purchasing.send_order(draft(supplier, "15"), budget_excess="500,00 RON")

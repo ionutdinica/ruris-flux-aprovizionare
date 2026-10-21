@@ -24,12 +24,13 @@ from django.conf import settings
 from django.utils import timezone
 
 from apps.audit.context import audit_context
+from apps.budgets import services as budgets
+from apps.budgets.models import SupplierBudget
 from apps.core.dates import is_business_day
 from apps.currency import services as currency
 from apps.invoicing import services as invoicing
 from apps.invoicing.models import Invoice, InvoiceLine
 from apps.notifications import services as notifications
-from apps.purchasing import services as purchasing
 from apps.purchasing.models import PurchaseOrder, PurchaseOrderLine
 from apps.warehouse import services as warehouse
 from apps.warehouse.models import Discrepancy, GoodsReceipt, GoodsReceiptLine
@@ -43,6 +44,23 @@ HISTORY_DAYS = 120  # cât de departe în trecut începe activitatea
 ORDERS_PER_WEEK = 3
 RANDOM_SEED = 2026
 DIGEST_DAYS = 3  # rezumatele zilnice trimise în ultimele zile lucrătoare (pagina Notificări)
+
+# Bugetele anului curent: cât din buget consumă comenzile demo. Doi furnizori ilustrează
+# alertele: unul aproape consumat, unul depășit (ultima lui comandă, trimisă cu justificare).
+BUDGET_USAGE = {
+    "motoare": 0.75,
+    "rulmenti": 0.55,  # loc pentru ciclul din README (o comandă nouă de ~2.800 lei)
+    "otel": 0.70,
+    "plastic": 0.94,  # aproape consumat
+    "vopsele": 0.65,
+    "hidraulic": 0.60,
+    "transmisii": 0.80,
+}
+OVER_BUDGET_SUPPLIER = "electrice"
+OVER_BUDGET_REASON = (
+    "Stocul de cabluri a scăzut sub minim și linia de asamblare s-ar fi oprit. "
+    "Suplimentarea bugetului e în aprobare la director."
+)
 
 # Cantități tipice, pe unitate de măsură: (minim, maxim, pas).
 QUANTITIES = {"buc": (5, 40, 5), "kg": (200, 800, 50), "m": (50, 300, 25), "l": (40, 200, 20)}
@@ -79,6 +97,7 @@ class DemoSeeder:
         self.fetch_rates = fetch_rates
         self.random = random.Random(RANDOM_SEED)
         self.agenda = []  # (moment, ordine, cine, acțiune)
+        self.planned_orders = []  # (zi, furnizor, valoare fără TVA): pentru bugete
         self.log = []  # ce s-a creat, pentru rezumatul afișat la final
         self.eur_rates = True
 
@@ -89,6 +108,7 @@ class DemoSeeder:
         self.create_base_data()
         self.plan_regular_activity()
         self.plan_requirement_scenarios()
+        self.plan_budgets()
         self.plan_daily_digests()
         self.execute_agenda()
         self.summarize()
@@ -159,9 +179,15 @@ class DemoSeeder:
                     vat_rate=self.products[code].vat_rate,
                     expected_date=expected_day,
                 )
-            story.order = purchasing.send_order(order)
+            # Justificarea contează doar dacă depășește bugetul (o singură comandă, vezi
+            # plan_budgets); altfel e ignorată.
+            story.order = budgets.send_order(order, reason=OVER_BUDGET_REASON)
 
-        return self.at(order_day, 10, owner, action)
+        scheduled = self.at(order_day, 10, owner, action)
+        if scheduled:
+            value = sum(D(quantity) * price_of(code) for code, quantity in items)
+            self.planned_orders.append((self.workday(order_day), supplier_key, value))
+        return scheduled
 
     def receive(self, story, day, quantities, extra=(), hour=11):
         """Depozitul numără marfa: {cod: cantitate} pe liniile comenzii; `extra` = marfă
@@ -526,6 +552,43 @@ class DemoSeeder:
         self.scenarios[label] = story
         return story
 
+    # --- Bugetele anului ----------------------------------------------------------------------
+
+    def plan_budgets(self):
+        """Contabilitatea stabilește bugetele anului înaintea primei comenzi din an.
+
+        Sumele vin din comenzile deja planificate (BUDGET_USAGE). Furnizorul „depășit”
+        primește un buget care ajunge pentru toate comenzile, mai puțin jumătate din
+        ultima: aceea se trimite peste buget, cu justificare, ca în realitate.
+        """
+        year = self.today.year
+        totals, last = {}, {}
+        for day, supplier, value in sorted(self.planned_orders):
+            if day.year == year:
+                totals[supplier] = totals.get(supplier, D(0)) + value
+                last[supplier] = value
+        first_day = self.workday(max(self.start, datetime.date(year, 1, 1)))
+
+        def action():
+            for key, supplier in self.suppliers.items():
+                total = totals.get(key, D(0))
+                if key == OVER_BUDGET_SUPPLIER and total:
+                    amount = total - last[key] / 2
+                elif total:
+                    amount = total / D(str(BUDGET_USAGE[key]))
+                else:  # nicio comandă în acest an (încă): un plafon obișnuit
+                    amount = D(20000)
+                budget = SupplierBudget(
+                    supplier=supplier,
+                    year=year,
+                    amount=(amount / 100).quantize(D(1), rounding=ROUND_HALF_UP) * 100,
+                    notes=f"Contract-cadru {year}",
+                )
+                budget.full_clean()
+                budget.save()
+
+        self.agenda.append((moment(first_day, 8, 30), len(self.agenda), self.accountant, action))
+
     # --- Rezumatele de pe email din ultimele zile -------------------------------------------
 
     def plan_daily_digests(self):
@@ -576,3 +639,8 @@ class DemoSeeder:
             + ", ".join(f"{n} {label.lower()}" for label, n in sorted(by_status.items()))
         )
         self.log.append(f"{len(self.scenarios)} situații din cerință: " + "; ".join(self.scenarios))
+        levels = [status.level for status in budgets.statuses(self.today.year)]
+        self.log.append(
+            f"bugete {self.today.year}: {len(levels)} ({levels.count('over')} depășit, "
+            f"{levels.count('warning')} aproape consumat)"
+        )

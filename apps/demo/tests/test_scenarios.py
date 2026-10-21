@@ -12,6 +12,7 @@ from django.db import transaction
 from django.utils import timezone
 
 from apps.audit.models import BusinessEvent
+from apps.budgets.services import statuses as budget_statuses
 from apps.dashboard.charts import late_orders_trend, on_time_by_supplier
 from apps.demo.seed import HISTORY_DAYS
 from apps.demo.testing import seed_demo_for_tests
@@ -113,6 +114,21 @@ def test_every_alert_type_appears_somewhere(demo):
         "INVOICE_DUE_SOON",
         "INVOICE_OVERDUE",
     }
+
+
+def test_budgets_one_almost_used_one_exceeded_with_a_reason(demo):
+    by_supplier = {s.budget.supplier.name: s for s in budget_statuses(TODAY.year)}
+
+    assert len(by_supplier) == 8
+    assert by_supplier["Plastic Injecție Dolj SRL"].level == "warning"
+    assert by_supplier["Componente Electrice Banat SRL"].level == "over"
+    assert by_supplier["Rulmenți Oltenia SRL"].percent < 70  # loc pentru ciclul din README
+    others = [s.level for name, s in by_supplier.items() if "Plastic" not in name]
+    assert others.count("over") == 1 and "warning" not in others
+    [over] = PurchaseOrder.objects.exclude(budget_override_reason="")
+    assert over.supplier.name == "Componente Electrice Banat SRL"
+    assert BusinessEvent.objects.get(event_type="order.sent_over_budget").target == over
+    assert {"BUDGET_ALMOST_USED", "BUDGET_EXCEEDED"} <= {alert.code for alert in collect()}
 
 
 # --- O istorie coerentă -----------------------------------------------------------------------

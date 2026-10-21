@@ -21,6 +21,7 @@ from django.db.models import F
 from django.utils import timezone
 
 from apps.accounts.models import User
+from apps.budgets.services import statuses as budget_statuses
 from apps.core.dates import business_days_between
 from apps.core.text import format_money, format_quantity
 from apps.invoicing.models import Invoice
@@ -42,9 +43,10 @@ class Section:
     LATE = "late"
     BLOCKED = "blocked"
     TODAY = "today"
+    BUDGET = "budget"
 
-    TITLES = {LATE: "Întârzieri și scadențe", BLOCKED: "Blocaje", TODAY: "Azi"}
-    ORDER = (LATE, BLOCKED, TODAY)
+    TITLES = {LATE: "Întârzieri și scadențe", BLOCKED: "Blocaje", TODAY: "Azi", BUDGET: "Bugete"}
+    ORDER = (LATE, BLOCKED, TODAY, BUDGET)
 
 
 @dataclass(frozen=True)
@@ -73,6 +75,7 @@ def collect(today=None):
         *rate_pending_invoices(today),
         *matched_waiting_invoices(today),
         *approved_invoices_due(today),
+        *budgets_running_out(today),
     ]
 
 
@@ -273,6 +276,43 @@ def approved_invoices_due(today):
             detail=f"De plătit {format_money(invoice.declared_total)} {invoice.currency}: {when}.",
             url=invoice.get_absolute_url(),
             roles=frozenset({Role.ACCOUNTING}),
+        )
+
+
+# --- Bugete ---------------------------------------------------------------------------------
+
+
+def budgets_running_out(today):
+    """BUDGET_ALMOST_USED (de la 90%) și BUDGET_EXCEEDED: bugetele anului curent.
+
+    Achizițiile (cine mai comandă) și Contabilitatea (cine răspunde de buget).
+    Cheia conține nivelul: trecerea de la „aproape consumat” la „depășit” e NOUĂ.
+    """
+    for status in budget_statuses(today.year):
+        if status.level == "ok":
+            continue
+        budget, currency = status.budget, status.budget.currency
+        total = f"{format_money(budget.amount)} {currency}"
+        if status.level == "over":
+            code = "BUDGET_EXCEEDED"
+            detail = (
+                f"Depășit cu {format_money(status.overrun)} {currency}: angajat "
+                f"{format_money(status.committed)} din {total}."
+            )
+        else:
+            code = "BUDGET_ALMOST_USED"
+            detail = (
+                f"Consumat {status.percent}%: mai sunt disponibili "
+                f"{format_money(status.available)} {currency} din {total}."
+            )
+        yield Alert(
+            code=code,
+            section=Section.BUDGET,
+            key=f"{code}:{budget.pk}",
+            title=f"Buget {budget.year} · {budget.supplier}",
+            detail=detail,
+            url=budget.supplier.get_absolute_url(),
+            roles=frozenset({Role.PROCUREMENT, Role.ACCOUNTING}),
         )
 
 

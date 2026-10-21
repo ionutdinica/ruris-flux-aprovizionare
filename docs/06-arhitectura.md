@@ -33,6 +33,7 @@ Fiecare modul corespunde unei zone a afacerii și are aceeași structură.
 | `warehouse` | recepții, carantină (discrepanțe), **registrul de stoc** |
 | `invoicing` | facturi, **motorul de potrivire în 3 direcții**, aprobare, plată |
 | `currency` | cursul BNR: descărcare, reguli de alegere a cursului |
+| `budgets` | bugetele anuale pe furnizor, verificarea la trimiterea comenzii |
 | `notifications` | detectorul de probleme, rezumatul zilnic pe email |
 | `dashboard` | panoul pe rol: cifre-cheie, grafice, starea sistemului |
 | `audit` | jurnalul de audit (cine, ce, când) și istoricul fiecărui document |
@@ -48,13 +49,17 @@ flowchart BT
     warehouse --> purchasing
     currency --> core
     invoicing --> purchasing & currency
-    notifications --> invoicing & warehouse
+    budgets --> invoicing
+    notifications --> invoicing & warehouse & budgets
     dashboard --> notifications
 ```
 
 Săgeata înseamnă „depinde de”. Dependențele merg într-un singur sens: comenzile nu știu
 nimic despre facturi, iar cursul BNR nu știe nimic despre facturi. Legăturile în sens invers
-se fac prin **semnale** (mai jos).
+se fac prin **semnale** (mai jos). La fel bugetele: comenzile nu știu de ele. Trimiterea din
+pagină trece prin `budgets.services.send_order`, care verifică bugetul și apoi apelează
+`purchasing.services.send_order`; cardul de buget apare pe paginile comenzii și furnizorului
+printr-un *template tag* (`{% supplier_budget %}`), ca istoricul din `audit`.
 
 ## Straturile unui modul
 

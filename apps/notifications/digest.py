@@ -11,8 +11,13 @@ from django.template.loader import render_to_string
 
 from .alerts import Section
 
-# Culoarea barei din stânga fiecărei probleme, pe secțiuni (portocaliu, roșu, albastru).
-SECTION_COLORS = {Section.LATE: "#d97706", Section.BLOCKED: "#dc2626", Section.TODAY: "#2563eb"}
+# Culoarea barei din stânga fiecărei probleme, pe secțiuni.
+SECTION_COLORS = {
+    Section.LATE: "#d97706",
+    Section.BLOCKED: "#dc2626",
+    Section.TODAY: "#2563eb",
+    Section.BUDGET: "#7c3aed",  # violet
+}
 
 
 @dataclass
