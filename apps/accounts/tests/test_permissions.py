@@ -35,6 +35,8 @@ EXPECTED_MATRIX = {
     "invoices.view":           (1, 0, 1, 1),
     "invoices.view_payment":   (0, 0, 1, 1),
     "invoices.edit":           (0, 0, 1, 1),
+    "budgets.view":            (1, 0, 1, 1),
+    "budgets.edit":            (0, 0, 1, 1),
     "rates.view":              (1, 0, 1, 1),
     "rates.refresh":           (0, 0, 1, 1),
     "alerts.view_all":         (0, 0, 0, 1),

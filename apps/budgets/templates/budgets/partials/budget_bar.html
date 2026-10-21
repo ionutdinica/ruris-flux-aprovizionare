@@ -1,0 +1,8 @@
+{% load formatting %}
+{# Bara unui buget. Folosire: {% include "budgets/partials/budget_bar.html" with status=status %} #}
+<div class="progress" role="progressbar" aria-label="Buget consumat" aria-valuenow="{{ status.percent }}" aria-valuemin="0" aria-valuemax="100" style="height: .6rem">
+  <div class="progress-bar bg-{{ status.color }}" style="width: {{ status.bar_percent }}%"></div>
+</div>
+<div class="small mt-1 {% if status.level == 'over' %}text-danger fw-semibold{% elif status.level == 'warning' %}text-warning-emphasis fw-semibold{% else %}text-body-secondary{% endif %}">
+  consumat {{ status.percent }}%{% if status.level == "over" %} · depășit cu {{ status.overrun|money }} {{ status.budget.currency }}{% elif status.level == "warning" %} · aproape consumat{% endif %}
+</div>

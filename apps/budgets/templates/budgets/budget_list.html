@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% load permissions formatting %}
+
+{% block title %}Bugete {{ year }}{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-1">
+  <h1 class="h3 mb-0"><i class="bi bi-piggy-bank me-2"></i>Bugete pe furnizor</h1>
+  <div class="d-flex gap-2">
+    <form method="get" class="d-flex">
+      <select name="an" class="form-select" aria-label="Anul" onchange="this.form.submit()">
+        {% for value in years %}<option value="{{ value }}"{% if value == year %} selected{% endif %}>{{ value }}</option>{% endfor %}
+      </select>
+      <noscript><button type="submit" class="btn btn-outline-secondary ms-2">Arată</button></noscript>
+    </form>
+    {% if user|can:"budgets.edit" %}
+      <a href="{% url 'budgets:budget_create' %}?an={{ year }}" class="btn btn-primary-dark text-nowrap"><i class="bi bi-plus-lg me-1"></i>Buget nou</a>
+    {% endif %}
+  </div>
+</div>
+<p class="text-body-secondary small mb-3">
+  Plafonul anual al fiecărui furnizor, fără TVA. Se consumă la <strong>trimiterea comenzii</strong> (angajamentul față de furnizor), nu la factură;
+  comenzile anulate nu contează, iar cele închise cu rest contează doar cu ce a sosit. O comandă care depășește bugetul se poate trimite doar cu o justificare.
+</p>
+
+{% if rows %}
+<div class="card shadow-sm mb-3">
+  <div class="table-responsive">
+    <table class="table align-middle mb-0">
+      <thead class="table-light">
+        <tr>
+          <th>Furnizor</th>
+          <th class="text-end">Buget</th>
+          <th class="text-end">Angajat</th>
+          <th class="text-end d-none d-md-table-cell">din care facturat</th>
+          <th class="text-end">Disponibil</th>
+          <th style="min-width: 10rem">Consum</th>
+          {% if user|can:"budgets.edit" %}<th></th>{% endif %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in rows %}
+          <tr>
+            <td>
+              <a href="{{ row.budget.supplier.get_absolute_url }}" class="fw-semibold text-decoration-none">{{ row.budget.supplier }}</a>
+              {% if row.budget.notes %}<div class="small text-body-secondary">{{ row.budget.notes }}</div>{% endif %}
+              {% if row.unconverted %}<div class="small text-warning-emphasis"><i class="bi bi-exclamation-triangle me-1"></i>fără curs BNR pentru {{ row.unconverted|length|plural:"comandă,comenzi" }}, neincluse</div>{% endif %}
+            </td>
+            <td class="text-end text-nowrap">{{ row.budget.amount|money }} {{ row.budget.currency }}</td>
+            <td class="text-end text-nowrap">{{ row.committed|money }}</td>
+            <td class="text-end text-nowrap d-none d-md-table-cell text-body-secondary">{{ row.invoiced|money }}</td>
+            <td class="text-end text-nowrap fw-semibold{% if row.level == 'over' %} text-danger{% endif %}">{{ row.available|money }}</td>
+            <td>{% include "budgets/partials/budget_bar.html" with status=row %}</td>
+            {% if user|can:"budgets.edit" %}
+              <td class="text-end"><a href="{% url 'budgets:budget_update' row.budget.pk %}" class="btn btn-sm btn-outline-primary" title="Editează bugetul"><i class="bi bi-pencil"></i></a></td>
+            {% endif %}
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% else %}
+  <div class="text-center text-body-secondary py-5">
+    <i class="bi bi-piggy-bank display-5"></i>
+    <p class="mt-2 mb-0">Niciun buget stabilit pentru {{ year }}.</p>
+  </div>
+{% endif %}
+
+{% if without_budget %}
+  <p class="small text-body-secondary mb-1">Furnizori fără buget în {{ year }} (comenzile lor nu sunt verificate):</p>
+  <div class="d-flex flex-wrap gap-2">
+    {% for supplier in without_budget %}
+      {% if user|can:"budgets.edit" %}
+        <a href="{% url 'budgets:budget_create' %}?an={{ year }}&amp;furnizor={{ supplier.pk }}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-plus me-1"></i>{{ supplier }}</a>
+      {% else %}
+        <span class="badge text-bg-light border">{{ supplier }}</span>
+      {% endif %}
+    {% endfor %}
+  </div>
+{% endif %}
+{% endblock %}

@@ -41,6 +41,7 @@ MENU = (
     ),
     MenuItem("Stoc", "boxes", "warehouse:stock", "stock.view"),
     MenuItem("Facturi", "receipt", "invoicing:invoice_list", "invoices.view"),
+    MenuItem("Bugete", "piggy-bank", "budgets:budget_list", "budgets.view"),
     MenuGroup(
         "Nomenclatoare",
         "journal-text",

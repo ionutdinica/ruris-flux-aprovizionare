@@ -42,6 +42,9 @@ PERMISSIONS = {
     "invoices.view": {P, A, ADMIN},  # Achizițiile văd statusul și motivele de blocare
     "invoices.view_payment": {A, ADMIN},  # detaliile de plată
     "invoices.edit": {A, ADMIN},  # înregistrare, validare, aprobare, forțare, plată
+    # Bugete pe furnizor (plafonul anual; se consumă la trimiterea comenzilor)
+    "budgets.view": {P, A, ADMIN},
+    "budgets.edit": {A, ADMIN},  # stabilirea și corectarea bugetelor
     # Cursuri BNR
     "rates.view": {P, A, ADMIN},
     "rates.refresh": {A, ADMIN},  # „Actualizează acum” (altfel automat, zilnic)

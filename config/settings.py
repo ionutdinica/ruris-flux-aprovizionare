@@ -71,6 +71,7 @@ INSTALLED_APPS = [
     "apps.purchasing",
     "apps.warehouse",
     "apps.invoicing",
+    "apps.budgets",
     "apps.currency",
     "apps.notifications",
     "apps.dashboard",
@@ -207,6 +208,7 @@ AUDITLOG_INCLUDE_TRACKING_MODELS = (
         "exclude_fields": [*_TIMESTAMPS, "match_result", "matched_at", "status_changed_at"],
     },
     {"model": "invoicing.InvoiceLine", "exclude_fields": _TIMESTAMPS},
+    {"model": "budgets.SupplierBudget", "exclude_fields": _TIMESTAMPS},
 )
 AUDITLOG_MASK_CALLABLE = "apps.audit.utils.mask_completely"
 AUDITLOG_STORE_JSON_CHANGES = True  # modificările se salvează structurat (JSON)
